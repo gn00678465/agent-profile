@@ -109,11 +109,9 @@ interface ContentViewProps {
   agent: AgentProfile;
   activeTab: string;
   onTabChange: (tab: string) => void;
-  sidebarCollapsed: boolean;
-  onToggleCollapse: () => void;
 }
 
-function ContentView({ agent, activeTab, onTabChange, sidebarCollapsed, onToggleCollapse }: ContentViewProps) {
+function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
   const { type, configDir, name } = agent;
   const color = agentColor(type);
   const tabs = AGENT_TABS[type] ?? [];
@@ -157,13 +155,6 @@ function ContentView({ agent, activeTab, onTabChange, sidebarCollapsed, onToggle
         className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
         style={{ background: color.subtle, borderColor: `${color.primary}40` }}
       >
-        <button
-          onClick={onToggleCollapse}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
         <span className="text-xl" style={{ color: color.primary }}>{AGENT_GLYPHS[type] ?? '◈'}</span>
         <div>
           <div className="font-mono text-sm font-semibold tracking-widest uppercase" style={{ color: color.primary }}>
@@ -288,6 +279,13 @@ export default function App() {
           style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarCollapsed((v) => !v)}
+              className="titlebar-nodrag rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
             <span className="text-base" style={{ color: color.primary }}>◈</span>
             <span className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--text-secondary)' }}>
               Agent Profile Manager
@@ -317,8 +315,6 @@ export default function App() {
                 agent={activeAgent}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                sidebarCollapsed={sidebarCollapsed}
-                onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
