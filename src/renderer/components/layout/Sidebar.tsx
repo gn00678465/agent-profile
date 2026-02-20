@@ -3,6 +3,9 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { AgentProfile } from '@shared/types';
+import claudeIcon from '../../../assets/claude-color.svg';
+import geminiIcon from '../../../assets/gemini-color.svg';
+import copilotIcon from '../../../assets/githubcopilot.svg';
 
 interface SidebarProps {
   agents: AgentProfile[];
@@ -14,9 +17,9 @@ interface SidebarProps {
 }
 
 const AGENT_ICONS: Record<string, React.ReactNode> = {
-  'claude-code': <Bot className="h-4 w-4 text-amber-500" />,
-  gemini: <Bot className="h-4 w-4 text-indigo-400" />,
-  copilot: <Bot className="h-4 w-4 text-emerald-400" />,
+  'claude-code': <img src={claudeIcon} alt="Claude" className="h-4 w-4" />,
+  gemini: <img src={geminiIcon} alt="Gemini" className="h-4 w-4" />,
+  copilot: <img src={copilotIcon} alt="Copilot" className="h-4 w-4" />,
   shared: <Share2 className="h-4 w-4 text-gray-400" />,
 };
 
