@@ -272,96 +272,61 @@ Appears at the top of the content area, above tabs:
 
 ### 5.5 Settings Tab
 
-#### Gemini Settings
+All three agents use a **JSON editor** as the sole interface for settings. No form UI — direct JSON editing with inline validation and one-click formatting.
+
+#### Common Layout (Gemini / Copilot / Claude)
 
 ```
-┌─ GENERAL ────────────────────────────────────────────────────────┐
-│                                                                   │
-│  Preview Features          [Toggle ON]                           │
-│  Enable early access to experimental features                    │
-│                                                                   │
-│  Vim Mode                  [Toggle OFF]                          │
-│  Use vim keybindings in the CLI                                  │
-│                                                                   │
-│  Session Retention         [Toggle ON]                           │
-│  Persist sessions between runs                                   │
-│                                                                   │
-│  Prompt Completion         [Toggle ON]                           │
-│  Enable tab completion suggestions                               │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
-┌─ UI ──────────────────────────────────────────────────────────────┐
-│                                                                   │
-│  Hide Context Summary      [Toggle OFF]                          │
-│  Show Memory Usage         [Toggle ON]                           │
-│  Show Model Info in Chat   [Toggle ON]                           │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
-┌─ SECURITY ────────────────────────────────────────────────────────┐
-│                                                                   │
-│  Auth Method               [oauth-personal ▼]                    │
-│                              oauth-personal                      │
-│                              oauth-workspace                     │
-│                              api-key                             │
-│                                                                   │
-│  Google Account            email@gmail.com                       │
-│                            [Switch Account]                      │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
-┌─ EXPERIMENTAL ────────────────────────────────────────────────────┐
-│  Skills Support            [Toggle ON]                           │
-└───────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  {Agent} Settings           [◉ Format] [↺ Refresh] [Save ▶]        │
+│  ~/.{agent}/settings.json                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ ⚠  settings.json does not exist yet. Changes will create the file.  │  ← amber banner (if file absent)
+├─────────────────────────────────────────────────────────────────────┤
+│ ✕  {parse error message}                                            │  ← red banner (on invalid JSON)
+├─────────────────────────────────────────────────────────────────────┤
+│  1  {                                                               │
+│  2    "model": "opus",                                              │
+│  3    "permissions": {                                              │
+│  4      "allow": [                                                  │
+│  5        "Bash(*)"                                                 │  ← CodeMirror JSON editor
+│  6      ]                                                           │     (fills remaining height)
+│  7    },                                                            │
+│  8    "env": {                                                      │
+│  9      "ANTHROPIC_MODEL": "claude-opus-4-6"                       │
+│ 10    }                                                             │
+│ 11  }                                                               │
+│  ~                                                                  │
+│  ~                                                                  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Copilot Settings
+**Toolbar Actions:**
 
-```
-┌─ ACCOUNT ─────────────────────────────────────────────────────────┐
-│  GitHub Login              gn00678465                            │
-│                            https://github.com                    │
-│                            [Switch Account]                      │
-└───────────────────────────────────────────────────────────────────┘
-┌─ MODEL ────────────────────────────────────────────────────────────┐
-│  Active Model              [claude-sonnet-4.5 ▼]                 │
-└───────────────────────────────────────────────────────────────────┘
-┌─ DISPLAY ──────────────────────────────────────────────────────────┐
-│  Theme                     [auto ▼] (auto / light / dark)        │
-│  Render Markdown           [Toggle ON]                           │
-│  Screen Reader Mode        [Toggle OFF]                          │
-│  Show Banner               [never ▼] (never / always)           │
-└───────────────────────────────────────────────────────────────────┘
-```
+| Button | Icon | Behaviour |
+|--------|------|-----------|
+| Format | `Braces` | `JSON.parse` → `JSON.stringify(_, null, 2)` — pretty-prints in-place; shows red banner if JSON is currently invalid |
+| Refresh | `RefreshCw` | Reloads file from disk, discards unsaved edits, clears error banners |
+| Save | `Save` | Parses JSON; on syntax error shows red banner and aborts; on success writes file via Electron IPC and resets dirty flag |
 
-#### Claude Settings
+Save is **disabled** while `isDirty === false` or while a save is in-flight (`Saving...`).
 
-```
-┌─ MODEL ────────────────────────────────────────────────────────────┐
-│  Active Model              [opus ▼] (opus / sonnet / haiku)      │
-│  Skip Dangerous Mode Prompt [Toggle ON]                           │
-└───────────────────────────────────────────────────────────────────┘
-┌─ PERMISSIONS ──────────────────────────────────────────────────────┐
-│  Allowed Rules             + Add rule                            │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │  (empty — no rules configured)                            │   │
-│  └───────────────────────────────────────────────────────────┘   │
-└───────────────────────────────────────────────────────────────────┘
-┌─ ENVIRONMENT VARIABLES ───────────────────────────────────────────┐
-│  ┌─────────────────────────────────────────────────────────┐     │
-│  │  KEY                           VALUE                    │     │
-│  │  ─────────────────────────────────────────────────────  │     │
-│  │  CLAUDE_CODE_EXPERIMENTAL_...  1               [✕]      │     │
-│  └─────────────────────────────────────────────────────────┘     │
-│  [+ Add Variable]                                                 │
-└───────────────────────────────────────────────────────────────────┘
-```
+**Inline Validation:**
+
+The editor runs `jsonParseLinter()` (from `@codemirror/lang-json` + `@codemirror/lint`) continuously. Syntax errors appear as **red wavy underlines** directly on the offending token — no separate action required.
+
+**Error Banners** (appear between toolbar and editor, stacked if multiple):
+- **Amber** — file does not exist yet; will be created on first save
+- **Red** — JSON parse error from Format or Save attempt; cleared on next valid keystroke or successful action
+- **Red** — backend load/save error from Electron IPC
 
 **Settings Component Specs:**
-- Section headers: `var(--text-secondary)`, `--text-xs`, uppercase, letter-spacing 0.10em; with full-width 1px divider line
-- Toggle: shadcn `Switch` component, active color = `var(--{agent}-primary)`
-- Dropdown: shadcn `Select` component
-- Section cards: subtle background `var(--bg-raised)`, 6px border-radius, 16px padding
-- Save button: sticky at bottom of content area, appears on unsaved changes
-- Key-value table for env vars: inline edit on click
+- Toolbar: `height: auto`, 1px bottom border `var(--border-border)`, `px-4 py-2`
+- Editor: `flex-1 overflow-hidden`, CodeMirror fills 100% height with no internal scrollbar (CodeMirror handles its own overflow)
+- Font: `var(--font-code)`, `11px` (CodeMirror `text-xs`)
+- Dark theme: `oneDark` from `@codemirror/theme-one-dark`; light theme: CodeMirror default
+- Line numbers, code folding, active-line highlight, `tabSize: 2`, `indentOnInput: true`
+- `Ctrl+S` / `Cmd+S`: triggers Save (inherited from global keybinding layer)
 
 ---
 
@@ -749,10 +714,11 @@ When "Shared (~/.agents/)" is selected in sidebar:
 | `Ctrl+,` | Open app settings |
 
 ### Error States
-- Invalid JSON in env var value: inline red underline + tooltip
-- File not found: banner warning at top of section
-- Save failure: toast notification (bottom-right, 4s)
-- Permission error: modal with details
+- **Invalid JSON (settings editor):** red wavy underline on the offending token via `jsonParseLinter` — continuous, no action required
+- **Format / Save with invalid JSON:** red banner between toolbar and editor; cleared on next valid edit
+- **File not found:** amber banner between toolbar and editor; file is created on first Save
+- **Save failure (IPC / permission):** red banner + Sonner toast (bottom-right, 4 s)
+- **Permission error:** modal with details
 
 ### Empty States
 - Sessions: "No sessions found" with folder icon and path
@@ -763,25 +729,26 @@ When "Shared (~/.agents/)" is selected in sidebar:
 
 ## 9. Component Library Mapping (shadcn/ui)
 
-| UI Element | shadcn Component | Notes |
-|------------|-----------------|-------|
-| Toggle settings | `Switch` | Colored per agent |
-| Dropdowns | `Select` | |
-| Text inputs | `Input` | |
-| Action buttons | `Button` (variant: outline, ghost, destructive) | |
-| Tab navigation | `Tabs`, `TabsList`, `TabsTrigger` | |
-| Confirm dialogs | `AlertDialog` | |
-| Detail panels | `Sheet` (side panel) | |
-| Toast notifications | `Sonner` / `Toast` | |
-| Tooltips | `Tooltip` | |
-| Badges | `Badge` | Scope/source indicators |
-| Command palette | `Command` | Search across all agents |
-| Popover menus | `Popover` | Context menus |
-| Modal marketplace | `Dialog` | Full-screen sheet |
-| Code editor | Monaco Editor | Not shadcn, integrated separately |
+| UI Element | Component | Notes |
+|------------|-----------|-------|
+| Toggle settings | shadcn `Switch` | Colored per agent |
+| Dropdowns | shadcn `Select` | |
+| Text inputs | shadcn `Input` | |
+| Action buttons | shadcn `Button` (variant: outline, ghost, destructive) | |
+| Tab navigation | shadcn `Tabs`, `TabsList`, `TabsTrigger` | |
+| Confirm dialogs | shadcn `AlertDialog` | |
+| Detail panels | shadcn `Sheet` (side panel) | |
+| Toast notifications | `Sonner` | |
+| Tooltips | shadcn `Tooltip` | |
+| Badges | shadcn `Badge` | Scope/source indicators |
+| Command palette | shadcn `Command` | Search across all agents |
+| Popover menus | shadcn `Popover` | Context menus |
+| Modal marketplace | shadcn `Dialog` | Full-screen sheet |
+| **JSON settings editor** | **`JsonEditor` — `@uiw/react-codemirror`** | **Settings tab for all agents; JSON syntax highlighting, inline linting (`jsonParseLinter`), Format + Refresh + Save toolbar, light/dark via `useTheme`** |
+| Markdown editor | CodeMirror (Markdown mode) | GEMINI.md / CLAUDE.md tab |
 | Scrollable lists | Custom + `@tanstack/react-virtual` | For large session lists |
-| Separator | `Separator` | Section dividers |
-| Skeleton | `Skeleton` | Loading states |
+| Separator | shadcn `Separator` | Section dividers |
+| Skeleton | shadcn `Skeleton` | Loading states |
 
 ---
 
@@ -809,10 +776,10 @@ App
 │       ├── SectionTabs
 │       │   └── TabTrigger (×up to 6 per agent)
 │       └── TabContent (active tab)
-│           ├── SettingsTab
-│           │   ├── SettingsSection (repeatable)
-│           │   │   └── SettingRow (Toggle | Select | Input | KeyValue)
-│           │   └── SaveButton (sticky)
+│           ├── SettingsTab  (JSON editor — all agents)
+│           │   ├── SettingsToolbar (Format | Refresh | Save)
+│           │   ├── ErrorBanner (amber: file absent | red: JSON error | red: IPC error)
+│           │   └── JsonEditor (@uiw/react-codemirror, jsonParseLinter, oneDark/light)
 │           ├── SessionsTab
 │           │   ├── SessionSearch
 │           │   ├── SessionList
