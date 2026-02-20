@@ -1,9 +1,13 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { registerFileHandlers } from './ipc/fileHandlers';
 import { registerConfigHandlers } from './ipc/configHandlers';
 import { registerDialogHandlers } from './ipc/dialogHandlers';
 import { IPC_CHANNELS } from '../shared/types';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -16,7 +20,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     webPreferences: {
-      preload: path.join(__dirname, '../preload/index.js'),
+      preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -27,8 +31,8 @@ function createWindow() {
   });
 
   // Load the app
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+  if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));

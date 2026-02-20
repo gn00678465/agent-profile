@@ -1,3 +1,30 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+
+# Production
+dist
+dist-ssr
+dist-electron
+release
+*.local
+
+# Electron
+build/*.png
+build/*.ico
+build/*.icns
+# We want to keep these icons, so we use ! to unignore them if build/ is ignored.
+# But build/ is not currently ignored. 
+# If you want to ignore EVERYTHING in build except these icons:
+# build/*
+# !build/icon.ico
+# !build/icon.icns
+# !build/icon.png
+
 # Logs
 logs
 *.log
@@ -6,11 +33,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -22,5 +44,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-dist-electron/
