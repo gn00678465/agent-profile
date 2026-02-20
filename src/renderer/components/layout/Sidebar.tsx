@@ -35,7 +35,7 @@ export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect }: Sid
     <div
       className={cn(
         'flex h-full flex-col border-r transition-[width] duration-200 p-3 gap-2',
-        collapsed ? 'w-[42px]' : 'w-[200px]'
+        collapsed ? 'w-[58px]' : 'w-[200px]'
       )}
       style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}
     >
