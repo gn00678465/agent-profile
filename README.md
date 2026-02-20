@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Agent Profile Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI Agent Profile Manager is an industrial-utilitarian Electron desktop application designed for power users to manage configurations for Gemini, Copilot, and Claude Code.
 
-Currently, two official plugins are available:
+## 🚀 Concept: "Mission Control"
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Inspired by aerospace control panels and professional developer tooling, Agent Profile Manager provides a "cockpit" experience for managing your AI agents. Each agent (Gemini, Copilot, Claude) has its own distinct visual identity, including color signatures and icon treatments, ensuring a seamless yet categorized management experience.
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Centralized Configuration:** Manage settings for multiple AI agents in one place.
+- **Pro JSON Editor:** Integrated CodeMirror 6 editor with:
+  - JSON syntax highlighting.
+  - Inline linting and validation (`jsonParseLinter`).
+  - One-click formatting and disk synchronization.
+- **Agent-Specific Themes:** The UI dynamically shifts its personality and color scheme based on the active agent.
+- **Industrial Aesthetic:** A dense, focused, and high-performance UI built for developers.
+- **Cross-Platform:** Built with Electron for Windows, macOS, and Linux.
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Framework:** [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool:** [Vite](https://vite.dev/)
+- **Desktop Wrapper:** [Electron](https://www.electronjs.org/)
+- **Code Editor:** [CodeMirror 6](https://codemirror.net/) via `@uiw/react-codemirror`
+- **UI Components:** [Radix UI](https://www.radix-ui.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🏃 Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- [npm](https://www.npmjs.com/) or [bun](https://bun.sh/)
+
+### Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server (Vite + Electron):
+   ```bash
+   npm run dev
+   ```
+
+### Testing
+
+Run the test suite with Vitest:
+```bash
+npm test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Generate coverage reports:
+```bash
+npm run test:coverage
 ```
+
+### Building & Packaging
+
+To build and package the application for your current platform:
+```bash
+npm run package
+```
+
+The output will be located in the `release/` directory.
+
+## 📄 License
+
+This project is private and for personal use.
