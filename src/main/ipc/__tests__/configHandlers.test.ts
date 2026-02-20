@@ -1,0 +1,883 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import path from 'path';
+import { registerConfigHandlers } from '../configHandlers';
+
+// Use path.join consistently to handle platform-specific separators (Win32 uses backslashes)
+
+// Mock os to control home directory
+vi.mock('os', () => ({
+  default: {
+    homedir: vi.fn(() => '/home/testuser'),
+  },
+}));
+
+// Mock fs/promises
+vi.mock('fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    mkdir: vi.fn(),
+    readdir: vi.fn(),
+    stat: vi.fn(),
+    unlink: vi.fn(),
+    rm: vi.fn(),
+    access: vi.fn(),
+  },
+}));
+
+import fs from 'fs/promises';
+
+function createMockIpcMain() {
+  const handlers: Record<string, Function> = {};
+  return {
+    handle: (channel: string, fn: Function) => {
+      handlers[channel] = fn;
+    },
+    invoke: async (channel: string, ...args: unknown[]) => {
+      const handler = handlers[channel];
+      if (!handler) throw new Error(`No handler for channel: ${channel}`);
+      return handler({}, ...args);
+    },
+    handlers,
+  };
+}
+
+describe('configHandlers', () => {
+  let ipc: ReturnType<typeof createMockIpcMain>;
+  const HOME = '/home/testuser';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    ipc = createMockIpcMain();
+    registerConfigHandlers(ipc as any);
+  });
+
+  // ── CONFIG_GET_AGENTS ──────────────────────────────────────────────────────
+
+  describe('config:get-agents', () => {
+    it('returns all four known agents', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(4);
+    });
+
+    it('includes Claude Code agent with correct config dir', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      const claudeAgent = result.data.find((a: any) => a.id === 'claude-code');
+      expect(claudeAgent).toBeDefined();
+      expect(claudeAgent.configDir).toBe(path.join(HOME, '.claude'));
+      expect(claudeAgent.type).toBe('claude-code');
+      expect(claudeAgent.name).toBe('Claude Code');
+    });
+
+    it('includes Gemini agent with correct config dir', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      const geminiAgent = result.data.find((a: any) => a.id === 'gemini');
+      expect(geminiAgent).toBeDefined();
+      expect(geminiAgent.configDir).toBe(path.join(HOME, '.gemini'));
+      expect(geminiAgent.type).toBe('gemini');
+    });
+
+    it('includes Copilot agent with correct config dir', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      const copilotAgent = result.data.find((a: any) => a.id === 'copilot');
+      expect(copilotAgent).toBeDefined();
+      expect(copilotAgent.configDir).toBe(path.join(HOME, '.copilot'));
+      expect(copilotAgent.type).toBe('copilot');
+    });
+
+    it('includes shared agent with correct config dir', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      const sharedAgent = result.data.find((a: any) => a.id === 'shared');
+      expect(sharedAgent).toBeDefined();
+      expect(sharedAgent.configDir).toBe(path.join(HOME, '.agents'));
+      expect(sharedAgent.type).toBe('shared');
+    });
+
+    it('all agents have required fields', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      for (const agent of result.data) {
+        expect(agent.id).toBeDefined();
+        expect(agent.name).toBeDefined();
+        expect(agent.configDir).toBeDefined();
+        expect(agent.type).toBeDefined();
+      }
+    });
+  });
+
+  // ── CONFIG_GET_CLAUDE_SETTINGS ─────────────────────────────────────────────
+
+  describe('config:get-claude-settings', () => {
+    it('reads settings.json and returns parsed config', async () => {
+      const settings = { model: 'opus', permissions: { allow: ['Bash(*)'] } };
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings) as any);
+
+      const result = await ipc.invoke('config:get-claude-settings', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toEqual(settings);
+      expect(result.data.path).toContain('settings.json');
+    });
+
+    it('returns not-found config when settings.json does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-claude-settings', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+      expect(result.data.data).toBeNull();
+    });
+
+    it('returns error config for malformed JSON', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue('{malformed json' as any);
+
+      const result = await ipc.invoke('config:get-claude-settings', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toBeNull();
+      expect(result.data.error).toBeDefined();
+    });
+
+    it('reads from correct path: configDir/settings.json', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue('{}' as any);
+
+      await ipc.invoke('config:get-claude-settings', '/custom/config/dir');
+      expect(fs.readFile).toHaveBeenCalledWith(
+        path.join('/custom/config/dir', 'settings.json'),
+        'utf-8'
+      );
+    });
+  });
+
+  // ── CONFIG_SAVE_CLAUDE_SETTINGS ────────────────────────────────────────────
+
+  describe('config:save-claude-settings', () => {
+    it('writes settings to settings.json', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const settings = { model: 'sonnet', env: { FOO: 'bar' } };
+      const result = await ipc.invoke('config:save-claude-settings', '/home/testuser/.claude', settings);
+
+      expect(result.success).toBe(true);
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join('/home/testuser/.claude', 'settings.json'),
+        JSON.stringify(settings, null, 2),
+        'utf-8'
+      );
+    });
+
+    it('creates parent directories before writing', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const configDir = path.join('/', 'new', 'config', 'dir');
+      await ipc.invoke('config:save-claude-settings', configDir, {});
+      expect(fs.mkdir).toHaveBeenCalledWith(configDir, { recursive: true });
+    });
+
+    it('returns failure when write fails', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockRejectedValue(new Error('Permission denied'));
+
+      const result = await ipc.invoke('config:save-claude-settings', '/home/testuser/.claude', {});
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // ── CONFIG_GET_GEMINI_SETTINGS ─────────────────────────────────────────────
+
+  describe('config:get-gemini-settings', () => {
+    it('reads settings.json and returns parsed Gemini config', async () => {
+      const settings = {
+        general: { previewFeatures: true, vimMode: false },
+        ui: { showMemoryUsage: true },
+        experimental: { skills: true },
+      };
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settings) as any);
+
+      const result = await ipc.invoke('config:get-gemini-settings', '/home/testuser/.gemini');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toEqual(settings);
+    });
+
+    it('returns not-found when settings.json is absent', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-gemini-settings', '/home/testuser/.gemini');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+    });
+  });
+
+  // ── CONFIG_SAVE_GEMINI_SETTINGS ────────────────────────────────────────────
+
+  describe('config:save-gemini-settings', () => {
+    it('writes Gemini settings to settings.json', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const settings = { general: { vimMode: true }, mcpServers: {} };
+      const result = await ipc.invoke('config:save-gemini-settings', '/home/testuser/.gemini', settings);
+
+      expect(result.success).toBe(true);
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join('/home/testuser/.gemini', 'settings.json'),
+        JSON.stringify(settings, null, 2),
+        'utf-8'
+      );
+    });
+  });
+
+  // ── CONFIG_GET_COPILOT_CONFIG ──────────────────────────────────────────────
+
+  describe('config:get-copilot-config', () => {
+    it('reads config.json and returns parsed Copilot config', async () => {
+      const config = {
+        model: 'claude-sonnet-4.5',
+        theme: 'auto',
+        render_markdown: true,
+        screen_reader: false,
+      };
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(config) as any);
+
+      const result = await ipc.invoke('config:get-copilot-config', '/home/testuser/.copilot');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toEqual(config);
+      expect(result.data.path).toContain('config.json');
+    });
+
+    it('returns not-found config when config.json does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-copilot-config', '/home/testuser/.copilot');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+      expect(result.data.data).toBeNull();
+    });
+  });
+
+  // ── CONFIG_SAVE_COPILOT_CONFIG ─────────────────────────────────────────────
+
+  describe('config:save-copilot-config', () => {
+    it('writes Copilot config to config.json', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const config = { model: 'gpt-4o', theme: 'dark' };
+      const result = await ipc.invoke('config:save-copilot-config', '/home/testuser/.copilot', config);
+
+      expect(result.success).toBe(true);
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join('/home/testuser/.copilot', 'config.json'),
+        JSON.stringify(config, null, 2),
+        'utf-8'
+      );
+    });
+  });
+
+  // ── CONFIG_GET_MCP ─────────────────────────────────────────────────────────
+
+  describe('config:get-mcp', () => {
+    it('finds MCP config in mcp-config.json (Copilot format)', async () => {
+      const mcpConfig = {
+        mcpServers: {
+          docker: { type: 'local', command: 'docker', args: ['mcp', 'gateway', 'run'] },
+        },
+      };
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mcpConfig) as any);
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot');
+      expect(result.success).toBe(true);
+      expect(result.data.data?.mcpServers).toBeDefined();
+      expect(result.data.path).toContain('mcp-config.json');
+    });
+
+    it('falls through candidates to find MCP config in settings.json', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      const settingsWithMcp = { mcpServers: { test: { command: 'npx' } } };
+
+      vi.mocked(fs.readFile)
+        .mockRejectedValueOnce(err)          // mcp-config.json not found
+        .mockRejectedValueOnce(err)          // claude_desktop_config.json not found
+        .mockResolvedValue(JSON.stringify(settingsWithMcp) as any); // settings.json found
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.gemini');
+      expect(result.success).toBe(true);
+      expect(result.data.data?.mcpServers).toBeDefined();
+    });
+
+    it('returns empty MCP config when no config file has mcpServers', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+      expect(result.data.data).toEqual({ mcpServers: {} });
+    });
+
+    it('skips candidate files that exist but have no mcpServers key', async () => {
+      const withoutMcp = { model: 'opus', permissions: { allow: [] } };
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+
+      vi.mocked(fs.readFile)
+        .mockRejectedValueOnce(err)          // mcp-config.json not found
+        .mockRejectedValueOnce(err)          // claude_desktop_config.json not found
+        .mockResolvedValue(JSON.stringify(withoutMcp) as any); // settings.json without mcpServers
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      // No mcpServers found, returns empty default
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+    });
+  });
+
+  // ── CONFIG_SAVE_MCP ────────────────────────────────────────────────────────
+
+  describe('config:save-mcp', () => {
+    it('creates mcp-config.json when no existing MCP config found', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const settings = { mcpServers: { test: { command: 'npx' } } };
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.claude', settings);
+
+      expect(result.success).toBe(true);
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('mcp-config.json'),
+        expect.stringContaining('"mcpServers"'),
+        'utf-8'
+      );
+    });
+
+    it('merges MCP settings with existing file content', async () => {
+      const existingContent = { model: 'opus', mcpServers: { old: { command: 'old' } } };
+      const newSettings = { mcpServers: { new: { command: 'new' } } };
+
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(existingContent) as any);
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.claude', newSettings);
+      expect(result.success).toBe(true);
+
+      const writtenContent = JSON.parse(
+        (vi.mocked(fs.writeFile).mock.calls[0][1] as string)
+      );
+      // Should merge: keep model, apply new mcpServers
+      expect(writtenContent.model).toBe('opus');
+      expect(writtenContent.mcpServers).toEqual(newSettings.mcpServers);
+    });
+  });
+
+  // ── CONFIG_GET_SKILLS ──────────────────────────────────────────────────────
+
+  describe('config:get-skills', () => {
+    it('returns empty array when skills directory does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readdir).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('reads skills from folders in the skills directory', async () => {
+      const skillContent = `---
+name: My Skill
+version: "1.0.0"
+description: A test skill
+user-invocable: true
+---
+
+# My Skill
+
+Skill instructions here.`;
+
+      vi.mocked(fs.readdir).mockResolvedValue(['my-skill'] as any);
+      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.readFile).mockResolvedValue(skillContent as any);
+
+      const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('my-skill');
+      expect(result.data[0].name).toBe('My Skill');
+      expect(result.data[0].description).toBe('A test skill');
+      expect(result.data[0].version).toBe('1.0.0');
+      expect(result.data[0].userInvocable).toBe(true);
+    });
+
+    it('skips non-directory entries in skills folder', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['file.txt', 'skill-folder'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isDirectory: () => false } as any) // file.txt
+        .mockResolvedValueOnce({ isDirectory: () => true } as any);  // skill-folder
+
+      const skillContent = '---\nname: A Skill\ndescription: desc\n---\n# A Skill';
+      vi.mocked(fs.readFile).mockResolvedValue(skillContent as any);
+
+      const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('skill-folder');
+    });
+
+    it('uses folder name as skill name when frontmatter name is absent', async () => {
+      const contentWithoutName = '# Skill Without Frontmatter\n\nSome content.';
+      vi.mocked(fs.readdir).mockResolvedValue(['unnamed-skill'] as any);
+      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.readFile).mockResolvedValue(contentWithoutName as any);
+
+      const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data[0].id).toBe('unnamed-skill');
+      expect(result.data[0].name).toBe('unnamed-skill');
+    });
+
+    it('skips skills whose SKILL.md cannot be read', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['bad-skill', 'good-skill'] as any);
+      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.readFile)
+        .mockRejectedValueOnce(new Error('Cannot read'))   // bad-skill SKILL.md
+        .mockResolvedValue('---\nname: Good\ndescription: Good skill\n---\n# Good' as any);
+
+      const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('good-skill');
+    });
+  });
+
+  // ── CONFIG_SAVE_SKILL ──────────────────────────────────────────────────────
+
+  describe('config:save-skill', () => {
+    it('writes skill to correct path in skills directory', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const skill = {
+        id: 'my-skill',
+        name: 'My Skill',
+        content: '---\nname: My Skill\n---\n# My Skill',
+      };
+      const result = await ipc.invoke('config:save-skill', '/home/testuser/.claude', skill);
+
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith(
+        path.join('/home/testuser/.claude', 'skills', 'my-skill'),
+        { recursive: true }
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join('/home/testuser/.claude', 'skills', 'my-skill', 'SKILL.md'),
+        skill.content,
+        'utf-8'
+      );
+    });
+  });
+
+  // ── CONFIG_DELETE_SKILL ────────────────────────────────────────────────────
+
+  describe('config:delete-skill', () => {
+    it('removes skill directory recursively', async () => {
+      vi.mocked(fs.rm).mockResolvedValue(undefined as any);
+
+      const result = await ipc.invoke('config:delete-skill', '/home/testuser/.claude', 'my-skill');
+      expect(result.success).toBe(true);
+      expect(fs.rm).toHaveBeenCalledWith(
+        path.join('/home/testuser/.claude', 'skills', 'my-skill'),
+        { recursive: true, force: true }
+      );
+    });
+
+    it('returns failure when rm fails', async () => {
+      vi.mocked(fs.rm).mockRejectedValue(new Error('Cannot remove'));
+
+      const result = await ipc.invoke('config:delete-skill', '/home/testuser/.claude', 'bad-skill');
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // ── CONFIG_GET_MARKDOWN ────────────────────────────────────────────────────
+
+  describe('config:get-markdown', () => {
+    it('reads and returns markdown file content', async () => {
+      const content = '# Instructions\n\nSome global instructions.';
+      vi.mocked(fs.readFile).mockResolvedValue(content as any);
+
+      const result = await ipc.invoke('config:get-markdown', '/home/testuser/.claude/CLAUDE.md');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toBe(content);
+      expect(result.data.path).toBe('/home/testuser/.claude/CLAUDE.md');
+    });
+
+    it('returns not-found config when file does not exist', async () => {
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'));
+
+      const result = await ipc.invoke('config:get-markdown', '/home/testuser/.claude/CLAUDE.md');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(false);
+      expect(result.data.data).toBeNull();
+    });
+
+    it('handles empty markdown file', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue('' as any);
+
+      const result = await ipc.invoke('config:get-markdown', '/home/testuser/.gemini/GEMINI.md');
+      expect(result.success).toBe(true);
+      expect(result.data.exists).toBe(true);
+      expect(result.data.data).toBe('');
+    });
+  });
+
+  // ── CONFIG_SAVE_MARKDOWN ───────────────────────────────────────────────────
+
+  describe('config:save-markdown', () => {
+    it('creates parent directories and writes markdown content', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const content = '# My Instructions\n\nDo this and that.';
+      const result = await ipc.invoke(
+        'config:save-markdown',
+        '/home/testuser/.claude/CLAUDE.md',
+        content
+      );
+
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith('/home/testuser/.claude', { recursive: true });
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        '/home/testuser/.claude/CLAUDE.md',
+        content,
+        'utf-8'
+      );
+    });
+
+    it('returns failure when write fails', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockRejectedValue(new Error('Read-only filesystem'));
+
+      const result = await ipc.invoke('config:save-markdown', '/read-only/CLAUDE.md', '# Test');
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // ── CONFIG_GET_GEMINI_EXTENSIONS ───────────────────────────────────────────
+
+  describe('config:get-gemini-extensions', () => {
+    it('returns empty when extensions directory does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readdir).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-gemini-extensions', '/home/testuser/.gemini');
+      expect(result.success).toBe(true);
+      expect(result.data.extensions).toEqual([]);
+    });
+
+    it('reads extension manifests from subfolders', async () => {
+      const manifest = {
+        name: 'context7',
+        version: '1.0.0',
+        description: 'Up-to-date code docs',
+        mcpServers: { context7: { command: 'npx', args: ['-y', '@upstash/context7-mcp'] } },
+      };
+      const enablement = { context7: { overrides: ['/home/testuser/*'] } };
+
+      vi.mocked(fs.readdir).mockResolvedValue(['context7', 'extension-enablement.json'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isDirectory: () => true } as any)   // context7 folder
+        .mockRejectedValueOnce(new Error('not dir')); // extension-enablement.json - not dir, skip
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(enablement) as any)   // extension-enablement.json
+        .mockResolvedValueOnce(JSON.stringify(manifest) as any);    // gemini-extension.json
+
+      const result = await ipc.invoke('config:get-gemini-extensions', '/home/testuser/.gemini');
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // ── CONFIG_GET_CLAUDE_PLUGINS ──────────────────────────────────────────────
+
+  describe('config:get-claude-plugins', () => {
+    it('returns plugins with enabled state from settings.json', async () => {
+      const installedPlugins = {
+        version: 2,
+        plugins: {
+          'context7@claude-plugins-official': [
+            {
+              scope: 'user',
+              installPath: '/path/to/context7',
+              version: '8deab84',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+          ],
+        },
+      };
+      const settings = {
+        enabledPlugins: { 'context7@claude-plugins-official': true },
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any) // installed_plugins.json
+        .mockResolvedValueOnce(JSON.stringify(settings) as any);        // settings.json
+
+      const result = await ipc.invoke('config:get-claude-plugins', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('context7@claude-plugins-official');
+      expect(result.data[0].name).toBe('context7');
+      expect(result.data[0].marketplace).toBe('claude-plugins-official');
+      expect(result.data[0].enabled).toBe(true);
+      expect(result.data[0].scope).toBe('user');
+    });
+
+    it('returns empty array when installed_plugins.json does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-claude-plugins', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('marks plugins as disabled when not in enabledPlugins', async () => {
+      const installedPlugins = {
+        version: 2,
+        plugins: {
+          'github@claude-plugins-official': [
+            {
+              scope: 'user',
+              installPath: '/path/to/github',
+              version: '1.0.0',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+          ],
+        },
+      };
+      const settings = {
+        enabledPlugins: { 'github@claude-plugins-official': false },
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any)
+        .mockResolvedValueOnce(JSON.stringify(settings) as any);
+
+      const result = await ipc.invoke('config:get-claude-plugins', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data[0].enabled).toBe(false);
+    });
+
+    it('handles multiple installs of the same plugin', async () => {
+      const installedPlugins = {
+        version: 2,
+        plugins: {
+          'claude-mem@thedotmack': [
+            {
+              scope: 'user',
+              installPath: '/user/install',
+              version: '7.4.1',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+            {
+              scope: 'project',
+              projectPath: '/some/project',
+              installPath: '/project/install',
+              version: '7.4.1',
+              installedAt: '2026-01-02T00:00:00Z',
+              lastUpdated: '2026-01-02T00:00:00Z',
+            },
+          ],
+        },
+      };
+      const settings = { enabledPlugins: {} };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any)
+        .mockResolvedValueOnce(JSON.stringify(settings) as any);
+
+      const result = await ipc.invoke('config:get-claude-plugins', '/home/testuser/.claude');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].scope).toBe('user');
+      expect(result.data[1].scope).toBe('project');
+      expect(result.data[1].projectPath).toBe('/some/project');
+    });
+  });
+
+  // ── CONFIG_DELETE_PLUGIN ──────────────────────────────────────────────────
+
+  describe('config:delete-plugin', () => {
+    it('removes plugin install entry and deletes install folder', async () => {
+      const installedPlugins = {
+        version: 2,
+        plugins: {
+          'context7@official': [
+            {
+              scope: 'user',
+              installPath: '/plugins/context7',
+              version: '1.0.0',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+          ],
+        },
+      };
+      const settings = {
+        enabledPlugins: { 'context7@official': true },
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any)  // installed_plugins.json
+        .mockResolvedValueOnce(JSON.stringify(settings) as any);         // settings.json
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.rm).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:delete-plugin',
+        '/home/testuser/.claude',
+        'context7@official',
+        '/plugins/context7'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.rm).toHaveBeenCalledWith('/plugins/context7', { recursive: true, force: true });
+      // Should have written updated installed_plugins.json (plugin removed)
+      expect(fs.writeFile).toHaveBeenCalled();
+    });
+
+    it('keeps other installs when deleting one of multiple', async () => {
+      const installedPlugins = {
+        version: 2,
+        plugins: {
+          'myplugin@official': [
+            {
+              scope: 'user',
+              installPath: '/plugins/user-install',
+              version: '1.0.0',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+            {
+              scope: 'project',
+              installPath: '/plugins/project-install',
+              version: '1.0.0',
+              installedAt: '2026-01-01T00:00:00Z',
+              lastUpdated: '2026-01-01T00:00:00Z',
+            },
+          ],
+        },
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any); // installed_plugins.json
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.rm).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:delete-plugin',
+        '/home/testuser/.claude',
+        'myplugin@official',
+        '/plugins/user-install'
+      );
+      expect(result.success).toBe(true);
+      // Should have written back with the project install still present
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const written = JSON.parse(writeCall[1] as string);
+      expect(written.plugins['myplugin@official']).toHaveLength(1);
+      expect(written.plugins['myplugin@official'][0].installPath).toBe('/plugins/project-install');
+    });
+
+    it('returns failure when fs.rm throws', async () => {
+      const installedPlugins = { version: 2, plugins: {} };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(installedPlugins) as any);
+      vi.mocked(fs.rm).mockRejectedValue(new Error('Permission denied'));
+
+      const result = await ipc.invoke(
+        'config:delete-plugin',
+        '/home/testuser/.claude',
+        'badplugin@official',
+        '/plugins/badplugin'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Permission denied');
+    });
+  });
+
+  // ── CONFIG_DELETE_GEMINI_EXTENSION ────────────────────────────────────────
+
+  describe('config:delete-gemini-extension', () => {
+    it('removes enablement entry and deletes extension folder', async () => {
+      const enablement = { 'my-ext': { overrides: [] } };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(enablement) as any); // extension-enablement.json
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.rm).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:delete-gemini-extension',
+        '/home/testuser/.gemini',
+        'my-ext'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.rm).toHaveBeenCalledWith(
+        path.join('/home/testuser/.gemini', 'extensions', 'my-ext'),
+        { recursive: true, force: true }
+      );
+      // Should have written updated enablement (entry removed)
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const written = JSON.parse(writeCall[1] as string);
+      expect(written).not.toHaveProperty('my-ext');
+    });
+
+    it('deletes folder even when extension not in enablement', async () => {
+      const enablement = { 'other-ext': {} };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(enablement) as any);
+      vi.mocked(fs.rm).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:delete-gemini-extension',
+        '/home/testuser/.gemini',
+        'my-ext'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.rm).toHaveBeenCalledWith(
+        path.join('/home/testuser/.gemini', 'extensions', 'my-ext'),
+        { recursive: true, force: true }
+      );
+      // enablement should not have been modified (no writeFile for enablement)
+    });
+
+    it('returns failure when fs.rm throws', async () => {
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify({}) as any);
+      vi.mocked(fs.rm).mockRejectedValue(new Error('EPERM'));
+
+      const result = await ipc.invoke(
+        'config:delete-gemini-extension',
+        '/home/testuser/.gemini',
+        'bad-ext'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('EPERM');
+    });
+  });
+});
