@@ -58,6 +58,47 @@
     --shared-primary:  #6b7280;
     --shared-accent:   #9ca3af;
   }
+
+  .light {
+    /* shadcn overrides */
+    --background: 0 0% 100%;
+    --foreground: 220 10% 10%;
+    --card: 220 10% 97%;
+    --card-foreground: 220 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 10%;
+    --primary: 220 90% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 93%;
+    --secondary-foreground: 220 10% 30%;
+    --muted: 220 10% 93%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 10% 93%;
+    --accent-foreground: 220 10% 10%;
+    --destructive: 0 72% 51%;
+    --border: 220 10% 85%;
+    --input: 220 10% 85%;
+    --ring: 220 90% 50%;
+
+    /* App design tokens */
+    --bg-base: #ffffff;
+    --bg-surface: #f8f8fa;
+    --bg-raised: #f0f0f3;
+    --bg-overlay: #e8e8ec;
+    --border-subtle: #e0e0e5;
+    --border-strong: #c8c8d0;
+    --text-primary: #1a1a1e;
+    --text-secondary: #6b6b7b;
+    --text-muted: #9b9bab;
+    --text-code: #3a3a4a;
+
+    /* Sidebar */
+    --sidebar-background: 220 10% 97%;
+    --sidebar-foreground: 220 10% 30%;
+    --sidebar-accent: 220 10% 93%;
+    --sidebar-accent-foreground: 220 10% 10%;
+    --sidebar-border: 220 10% 85%;
+  }
 }
 
 @layer base {

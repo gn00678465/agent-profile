@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useAgents } from './hooks/useAgents';
+import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
 import { ClaudeSettingsView } from './components/agents/ClaudeSettings';
 import { GeminiSettingsView } from './components/agents/GeminiSettings';
@@ -14,6 +15,7 @@ import { SessionsView } from './components/editors/SessionsView';
 import { ScrollArea } from './components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { electronAPI, callElectron } from './lib/electron';
+import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import type { AgentProfile } from '@shared/types';
 
 // ─── Agent theming ────────────────────────────────────────────────────────────
@@ -107,9 +109,11 @@ interface ContentViewProps {
   agent: AgentProfile;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  sidebarCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
+function ContentView({ agent, activeTab, onTabChange, sidebarCollapsed, onToggleCollapse }: ContentViewProps) {
   const { type, configDir, name } = agent;
   const color = agentColor(type);
   const tabs = AGENT_TABS[type] ?? [];
@@ -150,9 +154,16 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Agent header band */}
       <div
-        className="flex shrink-0 items-center gap-3 border-b px-6 py-3"
+        className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
         style={{ background: color.subtle, borderColor: `${color.primary}40` }}
       >
+        <button
+          onClick={onToggleCollapse}
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
         <span className="text-xl" style={{ color: color.primary }}>{AGENT_GLYPHS[type] ?? '◈'}</span>
         <div>
           <div className="font-mono text-sm font-semibold tracking-widest uppercase" style={{ color: color.primary }}>
@@ -164,7 +175,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
 
       {/* Section tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-border" style={{ background: '#0d0d0f' }}>
+        <div className="shrink-0 border-b border-border" style={{ background: 'var(--bg-base)' }}>
           <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -175,7 +186,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
                   className="rounded-none border-b-2 px-4 py-2.5 text-xs font-medium transition-colors data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                   style={isActive
                     ? { color: color.primary, borderColor: color.primary } as React.CSSProperties
-                    : { color: '#8b8b99', borderColor: 'transparent' } as React.CSSProperties
+                    : { color: 'var(--text-secondary)', borderColor: 'transparent' } as React.CSSProperties
                   }
                 >
                   {tab.label}
@@ -204,6 +215,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
 
 export default function App() {
   const { agents, loading, error } = useAgents();
+  useTheme();
   const [activeAgentId, setActiveAgentId] = useState('claude-code');
   const [activeTab, setActiveTab] = useState('settings');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -264,21 +276,20 @@ export default function App() {
     <>
       <Toaster
         position="bottom-right"
-        theme="dark"
         toastOptions={{
-          style: { background: '#1c1c1f', border: '1px solid #2a2a2e', color: '#f0f0f3' },
+          style: { background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' },
         }}
       />
 
-      <div className="flex h-full flex-col overflow-hidden" style={{ background: '#0d0d0f' }}>
+      <div className="flex h-full flex-col overflow-hidden" style={{ background: 'var(--bg-base)' }}>
         {/* Title bar */}
         <div
           className="titlebar-drag flex h-10 shrink-0 items-center justify-between border-b px-4"
-          style={{ background: '#0d0d0f', borderColor: '#2a2a2e' }}
+          style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="flex items-center gap-2">
             <span className="text-base" style={{ color: color.primary }}>◈</span>
-            <span className="font-mono text-xs tracking-widest uppercase" style={{ color: '#8b8b99' }}>
+            <span className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--text-secondary)' }}>
               Agent Profile Manager
             </span>
           </div>
@@ -292,7 +303,6 @@ export default function App() {
             activeAgentId={activeAgentId}
             collapsed={sidebarCollapsed}
             onAgentSelect={selectAgent}
-            onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
             accentColor={color.primary}
           />
 
@@ -307,6 +317,8 @@ export default function App() {
                 agent={activeAgent}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                sidebarCollapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
@@ -319,9 +331,9 @@ export default function App() {
         {/* Status bar */}
         <div
           className="flex h-7 shrink-0 items-center justify-between border-t px-4"
-          style={{ background: '#0d0d0f', borderColor: '#2a2a2e' }}
+          style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}
         >
-          <div className="flex items-center gap-2 font-mono text-[11px]" style={{ color: '#4a4a56' }}>
+          <div className="flex items-center gap-2 font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>
             {activeAgent && (
               <>
                 <span style={{ color: color.primary }}>{AGENT_GLYPHS[activeAgent.type]}</span>
@@ -353,7 +365,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="font-mono text-[11px]" style={{ color: '#4a4a56' }}>
+          <div className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>
             {activeModel ?? ''}
           </div>
         </div>

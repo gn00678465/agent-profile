@@ -59,9 +59,9 @@ export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtension
         ) : (
           <div className="flex flex-col gap-2">
             {exts.map((ext) => (
-              <div key={ext.name} className="group flex items-center justify-between rounded-md border border-border bg-[#141416] px-4 py-3">
+              <div key={ext.name} className="group flex items-center justify-between rounded-md border border-border bg-[var(--bg-surface)] px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full" style={{ background: ext.enabled ? accentColor : '#4a4a56' }} />
+                  <div className="h-2 w-2 rounded-full" style={{ background: ext.enabled ? accentColor : 'var(--text-muted)' }} />
                   <div>
                     <div className="font-mono text-sm">{ext.name}</div>
                     {ext.description && <div className="text-xs text-muted-foreground">{ext.description}</div>}

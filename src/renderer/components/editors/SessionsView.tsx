@@ -28,7 +28,7 @@ interface SessionDetailProps {
 
 function SessionDetail({ session, onDelete, onOpenFolder, accentColor }: SessionDetailProps) {
   return (
-    <div className="border-l border-border bg-[#141416] flex flex-col" style={{ minWidth: 320, maxWidth: 360 }}>
+    <div className="border-l border-border bg-[var(--bg-surface)] flex flex-col" style={{ minWidth: 320, maxWidth: 360 }}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Session Detail</span>
       </div>
@@ -41,7 +41,7 @@ function SessionDetail({ session, onDelete, onOpenFolder, accentColor }: Session
         </div>
 
         {/* Metadata grid */}
-        <div className="flex flex-col gap-2 rounded border border-border/60 bg-[#1c1c1f] p-3 text-xs">
+        <div className="flex flex-col gap-2 rounded border border-border/60 bg-[var(--bg-raised)] p-3 text-xs">
           {session.createdAt && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>

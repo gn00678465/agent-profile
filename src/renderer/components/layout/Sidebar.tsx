@@ -1,80 +1,89 @@
-import { Bot, Share2, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Sun, Moon, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { useTheme } from '@/hooks/useTheme';
 import type { AgentProfile } from '@shared/types';
 import claudeIcon from '../../../assets/claude-color.svg';
 import geminiIcon from '../../../assets/gemini-color.svg';
 import copilotIcon from '../../../assets/githubcopilot.svg';
+
+const AGENT_COLORS: Record<string, string> = {
+  'claude-code': '#d97706',
+  gemini: '#7c6ef5',
+  copilot: '#2eb88a',
+  shared: '#6b7280',
+};
 
 interface SidebarProps {
   agents: AgentProfile[];
   activeAgentId: string;
   collapsed: boolean;
   onAgentSelect: (id: string) => void;
-  onToggleCollapse: () => void;
   accentColor: string;
 }
 
 const AGENT_ICONS: Record<string, React.ReactNode> = {
-  'claude-code': <img src={claudeIcon} alt="Claude" className="h-4 w-4" />,
-  gemini: <img src={geminiIcon} alt="Gemini" className="h-4 w-4" />,
-  copilot: <img src={copilotIcon} alt="Copilot" className="h-4 w-4" />,
-  shared: <Share2 className="h-4 w-4 text-gray-400" />,
+  'claude-code': <img src={claudeIcon} alt="Claude" className="h-5 w-5" />,
+  gemini: <img src={geminiIcon} alt="Gemini" className="h-5 w-5" />,
+  copilot: <img src={copilotIcon} alt="Copilot" className="h-5 w-5" />,
+  shared: <Share2 className="h-5 w-5 text-gray-400" />,
 };
 
-export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect, onToggleCollapse, accentColor }: SidebarProps) {
+export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect }: SidebarProps) {
+  const { isDark, toggleTheme } = useTheme();
+
   return (
     <div
       className={cn(
-        'flex h-full shrink-0 flex-col border-r transition-[width] duration-200',
-        collapsed ? 'w-14' : 'w-56'
+        'flex h-full flex-col border-r transition-[width] duration-200 p-3 gap-2',
+        collapsed ? 'w-[42px]' : 'w-[200px]'
       )}
-      style={{ borderColor: '#2a2a2e', background: '#111113' }}
+      style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}
     >
-      {/* Header */}
-      <div className="flex h-10 shrink-0 items-center justify-between px-3">
-        {!collapsed && (
-          <span className="font-mono text-[11px] tracking-widest uppercase" style={{ color: '#6b6b7b' }}>
-            Agents
-          </span>
-        )}
-        <button
-          onClick={onToggleCollapse}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      {/* Agent grid / column */}
+      <div className="flex-1 overflow-y-auto px-1">
+        <div
+          className={cn(
+            collapsed
+              ? 'flex flex-col items-center gap-1'
+              : 'grid grid-cols-4 gap-2'
+          )}
         >
-          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
-      </div>
-
-      <Separator className="opacity-30" />
-
-      <ScrollArea className="flex-1 py-2">
-        <div className={cn('flex flex-col gap-1', collapsed ? 'px-1.5' : 'px-2')}>
           {agents.map((agent) => {
             const isActive = agent.id === activeAgentId;
+            const agentAccent = AGENT_COLORS[agent.type] ?? AGENT_COLORS.shared;
 
             return (
               <button
                 key={agent.id}
                 onClick={() => onAgentSelect(agent.id)}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
-                  collapsed && 'justify-center px-0',
-                  isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                  'flex items-center justify-center rounded-lg cursor-pointer transition-colors',
+                  collapsed ? 'w-8 h-8' : 'w-9 h-9',
+                  !isActive && 'hover:bg-accent/50'
                 )}
-                style={isActive ? { background: `${accentColor}15`, color: accentColor } : undefined}
-                title={collapsed ? agent.name : undefined}
+                style={isActive ? {
+                  background: `${agentAccent}20`,
+                  boxShadow: `inset 0 0 0 1.5px ${agentAccent}`,
+                } : undefined}
+                title={agent.name}
               >
-                {AGENT_ICONS[agent.type] ?? <Bot className="h-4 w-4" />}
-                {!collapsed && <span className="truncate">{agent.name}</span>}
+                {AGENT_ICONS[agent.type] ?? <Share2 className="h-5 w-5 text-gray-400" />}
               </button>
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
+
+      {/* Footer — theme toggle */}
+      <div className="flex shrink-0 items-center justify-center">
+        <button
+          onClick={toggleTheme}
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }
