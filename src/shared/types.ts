@@ -160,6 +160,7 @@ export interface Skill {
   filePath?: string;
   dirPath?: string;        // skill folder path
   userInvocable?: boolean;
+  isSymbolicLink?: boolean;
 }
 
 // ─── Session types ────────────────────────────────────────────────────────────

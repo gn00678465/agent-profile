@@ -95,7 +95,7 @@ function parseSkillFrontmatter(content: string): SkillFrontmatter | undefined {
 }
 
 // Read a skill from a folder
-async function readSkillFolder(folderPath: string): Promise<Skill | null> {
+async function readSkillFolder(folderPath: string, isSymbolicLink?: boolean): Promise<Skill | null> {
   const skillMdPath = path.join(folderPath, 'SKILL.md');
   try {
     const content = await fs.readFile(skillMdPath, 'utf-8');
@@ -112,6 +112,7 @@ async function readSkillFolder(folderPath: string): Promise<Skill | null> {
       filePath: skillMdPath,
       dirPath: folderPath,
       userInvocable: frontmatter?.['user-invocable'],
+      isSymbolicLink,
     };
   } catch {
     return null;
@@ -472,13 +473,22 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         for (const entryName of entryNames) {
           const entryPath = path.join(skillsDir, entryName);
           try {
-            const stat = await fs.stat(entryPath);
-            if (!stat.isDirectory()) continue;
+            const lstat = await fs.lstat(entryPath);
+            const isSymbolicLink = lstat.isSymbolicLink();
+            
+            // If it's a symbolic link, we need to check if the target is a directory
+            if (isSymbolicLink) {
+              const stat = await fs.stat(entryPath);
+              if (!stat.isDirectory()) continue;
+            } else if (!lstat.isDirectory()) {
+              continue;
+            }
+
+            const skill = await readSkillFolder(entryPath, isSymbolicLink);
+            if (skill) skills.push(skill);
           } catch {
             continue;
           }
-          const skill = await readSkillFolder(entryPath);
-          if (skill) skills.push(skill);
         }
 
         return success(skills);

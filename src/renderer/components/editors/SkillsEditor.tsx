@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Save, X, RefreshCw, Zap } from 'lucide-react';
+import { Plus, Trash2, Save, X, RefreshCw, Zap, Link } from 'lucide-react';
 import { useSkills } from '@/hooks/useConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -177,8 +177,13 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
                   : 'hover:bg-accent/50'
               }`}
             >
-              <div className="min-w-0">
-                <div className="truncate text-xs font-medium">{skill.name}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <div className="truncate text-xs font-medium">{skill.name}</div>
+                  {skill.isSymbolicLink && (
+                    <Link className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
+                  )}
+                </div>
                 {skill.description && (
                   <div className="truncate text-xs text-muted-foreground">
                     {skill.description}
@@ -229,6 +234,12 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
                     {selectedSkill.userInvocable && (
                       <Badge variant="secondary" className="text-xs">
                         user-invocable
+                      </Badge>
+                    )}
+                    {selectedSkill.isSymbolicLink && (
+                      <Badge variant="outline" className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase border-muted-foreground/30">
+                        <Link className="h-2 w-2" />
+                        Symbolic Link
                       </Badge>
                     )}
                   </div>
