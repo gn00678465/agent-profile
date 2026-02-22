@@ -11,8 +11,10 @@ describe('cn() utility', () => {
   });
 
   it('handles conditional class names (truthy/falsy)', () => {
-    expect(cn('foo', false && 'bar', 'baz')).toBe('foo baz');
-    expect(cn('foo', true && 'bar', 'baz')).toBe('foo bar baz');
+    const isFalse = false;
+    const isTrue = true;
+    expect(cn('foo', isFalse && 'bar', 'baz')).toBe('foo baz');
+    expect(cn('foo', isTrue && 'bar', 'baz')).toBe('foo bar baz');
   });
 
   it('merges conflicting Tailwind classes (last wins)', () => {
