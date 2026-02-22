@@ -6,11 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AddSkillDialog } from './AddSkillDialog';
 import type { Skill } from '@shared/types';
 
 interface SkillsEditorProps {
   configDir: string;
   agentName: string;
+  /** 'shared' hides the "Link from Shared" option in the dialog */
+  agentType?: string;
 }
 
 const DEFAULT_SKILL_TEMPLATE = `---
@@ -32,14 +35,15 @@ Describe what this skill does and how to use it.
 Add your skill instructions here.
 `;
 
-export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
-  const { skills, loading, error, saveSkill, deleteSkill, refresh } = useSkills(configDir);
+export function SkillsEditor({ configDir, agentName, agentType = 'custom' }: SkillsEditorProps) {
+  const { skills, loading, error, saveSkill, deleteSkill, linkSharedSkill, installSkillFromZip, refresh } = useSkills(configDir);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [newSkillId, setNewSkillId] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const selectedSkill = skills.find((s) => s.id === selectedId);
 
@@ -135,7 +139,7 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={startNew}
+              onClick={() => setAddDialogOpen(true)}
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -171,13 +175,13 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
               tabIndex={0}
               onClick={() => selectSkill(skill)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectSkill(skill); }}
-              className={`group flex w-full cursor-pointer items-center justify-between border-b px-3 py-2 text-left text-sm transition-colors ${
+              className={`group flex w-full overflow-hidden cursor-pointer items-center justify-between border-b px-3 py-2 text-left text-sm transition-colors ${
                 selectedId === skill.id
                   ? 'bg-accent text-accent-foreground'
                   : 'hover:bg-accent/50'
               }`}
             >
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex items-center gap-1.5 overflow-hidden">
                   <div className="truncate text-xs font-medium">{skill.name}</div>
                   {skill.isSymbolicLink && (
@@ -185,7 +189,7 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
                   )}
                 </div>
                 {skill.description && (
-                  <div className="truncate text-xs text-muted-foreground">
+                  <div className="line-clamp-1 text-xs text-muted-foreground">
                     {skill.description}
                   </div>
                 )}
@@ -275,13 +279,26 @@ export function SkillsEditor({ configDir, agentName }: SkillsEditorProps) {
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
             <Zap className="h-10 w-10 opacity-30" />
             <p className="text-sm">Select a skill to edit or create a new one</p>
-            <Button variant="outline" size="sm" onClick={startNew}>
+            <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4" />
-              New Skill
+              Add Skill
             </Button>
           </div>
         )}
       </div>
+
+      {/* Add Skill Dialog */}
+      <AddSkillDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        configDir={configDir}
+        agentName={agentName}
+        isShared={agentType === 'shared'}
+        installedSkillIds={skills.map((s) => s.id)}
+        linkSharedSkill={linkSharedSkill ?? (async () => {})}
+        installSkillFromZip={installSkillFromZip ?? (async () => {})}
+        onCreateNew={startNew}
+      />
     </div>
   );
 }

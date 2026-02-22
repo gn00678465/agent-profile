@@ -50,6 +50,8 @@ declare global {
         getSkills: (configDir: string) => Promise<IpcResponse<Skill[]>>;
         saveSkill: (configDir: string, skill: Skill) => Promise<IpcResponse<void>>;
         deleteSkill: (configDir: string, skillId: string) => Promise<IpcResponse<void>>;
+        linkSharedSkill: (agentConfigDir: string, sharedSkillPath: string, skillId: string) => Promise<IpcResponse<void>>;
+        installSkillFromZip: (agentConfigDir: string, zipFilePath: string) => Promise<IpcResponse<void>>;
         getMarkdown: (filePath: string) => Promise<IpcResponse<ConfigFile<string>>>;
         saveMarkdown: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         getSessions: (configDir: string, agentType: string) => Promise<IpcResponse<SessionEntry[]>>;

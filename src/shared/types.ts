@@ -266,6 +266,8 @@ export const IPC_CHANNELS = {
   CONFIG_GET_SKILLS: 'config:get-skills',
   CONFIG_SAVE_SKILL: 'config:save-skill',
   CONFIG_DELETE_SKILL: 'config:delete-skill',
+  SKILL_LINK_SHARED: 'skill:link-shared',
+  SKILL_INSTALL_ZIP: 'skill:install-zip',
 
   // Markdown files (CLAUDE.md / GEMINI.md)
   CONFIG_GET_MARKDOWN: 'config:get-markdown',

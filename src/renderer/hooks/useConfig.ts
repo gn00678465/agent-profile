@@ -154,7 +154,37 @@ export function useSkills(configDir: string | null) {
     [configDir, load]
   );
 
-  return { skills, loading, error, saveSkill, deleteSkill, refresh: load };
+  const linkSharedSkill = useCallback(
+    async (sharedSkillPath: string, skillId: string) => {
+      if (!configDir) return;
+      try {
+        await callElectron(() =>
+          electronAPI().config.linkSharedSkill(configDir, sharedSkillPath, skillId)
+        );
+        await load();
+      } catch (err) {
+        throw new Error(err instanceof Error ? err.message : 'Failed to link shared skill');
+      }
+    },
+    [configDir, load]
+  );
+
+  const installSkillFromZip = useCallback(
+    async (zipFilePath: string) => {
+      if (!configDir) return;
+      try {
+        await callElectron(() =>
+          electronAPI().config.installSkillFromZip(configDir, zipFilePath)
+        );
+        await load();
+      } catch (err) {
+        throw new Error(err instanceof Error ? err.message : 'Failed to install skill from ZIP');
+      }
+    },
+    [configDir, load]
+  );
+
+  return { skills, loading, error, saveSkill, deleteSkill, linkSharedSkill, installSkillFromZip, refresh: load };
 }
 
 // Hook for markdown files

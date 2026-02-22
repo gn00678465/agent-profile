@@ -93,6 +93,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<void>(IPC_CHANNELS.CONFIG_SAVE_SKILL, configDir, skill),
     deleteSkill: (configDir: string, skillId: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SKILL, configDir, skillId),
+    linkSharedSkill: (agentConfigDir: string, sharedSkillPath: string, skillId: string) =>
+      invoke<void>(IPC_CHANNELS.SKILL_LINK_SHARED, agentConfigDir, sharedSkillPath, skillId),
+    installSkillFromZip: (agentConfigDir: string, zipFilePath: string) =>
+      invoke<void>(IPC_CHANNELS.SKILL_INSTALL_ZIP, agentConfigDir, zipFilePath),
 
     // Markdown
     getMarkdown: (filePath: string) =>

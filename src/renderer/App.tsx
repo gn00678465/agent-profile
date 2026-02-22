@@ -120,7 +120,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     if (type === 'claude-code') {
       if (tabId === 'settings')  return <ClaudeSettingsView configDir={configDir} />;
       if (tabId === 'plugins')   return <ClaudePluginsView configDir={configDir} accentColor={color.primary} />;
-      if (tabId === 'skills')    return <SkillsEditor configDir={configDir} agentName={name} />;
+      if (tabId === 'skills')    return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp')       return <McpEditor configDir={configDir} />;
       if (tabId === 'claude-md') return (
         <MarkdownEditor filePath={`${configDir}/CLAUDE.md`} title="CLAUDE.md" description="Global instructions for Claude Code" />
@@ -130,7 +130,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'settings')   return <GeminiSettingsView configDir={configDir} />;
       if (tabId === 'sessions')   return <SessionsView configDir={configDir} agentType="gemini" agentColor={color.primary} />;
       if (tabId === 'extensions') return <GeminiExtensionsView configDir={configDir} accentColor={color.primary} />;
-      if (tabId === 'skills')     return <SkillsEditor configDir={configDir} agentName={name} />;
+      if (tabId === 'skills')     return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp')        return <GeminiMcpView onNavigate={() => onTabChange('extensions')} />;
       if (tabId === 'gemini-md')  return (
         <MarkdownEditor filePath={`${configDir}/GEMINI.md`} title="GEMINI.md" description="Global instructions for Gemini CLI" />
@@ -139,11 +139,11 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     if (type === 'copilot') {
       if (tabId === 'settings') return <CopilotSettingsView configDir={configDir} />;
       if (tabId === 'sessions') return <SessionsView configDir={configDir} agentType="copilot" agentColor={color.primary} />;
-      if (tabId === 'skills')   return <SkillsEditor configDir={configDir} agentName={name} />;
+      if (tabId === 'skills')   return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp')      return <McpEditor configDir={configDir} />;
     }
     if (type === 'shared') {
-      if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName="Shared" />;
+      if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName="Shared" agentType="shared" />;
     }
     return <div className="flex h-full items-center justify-center text-muted-foreground text-sm">View not available</div>;
   }

@@ -1,5 +1,7 @@
 import { IpcMain } from 'electron';
 import fs from 'fs/promises';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import path from 'path';
 import os from 'os';
 import { IPC_CHANNELS } from '../../shared/types';
@@ -19,6 +21,8 @@ import type {
   ConfigFile,
   SessionEntry,
 } from '../../shared/types';
+
+const execFileAsync = promisify(execFile);
 
 function success<T>(data: T): IpcResponse<T> {
   return { success: true, data };
@@ -708,6 +712,73 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         // 3. Remove install folder
         await fs.rm(installPath, { recursive: true, force: true });
 
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Skill: link shared skill via symbolic link ──────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_LINK_SHARED,
+    async (_event, agentConfigDir: string, sharedSkillPath: string, skillId: string) => {
+      try {
+        const skillsDir = path.join(agentConfigDir, 'skills');
+        await fs.mkdir(skillsDir, { recursive: true });
+        const linkPath = path.join(skillsDir, skillId);
+
+        // Check for existing entry
+        try {
+          const lstat = await fs.lstat(linkPath);
+          if (lstat.isSymbolicLink()) {
+            const existing = await fs.readlink(linkPath);
+            if (path.resolve(existing) === path.resolve(sharedSkillPath)) {
+              // Already correctly linked
+              return success(undefined);
+            }
+            // Different symlink — remove and re-create
+            await fs.unlink(linkPath);
+          } else {
+            return failure(new Error(`A real skill named "${skillId}" already exists. Remove it first.`));
+          }
+        } catch (e) {
+          const err = e as NodeJS.ErrnoException;
+          if (err.code !== 'ENOENT') throw err;
+          // Expected: path doesn't exist yet
+        }
+
+        // On Windows use 'junction' for directory symlinks; on others use 'dir'
+        const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
+        await fs.symlink(sharedSkillPath, linkPath, symlinkType);
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Skill: install from ZIP archive ───────────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_INSTALL_ZIP,
+    async (_event, agentConfigDir: string, zipFilePath: string) => {
+      try {
+        const skillsDir = path.join(agentConfigDir, 'skills');
+        await fs.mkdir(skillsDir, { recursive: true });
+
+        if (process.platform === 'win32') {
+          // Use PowerShell Expand-Archive on Windows
+          const literalPath = zipFilePath.replace(/'/g, "''");
+          const destPath = skillsDir.replace(/'/g, "''");
+          const ps1 = `$ErrorActionPreference = 'Stop'; Expand-Archive -Force -LiteralPath '${literalPath}' -DestinationPath '${destPath}'`;
+          await execFileAsync('powershell.exe', [
+            '-NoProfile', '-NonInteractive', '-Command', ps1,
+          ]);
+        } else {
+          await execFileAsync('unzip', ['-o', zipFilePath, '-d', skillsDir]);
+        }
         return success(undefined);
       } catch (err) {
         return failure(err);
