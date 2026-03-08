@@ -55,15 +55,16 @@ function registerHandlers() {
 
   // App-level handlers
   ipcMain.handle(IPC_CHANNELS.APP_GET_USER_DATA_PATH, () => {
-    return app.getPath('userData');
+    return { success: true, data: app.getPath('userData') };
   });
 
   ipcMain.handle(IPC_CHANNELS.APP_GET_HOME_PATH, () => {
-    return app.getPath('home');
+    return { success: true, data: app.getPath('home') };
   });
 
   ipcMain.handle(IPC_CHANNELS.APP_OPEN_EXTERNAL, async (_event, url: string) => {
     await shell.openExternal(url);
+    return { success: true };
   });
 }
 
