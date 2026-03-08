@@ -163,15 +163,6 @@ function getKnownAgents(home: string): AgentProfile[] {
     type: 'claude-code',
   });
 
-  // Gemini CLI
-  agents.push({
-    id: 'gemini',
-    name: 'Gemini CLI',
-    configDir: path.join(home, '.gemini'),
-    description: 'Google Gemini CLI agent',
-    type: 'gemini',
-  });
-
   // GitHub Copilot CLI
   agents.push({
     id: 'copilot',
@@ -179,6 +170,15 @@ function getKnownAgents(home: string): AgentProfile[] {
     configDir: path.join(home, '.copilot'),
     description: 'GitHub Copilot CLI agent',
     type: 'copilot',
+  });
+
+  // Gemini CLI
+  agents.push({
+    id: 'gemini',
+    name: 'Gemini CLI',
+    configDir: path.join(home, '.gemini'),
+    description: 'Google Gemini CLI agent',
+    type: 'gemini',
   });
 
   // Shared agents directory
@@ -195,6 +195,20 @@ function getKnownAgents(home: string): AgentProfile[] {
 
 export function registerConfigHandlers(ipcMain: IpcMain) {
   const home = os.homedir();
+
+  const KNOWN_CONFIG_DIRS = [
+    path.join(home, '.claude'),
+    path.join(home, '.gemini'),
+    path.join(home, '.copilot'),
+    path.join(home, '.agents'),
+  ];
+
+  function assertKnownConfigDir(configDir: string): void {
+    const resolved = path.resolve(configDir);
+    if (!KNOWN_CONFIG_DIRS.some((d) => path.resolve(d) === resolved)) {
+      throw new Error('Access denied: unknown config directory');
+    }
+  }
 
   // ── Agents list ──────────────────────────────────────────────────────────
 
@@ -980,6 +994,75 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
   );
 
   // ── Rules (Claude Code ~/.claude/rules/) ──────────────────────────────────
+
+  /**
+   * Parses a renderer-supplied rule path like `folder/rule.md` or `rule.md`.
+   * Validates that it is at most one level deep and contains no traversal.
+   * Returns { folder, fileName } where folder is null for top-level files.
+   */
+  function parseRulePath(rulePath: string): { folder: string | null; fileName: string } {
+    if (!rulePath || rulePath.trim() === '') {
+      throw new Error('Invalid rule path: empty');
+    }
+    const parts = rulePath.split('/');
+    if (parts.length > 2) {
+      throw new Error('Invalid rule path: only one folder level is supported');
+    }
+    for (const part of parts) {
+      if (!part || part === '..' || part.includes('..') || /[\\]/.test(part)) {
+        throw new Error(`Invalid rule path component: "${part}"`);
+      }
+    }
+    if (parts.length === 2) {
+      return { folder: parts[0], fileName: parts[1] };
+    }
+    return { folder: null, fileName: parts[0] };
+  }
+
+  /**
+   * Creates an empty rule file within configDir/rules/.
+   * Shared logic used by CONFIG_CREATE_RULE.
+   * Returns the absolute path of the created file.
+   */
+  async function createRuleFile(configDir: string, rulePath: string): Promise<string> {
+    assertKnownConfigDir(configDir);
+    const { folder, fileName } = parseRulePath(rulePath);
+    const rulesDir = path.join(configDir, 'rules');
+    const targetDir = folder ? path.join(rulesDir, folder) : rulesDir;
+    const filePath = path.join(targetDir, fileName);
+    assertSafePath(filePath, os.homedir());
+    await fs.mkdir(targetDir, { recursive: true });
+    await fs.writeFile(filePath, '', 'utf-8');
+    return filePath;
+  }
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_CREATE_RULE,
+    async (_event, configDir: string, rulePath: string) => {
+      try {
+        const filePath = await createRuleFile(configDir, rulePath);
+        return success(filePath);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_DELETE_RULE_FOLDER,
+    async (_event, configDir: string, folderName: string) => {
+      try {
+        assertKnownConfigDir(configDir);
+        assertSafeName(folderName);
+        const folderPath = path.join(configDir, 'rules', folderName);
+        assertSafePath(folderPath, os.homedir());
+        await fs.rm(folderPath, { recursive: true, force: true });
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_GET_RULES,

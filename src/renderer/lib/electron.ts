@@ -61,8 +61,10 @@ declare global {
         getClaudeSessions: (configDir: string) => Promise<IpcResponse<SessionEntry[]>>;
         getSessionMessages: (filePath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
         getRules: (configDir: string) => Promise<IpcResponse<RuleFile[]>>;
+        createRule: (configDir: string, rulePath: string) => Promise<IpcResponse<string>>;
         saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         deleteRule: (filePath: string) => Promise<IpcResponse<void>>;
+        deleteRuleFolder: (configDir: string, folderName: string) => Promise<IpcResponse<void>>;
         setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) => Promise<IpcResponse<void>>;
         deletePlugin: (configDir: string, pluginId: string, installPath: string) => Promise<IpcResponse<void>>;
       };

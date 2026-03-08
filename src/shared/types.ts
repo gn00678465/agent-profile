@@ -294,8 +294,10 @@ export const IPC_CHANNELS = {
 
   // Rules
   CONFIG_GET_RULES: 'config:get-rules',
+  CONFIG_CREATE_RULE: 'config:create-rule',
   CONFIG_SAVE_RULE: 'config:save-rule',
   CONFIG_DELETE_RULE: 'config:delete-rule',
+  CONFIG_DELETE_RULE_FOLDER: 'config:delete-rule-folder',
 
   // Plugin enable/disable
   CONFIG_SET_PLUGIN_ENABLED: 'config:set-plugin-enabled',

@@ -117,10 +117,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<ClaudeSessionMessage[]>(IPC_CHANNELS.CONFIG_GET_SESSION_MESSAGES, filePath),
     getRules: (configDir: string) =>
       invoke<RuleFile[]>(IPC_CHANNELS.CONFIG_GET_RULES, configDir),
+    createRule: (configDir: string, rulePath: string) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_RULE, configDir, rulePath),
     saveRule: (filePath: string, content: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_SAVE_RULE, filePath, content),
     deleteRule: (filePath: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE, filePath),
+    deleteRuleFolder: (configDir: string, folderName: string) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE_FOLDER, configDir, folderName),
 
     // Plugin enable/disable
     setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) =>
