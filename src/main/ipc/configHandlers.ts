@@ -26,6 +26,31 @@ import type {
 
 const execFileAsync = promisify(execFile);
 
+/**
+ * Throws if `inputPath` does not resolve to a location within at least one
+ * of `allowedRoots`. Prevents path-traversal attacks from renderer-supplied paths.
+ */
+function assertSafePath(inputPath: string, ...allowedRoots: string[]): void {
+  const resolved = path.resolve(inputPath);
+  const safe = allowedRoots.some((root) => {
+    const rootResolved = path.resolve(root);
+    return resolved === rootResolved || resolved.startsWith(rootResolved + path.sep);
+  });
+  if (!safe) {
+    throw new Error('Access denied: path is outside allowed directories');
+  }
+}
+
+/**
+ * Throws if `name` contains path separators or traversal sequences.
+ * Use for renderer-supplied name/id values used as path components.
+ */
+function assertSafeName(name: string): void {
+  if (!name || /[/\\]/.test(name) || name === '..' || name.includes('..')) {
+    throw new Error(`Invalid name: "${name}"`);
+  }
+}
+
 function success<T>(data: T): IpcResponse<T> {
   return { success: true, data };
 }
@@ -338,14 +363,17 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_DELETE_GEMINI_EXTENSION,
     async (_event, configDir: string, extensionName: string) => {
       try {
+        assertSafeName(extensionName);
         const extensionsDir = path.join(configDir, 'extensions');
 
         // 1. Remove from extension-enablement.json
         const enablementPath = path.join(extensionsDir, 'extension-enablement.json');
         const enablementResult = await readJsonFile<GeminiExtensionEnablement>(enablementPath);
         if (enablementResult.data && extensionName in enablementResult.data) {
-          delete enablementResult.data[extensionName];
-          await writeJsonFile(enablementPath, enablementResult.data);
+          const updated = Object.fromEntries(
+            Object.entries(enablementResult.data).filter(([k]) => k !== extensionName)
+          );
+          await writeJsonFile(enablementPath, updated);
         }
 
         // 2. Remove the extension folder
@@ -508,6 +536,7 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_SAVE_SKILL,
     async (_event, configDir: string, skill: Skill) => {
       try {
+        assertSafeName(skill.id);
         const skillDir = path.join(configDir, 'skills', skill.id);
         const skillPath = path.join(skillDir, 'SKILL.md');
         await fs.mkdir(skillDir, { recursive: true });
@@ -523,6 +552,7 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_DELETE_SKILL,
     async (_event, configDir: string, skillId: string) => {
       try {
+        assertSafeName(skillId);
         const skillDir = path.join(configDir, 'skills', skillId);
         await fs.rm(skillDir, { recursive: true, force: true });
         return success(undefined);
@@ -666,6 +696,7 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_DELETE_SESSION,
     async (_event, sessionPath: string) => {
       try {
+        assertSafePath(sessionPath, os.homedir());
         await fs.rm(sessionPath, { recursive: true, force: true });
         return success(undefined);
       } catch (err) {
@@ -708,10 +739,19 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
             let fileStat;
             try { fileStat = await fs.stat(filePath); } catch { continue; }
 
-            // Read first 50 lines for metadata
+            // Read only first 8 KB — avoids loading large JSONL files into memory
             try {
-              const content = await fs.readFile(filePath, 'utf-8');
-              const lines = content.split('\n').slice(0, 50);
+              const METADATA_BYTES = 8 * 1024;
+              const fd = await fs.open(filePath, 'r');
+              let partial: string;
+              try {
+                const buf = Buffer.alloc(METADATA_BYTES);
+                const { bytesRead } = await fd.read(buf, 0, METADATA_BYTES, 0);
+                partial = buf.subarray(0, bytesRead).toString('utf-8');
+              } finally {
+                await fd.close();
+              }
+              const lines = partial.split('\n').slice(0, 50);
               for (const line of lines) {
                 if (!line.trim()) continue;
                 let entry: Record<string, unknown>;
@@ -806,7 +846,12 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
           messages.push({ role, text });
         }
 
-        return success(messages);
+        // Return at most the last 500 messages to avoid overwhelming the renderer
+        const MAX_MESSAGES = 500;
+        const result = messages.length > MAX_MESSAGES
+          ? messages.slice(messages.length - MAX_MESSAGES)
+          : messages;
+        return success(result);
       } catch (err) {
         return failure(err);
       }
@@ -819,6 +864,8 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
     async (_event, configDir: string, pluginId: string, installPath: string) => {
       try {
+        assertSafeName(pluginId);
+        assertSafePath(installPath, os.homedir());
         // 1. Remove from installed_plugins.json
         const pluginsDir = path.join(configDir, 'plugins');
         const installedPath = path.join(pluginsDir, 'installed_plugins.json');
@@ -866,6 +913,8 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.SKILL_LINK_SHARED,
     async (_event, agentConfigDir: string, sharedSkillPath: string, skillId: string) => {
       try {
+        assertSafeName(skillId);
+        assertSafePath(sharedSkillPath, os.homedir());
         const skillsDir = path.join(agentConfigDir, 'skills');
         await fs.mkdir(skillsDir, { recursive: true });
         const linkPath = path.join(skillsDir, skillId);
@@ -910,13 +959,16 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         await fs.mkdir(skillsDir, { recursive: true });
 
         if (process.platform === 'win32') {
-          // Use PowerShell Expand-Archive on Windows
-          const literalPath = zipFilePath.replace(/'/g, "''");
-          const destPath = skillsDir.replace(/'/g, "''");
-          const ps1 = `$ErrorActionPreference = 'Stop'; Expand-Archive -Force -LiteralPath '${literalPath}' -DestinationPath '${destPath}'`;
-          await execFileAsync('powershell.exe', [
-            '-NoProfile', '-NonInteractive', '-Command', ps1,
-          ]);
+          // Paths are passed via environment variables — never interpolated into the
+          // command string — to prevent command injection from renderer-supplied paths.
+          const ps1 =
+            "$ErrorActionPreference = 'Stop'; " +
+            'Expand-Archive -Force -LiteralPath $env:ZIP_SRC -DestinationPath $env:ZIP_DST';
+          await execFileAsync(
+            'powershell.exe',
+            ['-NoProfile', '-NonInteractive', '-Command', ps1],
+            { env: { ...process.env, ZIP_SRC: zipFilePath, ZIP_DST: skillsDir } }
+          );
         } else {
           await execFileAsync('unzip', ['-o', zipFilePath, '-d', skillsDir]);
         }
@@ -988,6 +1040,7 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_SAVE_RULE,
     async (_event, filePath: string, content: string) => {
       try {
+        assertSafePath(filePath, os.homedir());
         await fs.mkdir(path.dirname(filePath), { recursive: true });
         await fs.writeFile(filePath, content, 'utf-8');
         return success(undefined);
@@ -1001,6 +1054,7 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     IPC_CHANNELS.CONFIG_DELETE_RULE,
     async (_event, filePath: string) => {
       try {
+        assertSafePath(filePath, os.homedir());
         await fs.unlink(filePath);
         return success(undefined);
       } catch (err) {
