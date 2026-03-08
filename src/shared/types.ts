@@ -235,6 +235,12 @@ export interface RuleFile {
   path: string;     // absolute path
 }
 
+export interface SubagentFile {
+  id: string;    // filename without .agent.md, e.g. "coder"
+  name: string;  // same as id
+  path: string;  // absolute path to the .agent.md file
+}
+
 // ─── IPC Channels ────────────────────────────────────────────────────────────
 
 export const IPC_CHANNELS = {
@@ -298,6 +304,15 @@ export const IPC_CHANNELS = {
   CONFIG_SAVE_RULE: 'config:save-rule',
   CONFIG_DELETE_RULE: 'config:delete-rule',
   CONFIG_DELETE_RULE_FOLDER: 'config:delete-rule-folder',
+
+  // Subagents (Copilot ~/.copilot/subagents/*.agent.md)
+  CONFIG_GET_SUBAGENTS: 'config:get-subagents',
+  CONFIG_CREATE_SUBAGENT: 'config:create-subagent',
+  CONFIG_DELETE_SUBAGENT: 'config:delete-subagent',
+  CONFIG_RENAME_SUBAGENT: 'config:rename-subagent',
+
+  // Rules rename
+  CONFIG_RENAME_RULE: 'config:rename-rule',
 
   // Plugin enable/disable
   CONFIG_SET_PLUGIN_ENABLED: 'config:set-plugin-enabled',

@@ -14,6 +14,7 @@ import type {
   SessionEntry,
   ClaudeSessionMessage,
   RuleFile,
+  SubagentFile,
 } from '../shared/types';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResponse<T>> {
@@ -125,6 +126,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE, filePath),
     deleteRuleFolder: (configDir: string, folderName: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE_FOLDER, configDir, folderName),
+
+    // Subagents (Copilot)
+    getSubagents: (configDir: string) =>
+      invoke<SubagentFile[]>(IPC_CHANNELS.CONFIG_GET_SUBAGENTS, configDir),
+    createSubagent: (configDir: string, name: string) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_SUBAGENT, configDir, name),
+    deleteSubagent: (configDir: string, name: string) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SUBAGENT, configDir, name),
+    renameSubagent: (configDir: string, oldName: string, newName: string) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_SUBAGENT, configDir, oldName, newName),
+    renameRule: (filePath: string, newName: string) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_RULE, filePath, newName),
 
     // Plugin enable/disable
     setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) =>

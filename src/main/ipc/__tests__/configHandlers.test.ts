@@ -22,6 +22,7 @@ vi.mock('fs/promises', () => ({
     lstat: vi.fn(),
     unlink: vi.fn(),
     rm: vi.fn(),
+    rename: vi.fn(),
     access: vi.fn(),
   },
 }));
@@ -1031,6 +1032,231 @@ Skill instructions here.`;
       );
       expect(result.success).toBe(false);
       expect(result.error).toContain('EPERM');
+    });
+  });
+
+  // ── CONFIG_GET_SUBAGENTS ───────────────────────────────────────────────────
+
+  describe('config:get-subagents', () => {
+    const COPILOT_DIR = path.join(HOME, '.copilot');
+    const SUBAGENTS_DIR = path.join(COPILOT_DIR, 'subagents');
+
+    it('returns empty array when subagents directory does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readdir).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-subagents', COPILOT_DIR);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('returns subagent files with .agent.md extension', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['coder.agent.md', 'reviewer.agent.md'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isFile: () => true, isDirectory: () => false } as any)
+        .mockResolvedValueOnce({ isFile: () => true, isDirectory: () => false } as any);
+
+      const result = await ipc.invoke('config:get-subagents', COPILOT_DIR);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].id).toBe('coder');
+      expect(result.data[0].name).toBe('coder');
+      expect(result.data[0].path).toBe(path.join(SUBAGENTS_DIR, 'coder.agent.md'));
+      expect(result.data[1].id).toBe('reviewer');
+    });
+
+    it('skips files that do not end in .agent.md', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['coder.agent.md', 'readme.md', 'notes.txt'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isFile: () => true, isDirectory: () => false } as any);
+
+      const result = await ipc.invoke('config:get-subagents', COPILOT_DIR);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('coder');
+    });
+
+    it('skips directories even if named *.agent.md', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['weird.agent.md'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isFile: () => false, isDirectory: () => true } as any);
+
+      const result = await ipc.invoke('config:get-subagents', COPILOT_DIR);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+  });
+
+  // ── CONFIG_CREATE_SUBAGENT ─────────────────────────────────────────────────
+
+  describe('config:create-subagent', () => {
+    const COPILOT_DIR = path.join(HOME, '.copilot');
+    const SUBAGENTS_DIR = path.join(COPILOT_DIR, 'subagents');
+
+    it('creates subagents dir and agent file', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke('config:create-subagent', COPILOT_DIR, 'coder');
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith(SUBAGENTS_DIR, { recursive: true });
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(SUBAGENTS_DIR, 'coder.agent.md'),
+        '',
+        'utf-8'
+      );
+      expect(result.data).toBe(path.join(SUBAGENTS_DIR, 'coder.agent.md'));
+    });
+
+    it('rejects empty name', async () => {
+      const result = await ipc.invoke('config:create-subagent', COPILOT_DIR, '');
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects name containing path separators', async () => {
+      const result = await ipc.invoke('config:create-subagent', COPILOT_DIR, 'foo/bar');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('rejects name containing ..', async () => {
+      const result = await ipc.invoke('config:create-subagent', COPILOT_DIR, '../secrets');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('returns failure when fs.writeFile throws', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockRejectedValue(new Error('ENOSPC'));
+
+      const result = await ipc.invoke('config:create-subagent', COPILOT_DIR, 'coder');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ENOSPC');
+    });
+  });
+
+  // ── CONFIG_DELETE_SUBAGENT ─────────────────────────────────────────────────
+
+  describe('config:delete-subagent', () => {
+    const COPILOT_DIR = path.join(HOME, '.copilot');
+    const SUBAGENTS_DIR = path.join(COPILOT_DIR, 'subagents');
+
+    it('deletes the agent file', async () => {
+      vi.mocked(fs.unlink).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke('config:delete-subagent', COPILOT_DIR, 'coder');
+      expect(result.success).toBe(true);
+      expect(fs.unlink).toHaveBeenCalledWith(path.join(SUBAGENTS_DIR, 'coder.agent.md'));
+    });
+
+    it('rejects empty name', async () => {
+      const result = await ipc.invoke('config:delete-subagent', COPILOT_DIR, '');
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects name with path traversal', async () => {
+      const result = await ipc.invoke('config:delete-subagent', COPILOT_DIR, '../evil');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('returns failure when fs.unlink throws', async () => {
+      vi.mocked(fs.unlink).mockRejectedValue(new Error('ENOENT'));
+
+      const result = await ipc.invoke('config:delete-subagent', COPILOT_DIR, 'coder');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ENOENT');
+    });
+  });
+
+  // ── CONFIG_RENAME_SUBAGENT ─────────────────────────────────────────────────
+
+  describe('config:rename-subagent', () => {
+    const COPILOT_DIR = path.join(HOME, '.copilot');
+    const SUBAGENTS_DIR = path.join(COPILOT_DIR, 'subagents');
+
+    it('renames the .agent.md file to the new name', async () => {
+      vi.mocked(fs.rename).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke('config:rename-subagent', COPILOT_DIR, 'coder', 'senior-coder');
+      expect(result.success).toBe(true);
+      expect(fs.rename).toHaveBeenCalledWith(
+        path.join(SUBAGENTS_DIR, 'coder.agent.md'),
+        path.join(SUBAGENTS_DIR, 'senior-coder.agent.md')
+      );
+      expect(result.data).toBe(path.join(SUBAGENTS_DIR, 'senior-coder.agent.md'));
+    });
+
+    it('rejects empty old name', async () => {
+      const result = await ipc.invoke('config:rename-subagent', COPILOT_DIR, '', 'new-name');
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects empty new name', async () => {
+      const result = await ipc.invoke('config:rename-subagent', COPILOT_DIR, 'coder', '');
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects new name with path traversal', async () => {
+      const result = await ipc.invoke('config:rename-subagent', COPILOT_DIR, 'coder', '../evil');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('returns failure when fs.rename throws', async () => {
+      vi.mocked(fs.rename).mockRejectedValue(new Error('EEXIST'));
+
+      const result = await ipc.invoke('config:rename-subagent', COPILOT_DIR, 'coder', 'reviewer');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('EEXIST');
+    });
+  });
+
+  // ── CONFIG_RENAME_RULE ─────────────────────────────────────────────────────
+
+  describe('config:rename-rule', () => {
+    const CLAUDE_DIR = path.join(HOME, '.claude');
+
+    it('renames the rule file to the new filename', async () => {
+      const filePath = path.join(CLAUDE_DIR, 'rules', 'common', 'agents.md');
+      vi.mocked(fs.rename).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke('config:rename-rule', filePath, 'agent-rules.md');
+      expect(result.success).toBe(true);
+      expect(fs.rename).toHaveBeenCalledWith(
+        filePath,
+        path.join(CLAUDE_DIR, 'rules', 'common', 'agent-rules.md')
+      );
+      expect(result.data).toBe(path.join(CLAUDE_DIR, 'rules', 'common', 'agent-rules.md'));
+    });
+
+    it('rejects new name without .md extension', async () => {
+      const filePath = path.join(CLAUDE_DIR, 'rules', 'agents.md');
+      const result = await ipc.invoke('config:rename-rule', filePath, 'agents');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/\.md/);
+    });
+
+    it('rejects new name with path separators', async () => {
+      const filePath = path.join(CLAUDE_DIR, 'rules', 'agents.md');
+      const result = await ipc.invoke('config:rename-rule', filePath, 'other/agents.md');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('rejects empty new name', async () => {
+      const filePath = path.join(CLAUDE_DIR, 'rules', 'agents.md');
+      const result = await ipc.invoke('config:rename-rule', filePath, '');
+      expect(result.success).toBe(false);
+    });
+
+    it('returns failure when fs.rename throws', async () => {
+      const filePath = path.join(CLAUDE_DIR, 'rules', 'agents.md');
+      vi.mocked(fs.rename).mockRejectedValue(new Error('EACCES'));
+
+      const result = await ipc.invoke('config:rename-rule', filePath, 'new-agents.md');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('EACCES');
     });
   });
 });

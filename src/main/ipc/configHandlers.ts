@@ -22,6 +22,7 @@ import type {
   SessionEntry,
   ClaudeSessionMessage,
   RuleFile,
+  SubagentFile,
 } from '../../shared/types';
 
 const execFileAsync = promisify(execFile);
@@ -1140,6 +1141,111 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         assertSafePath(filePath, os.homedir());
         await fs.unlink(filePath);
         return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Subagents (Copilot ~/.copilot/subagents/*.agent.md) ──────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_SUBAGENTS,
+    async (_event, configDir: string) => {
+      try {
+        const subagentsDir = path.join(configDir, 'subagents');
+        let entries: string[];
+        try {
+          entries = await fs.readdir(subagentsDir);
+        } catch {
+          return success<SubagentFile[]>([]);
+        }
+
+        const subagents: SubagentFile[] = [];
+        for (const entry of entries) {
+          if (!entry.endsWith('.agent.md')) continue;
+          const filePath = path.join(subagentsDir, entry);
+          try {
+            const stat = await fs.stat(filePath);
+            if (!stat.isFile()) continue;
+          } catch { continue; }
+          const id = entry.slice(0, -'.agent.md'.length);
+          subagents.push({ id, name: id, path: filePath });
+        }
+
+        return success(subagents);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_CREATE_SUBAGENT,
+    async (_event, configDir: string, name: string) => {
+      try {
+        assertSafeName(name);
+        const subagentsDir = path.join(configDir, 'subagents');
+        const filePath = path.join(subagentsDir, `${name}.agent.md`);
+        assertSafePath(filePath, os.homedir());
+        await fs.mkdir(subagentsDir, { recursive: true });
+        await fs.writeFile(filePath, '', 'utf-8');
+        return success(filePath);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_DELETE_SUBAGENT,
+    async (_event, configDir: string, name: string) => {
+      try {
+        assertSafeName(name);
+        const filePath = path.join(configDir, 'subagents', `${name}.agent.md`);
+        assertSafePath(filePath, os.homedir());
+        await fs.unlink(filePath);
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_RENAME_SUBAGENT,
+    async (_event, configDir: string, oldName: string, newName: string) => {
+      try {
+        assertSafeName(oldName);
+        assertSafeName(newName);
+        const subagentsDir = path.join(configDir, 'subagents');
+        const oldPath = path.join(subagentsDir, `${oldName}.agent.md`);
+        const newPath = path.join(subagentsDir, `${newName}.agent.md`);
+        assertSafePath(oldPath, os.homedir());
+        assertSafePath(newPath, os.homedir());
+        await fs.rename(oldPath, newPath);
+        return success(newPath);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Rules rename ──────────────────────────────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_RENAME_RULE,
+    async (_event, filePath: string, newName: string) => {
+      try {
+        assertSafePath(filePath, os.homedir());
+        assertSafeName(newName);
+        if (!newName.endsWith('.md')) {
+          throw new Error('Rule name must end with .md');
+        }
+        const newPath = path.join(path.dirname(filePath), newName);
+        assertSafePath(newPath, os.homedir());
+        await fs.rename(filePath, newPath);
+        return success(newPath);
       } catch (err) {
         return failure(err);
       }

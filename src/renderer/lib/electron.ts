@@ -13,6 +13,7 @@ import type {
   SessionEntry,
   ClaudeSessionMessage,
   RuleFile,
+  SubagentFile,
 } from '@shared/types';
 
 declare global {
@@ -65,6 +66,11 @@ declare global {
         saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         deleteRule: (filePath: string) => Promise<IpcResponse<void>>;
         deleteRuleFolder: (configDir: string, folderName: string) => Promise<IpcResponse<void>>;
+        getSubagents: (configDir: string) => Promise<IpcResponse<SubagentFile[]>>;
+        createSubagent: (configDir: string, name: string) => Promise<IpcResponse<string>>;
+        deleteSubagent: (configDir: string, name: string) => Promise<IpcResponse<void>>;
+        renameSubagent: (configDir: string, oldName: string, newName: string) => Promise<IpcResponse<string>>;
+        renameRule: (filePath: string, newName: string) => Promise<IpcResponse<string>>;
         setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) => Promise<IpcResponse<void>>;
         deletePlugin: (configDir: string, pluginId: string, installPath: string) => Promise<IpcResponse<void>>;
       };
