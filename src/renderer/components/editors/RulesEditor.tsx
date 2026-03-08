@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FolderOpen, FolderClosed, FileText, Trash2, RefreshCw, ChevronRight, Plus, X } from 'lucide-react';
+import { FolderOpen, FolderClosed, FileText, Trash2, RefreshCw, ChevronRight, Plus, X, Pencil } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,18 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
   const [loading, setLoading] = useState(true);
   const [selectedRule, setSelectedRule] = useState<RuleFile | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+
+  // Add
   const [showAddInput, setShowAddInput] = useState(false);
   const [addValue, setAddValue] = useState('');
   const [addError, setAddError] = useState('');
   const addInputRef = useRef<HTMLInputElement>(null);
+
+  // Rename
+  const [renamingRuleId, setRenamingRuleId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState('');
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   function toggleFolder(folder: string) {
     setCollapsedFolders((prev) => {
@@ -51,10 +59,15 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    if (showAddInput) {
-      addInputRef.current?.focus();
-    }
+    if (showAddInput) addInputRef.current?.focus();
   }, [showAddInput]);
+
+  useEffect(() => {
+    if (renamingRuleId) {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }
+  }, [renamingRuleId]);
 
   async function handleDelete(rule: RuleFile) {
     if (!confirm(`Delete rule "${rule.name}"?\n${rule.path}\n\nThis cannot be undone.`)) return;
@@ -86,10 +99,7 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
 
   async function handleAddRule() {
     const trimmed = addValue.trim();
-    if (!trimmed) {
-      setAddError('Enter a rule path');
-      return;
-    }
+    if (!trimmed) { setAddError('Enter a rule path'); return; }
     try {
       const filePath = await callElectron(() =>
         electronAPI().config.createRule(configDir, trimmed)
@@ -107,12 +117,33 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
     }
   }
 
-  function handleAddKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') { void handleAddRule(); }
-    if (e.key === 'Escape') {
-      setShowAddInput(false);
-      setAddValue('');
-      setAddError('');
+  function startRename(rule: RuleFile) {
+    setRenamingRuleId(rule.id);
+    setRenameValue(rule.name);
+    setRenameError('');
+  }
+
+  function cancelRename() {
+    setRenamingRuleId(null);
+    setRenameValue('');
+    setRenameError('');
+  }
+
+  async function commitRename(rule: RuleFile) {
+    const trimmed = renameValue.trim();
+    if (!trimmed || trimmed === rule.name) { cancelRename(); return; }
+    try {
+      const newPath = await callElectron(() =>
+        electronAPI().config.renameRule(rule.path, trimmed)
+      );
+      toast.success('Rule renamed');
+      cancelRename();
+      const freshRules = await callElectron(() => electronAPI().config.getRules(configDir));
+      setRules(freshRules);
+      const updated = freshRules.find((r) => r.path === newPath);
+      if (selectedRule?.id === rule.id) setSelectedRule(updated ?? null);
+    } catch (err) {
+      setRenameError(err instanceof Error ? err.message : 'Rename failed');
     }
   }
 
@@ -124,7 +155,6 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
     return acc;
   }, {} as Record<string, RuleFile[]>);
 
-  // Sort folders: '' (root) first, then alphabetical
   const folders = Object.keys(grouped).sort((a, b) => {
     if (a === '') return -1;
     if (b === '') return 1;
@@ -142,24 +172,15 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
           </span>
           <div className="flex items-center gap-1">
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
+              variant="ghost" size="icon" className="h-6 w-6"
               title="Add rule"
-              onClick={() => {
-                setShowAddInput((v) => !v);
-                setAddValue('');
-                setAddError('');
-              }}
+              onClick={() => { setShowAddInput((v) => !v); setAddValue(''); setAddError(''); }}
             >
               {showAddInput ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => { void load(); }}
-              disabled={loading}
+              variant="ghost" size="icon" className="h-6 w-6"
+              onClick={() => { void load(); }} disabled={loading}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -174,15 +195,13 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
               className="h-6 text-xs font-mono"
               placeholder="folder/rule.md or rule.md"
               value={addValue}
-              onChange={(e) => {
-                setAddValue(e.target.value);
-                setAddError('');
+              onChange={(e) => { setAddValue(e.target.value); setAddError(''); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { void handleAddRule(); }
+                if (e.key === 'Escape') { setShowAddInput(false); setAddValue(''); setAddError(''); }
               }}
-              onKeyDown={handleAddKeyDown}
             />
-            {addError && (
-              <p className="mt-1 text-[10px] text-destructive">{addError}</p>
-            )}
+            {addError && <p className="mt-1 text-[10px] text-destructive">{addError}</p>}
             <p className="mt-1 text-[10px] text-muted-foreground">Press Enter to create</p>
           </div>
         )}
@@ -196,89 +215,113 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
           </div>
         ) : (
           <ScrollArea className="flex-1">
-            {folders.map((folder) => (
-              <div key={folder}>
-                {/* Folder header (only for non-root folders) */}
-                {folder !== '' && (
-                  <div className="group flex w-full items-center gap-1.5 px-3 py-1.5">
-                    <button
-                      className="flex flex-1 min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
-                      onClick={() => toggleFolder(folder)}
-                    >
-                      <ChevronRight
-                        className="h-3 w-3 shrink-0 transition-transform"
-                        style={{ transform: collapsedFolders.has(folder) ? 'rotate(0deg)' : 'rotate(90deg)' }}
-                      />
-                      {collapsedFolders.has(folder)
-                        ? <FolderClosed className="h-3 w-3 shrink-0" />
-                        : <FolderOpen className="h-3 w-3 shrink-0" />
-                      }
-                      <span className="truncate">{folder}</span>
-                    </button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                      title={`Delete folder "${folder}"`}
-                      onClick={() => { void handleDeleteFolder(folder); }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-
-                {/* Files in this folder */}
-                {!collapsedFolders.has(folder) && grouped[folder].map((rule) => {
-                  const isSelected = selectedRule?.id === rule.id;
-                  const displayName = rule.name.replace(/\.md$/i, '');
-                  return (
-                    <div
-                      key={rule.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedRule(isSelected ? null : rule)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ')
-                          setSelectedRule(isSelected ? null : rule);
-                      }}
-                      className={`group flex cursor-pointer items-center justify-between px-3 py-1.5 text-left transition-colors ${
-                        folder !== '' ? 'pl-6' : ''
-                      } ${
-                        isSelected
-                          ? 'bg-accent/60'
-                          : 'hover:bg-accent/30'
-                      }`}
-                    >
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <FileText
-                          className="h-3.5 w-3.5 shrink-0"
-                          style={{ color: isSelected ? accentColor : undefined }}
+            <div>
+              {folders.map((folder) => (
+                <div key={folder}>
+                  {/* Folder header */}
+                  {folder !== '' && (
+                    <div className="group flex w-full items-center gap-1.5 px-3 py-1.5">
+                      <button
+                        className="flex flex-1 min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+                        onClick={() => toggleFolder(folder)}
+                      >
+                        <ChevronRight
+                          className="h-3 w-3 shrink-0 transition-transform"
+                          style={{ transform: collapsedFolders.has(folder) ? 'rotate(0deg)' : 'rotate(90deg)' }}
                         />
-                        <span
-                          className="truncate text-xs"
-                          style={isSelected ? { color: accentColor, fontWeight: 500 } : undefined}
-                        >
-                          {displayName}
-                        </span>
-                      </div>
-
-                      {/* Delete button on hover */}
+                        {collapsedFolders.has(folder)
+                          ? <FolderClosed className="h-3 w-3 shrink-0" />
+                          : <FolderOpen className="h-3 w-3 shrink-0" />
+                        }
+                        <span className="truncate">{folder}</span>
+                      </button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleDelete(rule);
-                        }}
+                        variant="ghost" size="icon"
+                        className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
+                        title={`Delete folder "${folder}"`}
+                        onClick={() => { void handleDeleteFolder(folder); }}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  )}
+
+                  {/* Files */}
+                  {!collapsedFolders.has(folder) && grouped[folder].map((rule) => {
+                    const isSelected = selectedRule?.id === rule.id;
+                    const isRenaming = renamingRuleId === rule.id;
+                    const displayName = rule.name.replace(/\.md$/i, '');
+                    return (
+                      <div
+                        key={rule.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => { if (!isRenaming) setSelectedRule(isSelected ? null : rule); }}
+                        onKeyDown={(e) => {
+                          if (!isRenaming && (e.key === 'Enter' || e.key === ' '))
+                            setSelectedRule(isSelected ? null : rule);
+                        }}
+                        className={`group flex w-full cursor-pointer items-center gap-1.5 py-1.5 text-left transition-colors ${
+                          folder !== '' ? 'pl-6 pr-3' : 'px-3'
+                        } ${isSelected ? 'bg-accent/60' : 'hover:bg-accent/30'}`}
+                      >
+                        <FileText
+                          className="h-3.5 w-3.5 shrink-0"
+                          style={{ color: isSelected ? accentColor : undefined }}
+                        />
+
+                        {isRenaming ? (
+                          <div className="flex flex-1 min-w-0 flex-col" onClick={(e) => e.stopPropagation()}>
+                            <Input
+                              ref={renameInputRef}
+                              className="h-5 px-1 text-xs font-mono border-0 border-b rounded-none focus-visible:ring-0"
+                              value={renameValue}
+                              onChange={(e) => { setRenameValue(e.target.value); setRenameError(''); }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { void commitRename(rule); }
+                                if (e.key === 'Escape') { cancelRename(); }
+                              }}
+                              onBlur={() => { void commitRename(rule); }}
+                            />
+                            {renameError && (
+                              <p className="text-[10px] text-destructive leading-tight mt-0.5">{renameError}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span
+                            className="truncate text-xs w-[120px]"
+                            style={{ ...(isSelected ? { color: accentColor, fontWeight: 500 } : {}) }}
+                          >
+                            {displayName}
+                          </span>
+                        )}
+
+                        {!isRenaming && (
+                          <>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-accent"
+                              title="Rename"
+                              onClick={(e) => { e.stopPropagation(); startRename(rule); }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
+                              title="Delete"
+                              onClick={(e) => { e.stopPropagation(); void handleDelete(rule); }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </ScrollArea>
         )}
       </div>

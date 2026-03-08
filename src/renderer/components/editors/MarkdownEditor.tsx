@@ -9,9 +9,10 @@ interface MarkdownEditorProps {
   title: string;
   description?: string;
   placeholder?: string;
+  autoCreate?: boolean;
 }
 
-export function MarkdownEditor({ filePath, title, description, placeholder }: MarkdownEditorProps) {
+export function MarkdownEditor({ filePath, title, description, placeholder, autoCreate }: MarkdownEditorProps) {
   const { config, loading, saving, error, save, refresh } = useMarkdown(filePath);
   const [draft, setDraft] = useState('');
   const [isDirty, setIsDirty] = useState(false);
@@ -20,8 +21,12 @@ export function MarkdownEditor({ filePath, title, description, placeholder }: Ma
     if (config !== null) {
       setDraft(config.data ?? '');
       setIsDirty(false);
+      // Auto-create: immediately create the file with empty content if it doesn't exist
+      if (autoCreate && !config.exists) {
+        void save('');
+      }
     }
-  }, [config]);
+  }, [config, autoCreate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSave() {
     await save(draft);

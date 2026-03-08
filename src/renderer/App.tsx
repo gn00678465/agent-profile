@@ -14,6 +14,7 @@ import { MarkdownEditor } from './components/editors/MarkdownEditor';
 import { SessionsView } from './components/editors/SessionsView';
 import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
 import { RulesEditor } from './components/editors/RulesEditor';
+import { SubagentsEditor } from './components/editors/SubagentsEditor';
 import { ScrollArea } from './components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { electronAPI, callElectron } from './lib/electron';
@@ -53,10 +54,12 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'rules',     label: 'Rules' },
   ],
   copilot: [
-    { id: 'settings', label: 'Settings' },
-    { id: 'sessions', label: 'Sessions' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'mcp', label: 'MCP Servers' },
+    { id: 'settings',              label: 'Settings' },
+    { id: 'copilot-instructions',  label: 'Instructions' },
+    { id: 'subagents',             label: 'Subagents' },
+    { id: 'sessions',              label: 'Sessions' },
+    { id: 'skills',                label: 'Skills' },
+    { id: 'mcp',                   label: 'MCP Servers' },
   ],
   gemini: [
     { id: 'settings',   label: 'Settings' },
@@ -134,6 +137,15 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     }
     if (type === 'copilot') {
       if (tabId === 'settings') return <CopilotSettingsView configDir={configDir} />;
+      if (tabId === 'copilot-instructions') return (
+        <MarkdownEditor
+          filePath={`${configDir}/copilot-instructions.md`}
+          title="copilot-instructions.md"
+          description="Custom instructions for GitHub Copilot"
+          autoCreate
+        />
+      );
+      if (tabId === 'subagents') return <SubagentsEditor configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'sessions') return <SessionsView configDir={configDir} agentType="copilot" agentColor={color.primary} />;
       if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp') return <McpEditor configDir={configDir} />;
