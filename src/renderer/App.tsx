@@ -24,15 +24,15 @@ import type { AgentProfile } from '@shared/types';
 
 const AGENT_COLORS: Record<string, { primary: string; subtle: string }> = {
   'claude-code': { primary: '#d97706', subtle: 'rgba(217,119,6,0.08)' },
-  gemini:        { primary: '#7c6ef5', subtle: 'rgba(124,110,245,0.08)' },
   copilot:       { primary: '#2eb88a', subtle: 'rgba(46,184,138,0.08)' },
+  gemini:        { primary: '#7c6ef5', subtle: 'rgba(124,110,245,0.08)' },
   shared:        { primary: '#6b7280', subtle: 'rgba(107,114,128,0.08)' },
 };
 
 const AGENT_GLYPHS: Record<string, string> = {
   'claude-code': '◉',
-  gemini:        '◆',
   copilot:       '▶',
+  gemini:        '◆',
   shared:        '◈',
 };
 
@@ -47,24 +47,24 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'settings',  label: 'Settings' },
     { id: 'claude-md', label: 'CLAUDE.md' },
     { id: 'sessions',  label: 'Sessions' },
-    { id: 'plugins',   label: 'Plugins' },
     { id: 'skills',    label: 'Skills' },
+    { id: 'plugins',   label: 'Plugins' },
     { id: 'mcp',       label: 'MCP Servers' },
     { id: 'rules',     label: 'Rules' },
+  ],
+  copilot: [
+    { id: 'settings', label: 'Settings' },
+    { id: 'sessions', label: 'Sessions' },
+    { id: 'skills', label: 'Skills' },
+    { id: 'mcp', label: 'MCP Servers' },
   ],
   gemini: [
     { id: 'settings',   label: 'Settings' },
     { id: 'gemini-md',  label: 'GEMINI.md' },
     { id: 'sessions',   label: 'Sessions' },
-    { id: 'extensions', label: 'Extensions' },
     { id: 'skills',     label: 'Skills' },
+    { id: 'extensions', label: 'Extensions' },
     { id: 'mcp',        label: 'MCP Servers' },
-  ],
-  copilot: [
-    { id: 'settings', label: 'Settings' },
-    { id: 'sessions', label: 'Sessions' },
-    { id: 'skills',   label: 'Skills' },
-    { id: 'mcp',      label: 'MCP Servers' },
   ],
   shared: [
     { id: 'skills', label: 'Shared Skills' },
@@ -132,6 +132,12 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'sessions') return <ClaudeSessionsView configDir={configDir} agentColor={color.primary} />;
       if (tabId === 'rules')    return <RulesEditor configDir={configDir} accentColor={color.primary} />;
     }
+    if (type === 'copilot') {
+      if (tabId === 'settings') return <CopilotSettingsView configDir={configDir} />;
+      if (tabId === 'sessions') return <SessionsView configDir={configDir} agentType="copilot" agentColor={color.primary} />;
+      if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
+      if (tabId === 'mcp') return <McpEditor configDir={configDir} />;
+    }
     if (type === 'gemini') {
       if (tabId === 'settings')   return <GeminiSettingsView configDir={configDir} />;
       if (tabId === 'sessions')   return <SessionsView configDir={configDir} agentType="gemini" agentColor={color.primary} />;
@@ -141,12 +147,6 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'gemini-md')  return (
         <MarkdownEditor filePath={`${configDir}/GEMINI.md`} title="GEMINI.md" description="Global instructions for Gemini CLI" />
       );
-    }
-    if (type === 'copilot') {
-      if (tabId === 'settings') return <CopilotSettingsView configDir={configDir} />;
-      if (tabId === 'sessions') return <SessionsView configDir={configDir} agentType="copilot" agentColor={color.primary} />;
-      if (tabId === 'skills')   return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
-      if (tabId === 'mcp')      return <McpEditor configDir={configDir} />;
     }
     if (type === 'shared') {
       if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName="Shared" agentType="shared" />;

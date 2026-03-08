@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { FolderOpen, FolderClosed, FileText, Trash2, RefreshCw, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { FolderOpen, FolderClosed, FileText, Trash2, RefreshCw, ChevronRight, Plus, X } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import type { RuleFile } from '@shared/types';
@@ -17,6 +18,10 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
   const [loading, setLoading] = useState(true);
   const [selectedRule, setSelectedRule] = useState<RuleFile | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [showAddInput, setShowAddInput] = useState(false);
+  const [addValue, setAddValue] = useState('');
+  const [addError, setAddError] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
 
   function toggleFolder(folder: string) {
     setCollapsedFolders((prev) => {
@@ -45,6 +50,12 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    if (showAddInput) {
+      addInputRef.current?.focus();
+    }
+  }, [showAddInput]);
+
   async function handleDelete(rule: RuleFile) {
     if (!confirm(`Delete rule "${rule.name}"?\n${rule.path}\n\nThis cannot be undone.`)) return;
     try {
@@ -56,6 +67,52 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
       toast.error('Failed to delete rule', {
         description: err instanceof Error ? err.message : 'Unknown error',
       });
+    }
+  }
+
+  async function handleDeleteFolder(folder: string) {
+    if (!confirm(`Delete folder "${folder}" and all its rules?\n\nThis cannot be undone.`)) return;
+    try {
+      await callElectron(() => electronAPI().config.deleteRuleFolder(configDir, folder));
+      toast.success(`Folder "${folder}" deleted`);
+      if (selectedRule?.folder === folder) setSelectedRule(null);
+      await load();
+    } catch (err) {
+      toast.error('Failed to delete folder', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  }
+
+  async function handleAddRule() {
+    const trimmed = addValue.trim();
+    if (!trimmed) {
+      setAddError('Enter a rule path');
+      return;
+    }
+    try {
+      const filePath = await callElectron(() =>
+        electronAPI().config.createRule(configDir, trimmed)
+      );
+      toast.success('Rule created');
+      setShowAddInput(false);
+      setAddValue('');
+      setAddError('');
+      const freshRules = await callElectron(() => electronAPI().config.getRules(configDir));
+      setRules(freshRules);
+      const newRule = freshRules.find((r) => r.path === filePath);
+      if (newRule) setSelectedRule(newRule);
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : 'Failed to create rule');
+    }
+  }
+
+  function handleAddKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { void handleAddRule(); }
+    if (e.key === 'Escape') {
+      setShowAddInput(false);
+      setAddValue('');
+      setAddError('');
     }
   }
 
@@ -83,16 +140,52 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Rules
           </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => { void load(); }}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              title="Add rule"
+              onClick={() => {
+                setShowAddInput((v) => !v);
+                setAddValue('');
+                setAddError('');
+              }}
+            >
+              {showAddInput ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => { void load(); }}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
+
+        {/* Add rule input */}
+        {showAddInput && (
+          <div className="border-b border-border px-2 py-2 shrink-0">
+            <Input
+              ref={addInputRef}
+              className="h-6 text-xs font-mono"
+              placeholder="folder/rule.md or rule.md"
+              value={addValue}
+              onChange={(e) => {
+                setAddValue(e.target.value);
+                setAddError('');
+              }}
+              onKeyDown={handleAddKeyDown}
+            />
+            {addError && (
+              <p className="mt-1 text-[10px] text-destructive">{addError}</p>
+            )}
+            <p className="mt-1 text-[10px] text-muted-foreground">Press Enter to create</p>
+          </div>
+        )}
 
         {/* File list */}
         {!loading && rules.length === 0 ? (
@@ -107,20 +200,31 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
               <div key={folder}>
                 {/* Folder header (only for non-root folders) */}
                 {folder !== '' && (
-                  <button
-                    className="flex w-full items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:bg-accent/20 transition-colors"
-                    onClick={() => toggleFolder(folder)}
-                  >
-                    <ChevronRight
-                      className="h-3 w-3 shrink-0 transition-transform"
-                      style={{ transform: collapsedFolders.has(folder) ? 'rotate(0deg)' : 'rotate(90deg)' }}
-                    />
-                    {collapsedFolders.has(folder)
-                      ? <FolderClosed className="h-3 w-3 shrink-0" />
-                      : <FolderOpen className="h-3 w-3 shrink-0" />
-                    }
-                    <span className="truncate">{folder}</span>
-                  </button>
+                  <div className="group flex w-full items-center gap-1.5 px-3 py-1.5">
+                    <button
+                      className="flex flex-1 min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+                      onClick={() => toggleFolder(folder)}
+                    >
+                      <ChevronRight
+                        className="h-3 w-3 shrink-0 transition-transform"
+                        style={{ transform: collapsedFolders.has(folder) ? 'rotate(0deg)' : 'rotate(90deg)' }}
+                      />
+                      {collapsedFolders.has(folder)
+                        ? <FolderClosed className="h-3 w-3 shrink-0" />
+                        : <FolderOpen className="h-3 w-3 shrink-0" />
+                      }
+                      <span className="truncate">{folder}</span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
+                      title={`Delete folder "${folder}"`}
+                      onClick={() => { void handleDeleteFolder(folder); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
 
                 {/* Files in this folder */}
