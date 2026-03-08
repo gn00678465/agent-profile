@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useAgents } from './hooks/useAgents';
 import { useTheme } from './hooks/useTheme';
@@ -222,7 +222,7 @@ export default function App() {
   const activeAgent = agents.find((a) => a.id === activeAgentId) ?? null;
   const color = activeAgent ? agentColor(activeAgent.type) : agentColor('shared');
 
-  function selectAgent(id: string) {
+  const selectAgent = useCallback((id: string) => {
     setActiveAgentId(id);
     const agent = agents.find((a) => a.id === id);
     if (agent) {
@@ -230,7 +230,7 @@ export default function App() {
       setActiveTab(tabs[0]?.id ?? 'settings');
     }
     setSaveState({ isDirty: false, isSaving: false });
-  }
+  }, [agents]);
 
   // Load active model for status bar
   useEffect(() => {
@@ -267,7 +267,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [agents, activeAgentId]);
+  }, [agents, activeAgentId, selectAgent]);
 
   return (
     <>
