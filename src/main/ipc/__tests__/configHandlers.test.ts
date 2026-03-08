@@ -19,6 +19,7 @@ vi.mock('fs/promises', () => ({
     mkdir: vi.fn(),
     readdir: vi.fn(),
     stat: vi.fn(),
+    lstat: vi.fn(),
     unlink: vi.fn(),
     rm: vi.fn(),
     access: vi.fn(),
@@ -47,7 +48,7 @@ describe('configHandlers', () => {
   const HOME = '/home/testuser';
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     ipc = createMockIpcMain();
     registerConfigHandlers(ipc as any);
   });
@@ -403,7 +404,7 @@ user-invocable: true
 Skill instructions here.`;
 
       vi.mocked(fs.readdir).mockResolvedValue(['my-skill'] as any);
-      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.lstat).mockResolvedValue({ isDirectory: () => true, isSymbolicLink: () => false } as any);
       vi.mocked(fs.readFile).mockResolvedValue(skillContent as any);
 
       const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
@@ -418,9 +419,9 @@ Skill instructions here.`;
 
     it('skips non-directory entries in skills folder', async () => {
       vi.mocked(fs.readdir).mockResolvedValue(['file.txt', 'skill-folder'] as any);
-      vi.mocked(fs.stat)
-        .mockResolvedValueOnce({ isDirectory: () => false } as any) // file.txt
-        .mockResolvedValueOnce({ isDirectory: () => true } as any);  // skill-folder
+      vi.mocked(fs.lstat)
+        .mockResolvedValueOnce({ isDirectory: () => false, isSymbolicLink: () => false } as any) // file.txt
+        .mockResolvedValueOnce({ isDirectory: () => true, isSymbolicLink: () => false } as any);  // skill-folder
 
       const skillContent = '---\nname: A Skill\ndescription: desc\n---\n# A Skill';
       vi.mocked(fs.readFile).mockResolvedValue(skillContent as any);
@@ -434,7 +435,7 @@ Skill instructions here.`;
     it('uses folder name as skill name when frontmatter name is absent', async () => {
       const contentWithoutName = '# Skill Without Frontmatter\n\nSome content.';
       vi.mocked(fs.readdir).mockResolvedValue(['unnamed-skill'] as any);
-      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.lstat).mockResolvedValue({ isDirectory: () => true, isSymbolicLink: () => false } as any);
       vi.mocked(fs.readFile).mockResolvedValue(contentWithoutName as any);
 
       const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
@@ -445,7 +446,7 @@ Skill instructions here.`;
 
     it('skips skills whose SKILL.md cannot be read', async () => {
       vi.mocked(fs.readdir).mockResolvedValue(['bad-skill', 'good-skill'] as any);
-      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.lstat).mockResolvedValue({ isDirectory: () => true, isSymbolicLink: () => false } as any);
       vi.mocked(fs.readFile)
         .mockRejectedValueOnce(new Error('Cannot read'))   // bad-skill SKILL.md
         .mockResolvedValue('---\nname: Good\ndescription: Good skill\n---\n# Good' as any);
@@ -720,13 +721,14 @@ Skill instructions here.`;
 
   describe('config:delete-plugin', () => {
     it('removes plugin install entry and deletes install folder', async () => {
+      const INSTALL_PATH = path.join(HOME, '.claude', 'plugins', 'context7');
       const installedPlugins = {
         version: 2,
         plugins: {
           'context7@official': [
             {
               scope: 'user',
-              installPath: '/plugins/context7',
+              installPath: INSTALL_PATH,
               version: '1.0.0',
               installedAt: '2026-01-01T00:00:00Z',
               lastUpdated: '2026-01-01T00:00:00Z',
@@ -747,31 +749,33 @@ Skill instructions here.`;
 
       const result = await ipc.invoke(
         'config:delete-plugin',
-        '/home/testuser/.claude',
+        path.join(HOME, '.claude'),
         'context7@official',
-        '/plugins/context7'
+        INSTALL_PATH
       );
       expect(result.success).toBe(true);
-      expect(fs.rm).toHaveBeenCalledWith('/plugins/context7', { recursive: true, force: true });
+      expect(fs.rm).toHaveBeenCalledWith(INSTALL_PATH, { recursive: true, force: true });
       // Should have written updated installed_plugins.json (plugin removed)
       expect(fs.writeFile).toHaveBeenCalled();
     });
 
     it('keeps other installs when deleting one of multiple', async () => {
+      const USER_INSTALL = path.join(HOME, '.claude', 'plugins', 'user-install');
+      const PROJECT_INSTALL = path.join(HOME, '.claude', 'plugins', 'project-install');
       const installedPlugins = {
         version: 2,
         plugins: {
           'myplugin@official': [
             {
               scope: 'user',
-              installPath: '/plugins/user-install',
+              installPath: USER_INSTALL,
               version: '1.0.0',
               installedAt: '2026-01-01T00:00:00Z',
               lastUpdated: '2026-01-01T00:00:00Z',
             },
             {
               scope: 'project',
-              installPath: '/plugins/project-install',
+              installPath: PROJECT_INSTALL,
               version: '1.0.0',
               installedAt: '2026-01-01T00:00:00Z',
               lastUpdated: '2026-01-01T00:00:00Z',
@@ -788,19 +792,20 @@ Skill instructions here.`;
 
       const result = await ipc.invoke(
         'config:delete-plugin',
-        '/home/testuser/.claude',
+        path.join(HOME, '.claude'),
         'myplugin@official',
-        '/plugins/user-install'
+        USER_INSTALL
       );
       expect(result.success).toBe(true);
       // Should have written back with the project install still present
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const written = JSON.parse(writeCall[1] as string);
       expect(written.plugins['myplugin@official']).toHaveLength(1);
-      expect(written.plugins['myplugin@official'][0].installPath).toBe('/plugins/project-install');
+      expect(written.plugins['myplugin@official'][0].installPath).toBe(PROJECT_INSTALL);
     });
 
     it('returns failure when fs.rm throws', async () => {
+      const INSTALL_PATH = path.join(HOME, '.local', 'share', 'bad-plugin');
       const installedPlugins = { version: 2, plugins: {} };
 
       vi.mocked(fs.readFile)
@@ -809,9 +814,9 @@ Skill instructions here.`;
 
       const result = await ipc.invoke(
         'config:delete-plugin',
-        '/home/testuser/.claude',
+        path.join(HOME, '.claude'),
         'badplugin@official',
-        '/plugins/badplugin'
+        INSTALL_PATH
       );
       expect(result.success).toBe(false);
       expect(result.error).toContain('Permission denied');
@@ -875,6 +880,154 @@ Skill instructions here.`;
         'config:delete-gemini-extension',
         '/home/testuser/.gemini',
         'bad-ext'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('EPERM');
+    });
+  });
+
+  // ── CONFIG_CREATE_RULE ─────────────────────────────────────────────────────
+
+  describe('config:create-rule', () => {
+    it('creates a top-level rule file at rules/<rule>.md', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        'my-rule.md'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith(
+        path.join(HOME, '.claude', 'rules'),
+        { recursive: true }
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(HOME, '.claude', 'rules', 'my-rule.md'),
+        '',
+        'utf-8'
+      );
+    });
+
+    it('creates folder and file at rules/<folder>/<rule>.md', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        'common/agents.md'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith(
+        path.join(HOME, '.claude', 'rules', 'common'),
+        { recursive: true }
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(HOME, '.claude', 'rules', 'common', 'agents.md'),
+        '',
+        'utf-8'
+      );
+    });
+
+    it('rejects path traversal in rulePath', async () => {
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        '../../../etc/passwd'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('rejects more than one folder level', async () => {
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        'a/b/c.md'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid|one level/i);
+    });
+
+    it('rejects empty rulePath', async () => {
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        ''
+      );
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects folder component containing ..', async () => {
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        '../secrets.md'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid/i);
+    });
+
+    it('returns failure when fs.writeFile throws', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockRejectedValue(new Error('ENOSPC'));
+
+      const result = await ipc.invoke(
+        'config:create-rule',
+        path.join(HOME, '.claude'),
+        'my-rule.md'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ENOSPC');
+    });
+  });
+
+  // ── CONFIG_DELETE_RULE_FOLDER ──────────────────────────────────────────────
+
+  describe('config:delete-rule-folder', () => {
+    it('removes the rules folder recursively', async () => {
+      vi.mocked(fs.rm).mockResolvedValue(undefined);
+
+      const result = await ipc.invoke(
+        'config:delete-rule-folder',
+        path.join(HOME, '.claude'),
+        'common'
+      );
+      expect(result.success).toBe(true);
+      expect(fs.rm).toHaveBeenCalledWith(
+        path.join(HOME, '.claude', 'rules', 'common'),
+        { recursive: true, force: true }
+      );
+    });
+
+    it('rejects folder name containing ..', async () => {
+      const result = await ipc.invoke(
+        'config:delete-rule-folder',
+        path.join(HOME, '.claude'),
+        '../secrets'
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/invalid|access denied/i);
+    });
+
+    it('rejects empty folder name', async () => {
+      const result = await ipc.invoke(
+        'config:delete-rule-folder',
+        path.join(HOME, '.claude'),
+        ''
+      );
+      expect(result.success).toBe(false);
+    });
+
+    it('returns failure when fs.rm throws', async () => {
+      vi.mocked(fs.rm).mockRejectedValue(new Error('EPERM'));
+
+      const result = await ipc.invoke(
+        'config:delete-rule-folder',
+        path.join(HOME, '.claude'),
+        'common'
       );
       expect(result.success).toBe(false);
       expect(result.error).toContain('EPERM');

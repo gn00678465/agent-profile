@@ -15,6 +15,7 @@ vi.mock('fs/promises', () => ({
     mkdir: vi.fn(),
     readdir: vi.fn(),
     stat: vi.fn(),
+    lstat: vi.fn(),
     unlink: vi.fn(),
     rm: vi.fn(),
     access: vi.fn(),
@@ -51,7 +52,7 @@ describe('configHandlers - edge cases', () => {
   describe('parseSkillFrontmatter (via config:get-skills)', () => {
     async function getSkillsWithContent(content: string) {
       vi.mocked(fs.readdir).mockResolvedValue(['test-skill'] as any);
-      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => true } as any);
+      vi.mocked(fs.lstat).mockResolvedValue({ isDirectory: () => true, isSymbolicLink: () => false } as any);
       vi.mocked(fs.readFile).mockResolvedValue(content as any);
       const result = await ipc.invoke('config:get-skills', '/home/testuser/.claude');
       return result.data[0];

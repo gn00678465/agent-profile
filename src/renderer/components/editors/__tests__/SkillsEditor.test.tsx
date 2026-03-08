@@ -11,6 +11,14 @@ vi.mock('@/hooks/useConfig', () => ({
   useSkills: vi.fn(),
 }));
 
+// Mock AddSkillDialog: renders a "New Skill" button when open that calls onCreateNew
+vi.mock('../AddSkillDialog', () => ({
+  AddSkillDialog: ({ open, onOpenChange, onCreateNew }: any) =>
+    open ? (
+      <button onClick={() => { onOpenChange(false); onCreateNew(); }}>New Skill</button>
+    ) : null,
+}));
+
 import { useSkills } from '@/hooks/useConfig';
 
 const mockSkills: Skill[] = [
@@ -136,14 +144,14 @@ describe('SkillsEditor', () => {
   });
 
   it('enters new skill mode by clicking the "New Skill" empty-state button when no skills exist', async () => {
-    // When skills is empty, a "New Skill" button is shown in the empty editor panel
+    // When skills is empty, clicking "Add Skill" opens the dialog;
+    // clicking "New Skill" in the dialog enters new-skill mode.
     vi.mocked(useSkills).mockReturnValue(makeHook({ skills: [] }));
 
     render(<SkillsEditor configDir="/home/user/.claude" agentName="Claude Code" />);
 
-    // The empty state shows a "New Skill" button in the editor panel
-    const newSkillBtn = screen.getByRole('button', { name: /new skill/i });
-    fireEvent.click(newSkillBtn);
+    fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /new skill/i }));
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('skill-id')).toBeTruthy();
@@ -154,8 +162,8 @@ describe('SkillsEditor', () => {
     vi.mocked(useSkills).mockReturnValue(makeHook({ skills: [] }));
 
     render(<SkillsEditor configDir="/home/user/.claude" agentName="Claude Code" />);
-    const newSkillBtn = screen.getByRole('button', { name: /new skill/i });
-    fireEvent.click(newSkillBtn);
+    fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /new skill/i }));
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('skill-id')).toBeTruthy();
@@ -166,7 +174,8 @@ describe('SkillsEditor', () => {
     vi.mocked(useSkills).mockReturnValue(makeHook({ skills: [] }));
 
     render(<SkillsEditor configDir="/home/user/.claude" agentName="Claude Code" />);
-    fireEvent.click(screen.getByRole('button', { name: /new skill/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /new skill/i }));
 
     await waitFor(() => expect(screen.getByPlaceholderText('skill-id')).toBeTruthy());
 
@@ -185,7 +194,8 @@ describe('SkillsEditor', () => {
     );
 
     render(<SkillsEditor configDir="/home/user/.claude" agentName="Claude Code" />);
-    fireEvent.click(screen.getByRole('button', { name: /new skill/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /new skill/i }));
 
     await waitFor(() => expect(screen.getByPlaceholderText('skill-id')).toBeTruthy());
 
@@ -220,7 +230,8 @@ describe('SkillsEditor', () => {
     );
 
     render(<SkillsEditor configDir="/home/user/.claude" agentName="Claude Code" />);
-    fireEvent.click(screen.getByRole('button', { name: /new skill/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add skill/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /new skill/i }));
 
     await waitFor(() => expect(screen.getByPlaceholderText('skill-id')).toBeTruthy());
 
