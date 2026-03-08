@@ -163,6 +163,11 @@ export interface Skill {
   isSymbolicLink?: boolean;
 }
 
+export interface ClaudeSessionMessage {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
 // ─── Session types ────────────────────────────────────────────────────────────
 
 export interface GeminiSession {
@@ -220,6 +225,14 @@ export interface SessionEntry {
   checkpointCount?: number;
   // Common
   lastModified?: number;
+  slug?: string;
+}
+
+export interface RuleFile {
+  id: string;       // e.g. "common/agents"
+  folder: string;   // e.g. "common"
+  name: string;     // e.g. "agents.md"
+  path: string;     // absolute path
 }
 
 // ─── IPC Channels ────────────────────────────────────────────────────────────
@@ -276,6 +289,13 @@ export const IPC_CHANNELS = {
   // Sessions
   CONFIG_GET_SESSIONS: 'config:get-sessions',
   CONFIG_DELETE_SESSION: 'config:delete-session',
+  CONFIG_GET_CLAUDE_SESSIONS: 'config:get-claude-sessions',
+  CONFIG_GET_SESSION_MESSAGES: 'config:get-session-messages',
+
+  // Rules
+  CONFIG_GET_RULES: 'config:get-rules',
+  CONFIG_SAVE_RULE: 'config:save-rule',
+  CONFIG_DELETE_RULE: 'config:delete-rule',
 
   // Plugin enable/disable
   CONFIG_SET_PLUGIN_ENABLED: 'config:set-plugin-enabled',

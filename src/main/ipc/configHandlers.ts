@@ -20,6 +20,8 @@ import type {
   SkillFrontmatter,
   ConfigFile,
   SessionEntry,
+  ClaudeSessionMessage,
+  RuleFile,
 } from '../../shared/types';
 
 const execFileAsync = promisify(execFile);
@@ -672,6 +674,145 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
     }
   );
 
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_CLAUDE_SESSIONS,
+    async (_event, configDir: string) => {
+      try {
+        const projectsDir = path.join(configDir, 'projects');
+        const sessions: SessionEntry[] = [];
+
+        let projectFolders: string[] = [];
+        try {
+          projectFolders = await fs.readdir(projectsDir);
+        } catch {
+          return success<SessionEntry[]>([]);
+        }
+
+        for (const folder of projectFolders) {
+          const folderPath = path.join(projectsDir, folder);
+          let folderStat;
+          try { folderStat = await fs.stat(folderPath); } catch { continue; }
+          if (!folderStat.isDirectory()) continue;
+
+          let files: string[] = [];
+          try { files = await fs.readdir(folderPath); } catch { continue; }
+
+          for (const file of files) {
+            if (!file.endsWith('.jsonl')) continue;
+            const filePath = path.join(folderPath, file);
+            const sessionId = file.slice(0, -6); // remove .jsonl
+
+            let cwd: string | undefined;
+            let slug: string | undefined;
+            let earliestTs: number | undefined;
+            let fileStat;
+            try { fileStat = await fs.stat(filePath); } catch { continue; }
+
+            // Read first 50 lines for metadata
+            try {
+              const content = await fs.readFile(filePath, 'utf-8');
+              const lines = content.split('\n').slice(0, 50);
+              for (const line of lines) {
+                if (!line.trim()) continue;
+                let entry: Record<string, unknown>;
+                try { entry = JSON.parse(line) as Record<string, unknown>; } catch { continue; }
+
+                if (!cwd && typeof entry.cwd === 'string') cwd = entry.cwd;
+                if (!slug) {
+                  if (typeof entry.slug === 'string') slug = entry.slug;
+                  else if (typeof entry.leafName === 'string') slug = entry.leafName;
+                }
+                if (typeof entry.timestamp === 'string') {
+                  const ts = new Date(entry.timestamp).getTime();
+                  if (!isNaN(ts)) {
+                    if (earliestTs === undefined || ts < earliestTs) earliestTs = ts;
+                  }
+                }
+              }
+            } catch { continue; }
+
+            if (!slug) slug = sessionId.slice(0, 12);
+
+            sessions.push({
+              id: sessionId,
+              name: slug,
+              path: filePath,
+              type: 'hash',
+              agentType: 'claude-code',
+              cwd,
+              slug,
+              lastModified: fileStat.mtimeMs,
+              createdAt: earliestTs ? new Date(earliestTs).toISOString() : undefined,
+            });
+          }
+        }
+
+        sessions.sort((a, b) => (b.lastModified ?? 0) - (a.lastModified ?? 0));
+        return success(sessions);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_SESSION_MESSAGES,
+    async (_event, filePath: string) => {
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const messages: ClaudeSessionMessage[] = [];
+
+        for (const line of content.split('\n')) {
+          if (!line.trim()) continue;
+          let entry: Record<string, unknown>;
+          try { entry = JSON.parse(line) as Record<string, unknown>; } catch { continue; }
+
+          // Determine role
+          let role: 'user' | 'assistant' | null = null;
+          const entryRole = (entry.role as string | undefined) ??
+            ((entry.message as Record<string, unknown> | undefined)?.role as string | undefined);
+
+          if (entryRole === 'user' || entryRole === 'human') role = 'user';
+          else if (entryRole === 'assistant') role = 'assistant';
+
+          if (!role) {
+            const t = entry.type as string | undefined;
+            if (t === 'human' || t === 'user') role = 'user';
+            else if (t === 'assistant') role = 'assistant';
+          }
+          if (!role) continue;
+
+          // Extract content
+          const rawContent: unknown =
+            (entry.message as Record<string, unknown> | undefined)?.content ??
+            (typeof (entry.message as unknown) === 'string' ? entry.message : undefined) ??
+            entry.content;
+
+          if (!rawContent) continue;
+
+          // Purify text
+          let text = '';
+          if (typeof rawContent === 'string') {
+            text = rawContent;
+          } else if (Array.isArray(rawContent)) {
+            text = (rawContent as Array<Record<string, unknown>>)
+              .filter((b) => b.type === 'text')
+              .map((b) => String(b.text ?? ''))
+              .join('');
+          }
+
+          text = text.trim();
+          if (!text) continue;
+          messages.push({ role, text });
+        }
+
+        return success(messages);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
   // ── Plugin deletion (Claude) ──────────────────────────────────────────────
 
   ipcMain.handle(
@@ -779,6 +920,88 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         } else {
           await execFileAsync('unzip', ['-o', zipFilePath, '-d', skillsDir]);
         }
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Rules (Claude Code ~/.claude/rules/) ──────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_RULES,
+    async (_event, configDir: string) => {
+      try {
+        const rulesDir = path.join(configDir, 'rules');
+        const rules: RuleFile[] = [];
+
+        let topEntries: string[] = [];
+        try {
+          topEntries = await fs.readdir(rulesDir);
+        } catch {
+          return success<RuleFile[]>([]);
+        }
+
+        for (const topName of topEntries) {
+          const topPath = path.join(rulesDir, topName);
+          let topStat;
+          try { topStat = await fs.stat(topPath); } catch { continue; }
+
+          if (topStat.isDirectory()) {
+            // Folder — list .md files inside
+            let subEntries: string[] = [];
+            try { subEntries = await fs.readdir(topPath); } catch { continue; }
+            for (const subName of subEntries) {
+              if (!subName.endsWith('.md')) continue;
+              const filePath = path.join(topPath, subName);
+              try {
+                const s = await fs.stat(filePath);
+                if (!s.isFile()) continue;
+              } catch { continue; }
+              rules.push({
+                id: `${topName}/${subName.slice(0, -3)}`,
+                folder: topName,
+                name: subName,
+                path: filePath,
+              });
+            }
+          } else if (topStat.isFile() && topName.endsWith('.md')) {
+            // Top-level .md file
+            rules.push({
+              id: topName.slice(0, -3),
+              folder: '',
+              name: topName,
+              path: topPath,
+            });
+          }
+        }
+
+        return success(rules);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_SAVE_RULE,
+    async (_event, filePath: string, content: string) => {
+      try {
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.writeFile(filePath, content, 'utf-8');
+        return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_DELETE_RULE,
+    async (_event, filePath: string) => {
+      try {
+        await fs.unlink(filePath);
         return success(undefined);
       } catch (err) {
         return failure(err);

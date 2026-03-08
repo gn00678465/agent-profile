@@ -11,6 +11,8 @@ import type {
   DirectoryEntry,
   IpcResponse,
   SessionEntry,
+  ClaudeSessionMessage,
+  RuleFile,
 } from '@shared/types';
 
 declare global {
@@ -56,6 +58,11 @@ declare global {
         saveMarkdown: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         getSessions: (configDir: string, agentType: string) => Promise<IpcResponse<SessionEntry[]>>;
         deleteSession: (sessionPath: string) => Promise<IpcResponse<void>>;
+        getClaudeSessions: (configDir: string) => Promise<IpcResponse<SessionEntry[]>>;
+        getSessionMessages: (filePath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
+        getRules: (configDir: string) => Promise<IpcResponse<RuleFile[]>>;
+        saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;
+        deleteRule: (filePath: string) => Promise<IpcResponse<void>>;
         setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) => Promise<IpcResponse<void>>;
         deletePlugin: (configDir: string, pluginId: string, installPath: string) => Promise<IpcResponse<void>>;
       };

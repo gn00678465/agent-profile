@@ -12,6 +12,8 @@ import { McpEditor } from './components/editors/McpEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
 import { SessionsView } from './components/editors/SessionsView';
+import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
+import { RulesEditor } from './components/editors/RulesEditor';
 import { ScrollArea } from './components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { electronAPI, callElectron } from './lib/electron';
@@ -43,18 +45,20 @@ function agentColor(type: string) {
 const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
   'claude-code': [
     { id: 'settings',  label: 'Settings' },
+    { id: 'claude-md', label: 'CLAUDE.md' },
+    { id: 'sessions',  label: 'Sessions' },
     { id: 'plugins',   label: 'Plugins' },
     { id: 'skills',    label: 'Skills' },
     { id: 'mcp',       label: 'MCP Servers' },
-    { id: 'claude-md', label: 'CLAUDE.md' },
+    { id: 'rules',     label: 'Rules' },
   ],
   gemini: [
     { id: 'settings',   label: 'Settings' },
+    { id: 'gemini-md',  label: 'GEMINI.md' },
     { id: 'sessions',   label: 'Sessions' },
     { id: 'extensions', label: 'Extensions' },
     { id: 'skills',     label: 'Skills' },
     { id: 'mcp',        label: 'MCP Servers' },
-    { id: 'gemini-md',  label: 'GEMINI.md' },
   ],
   copilot: [
     { id: 'settings', label: 'Settings' },
@@ -125,6 +129,8 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'claude-md') return (
         <MarkdownEditor filePath={`${configDir}/CLAUDE.md`} title="CLAUDE.md" description="Global instructions for Claude Code" />
       );
+      if (tabId === 'sessions') return <ClaudeSessionsView configDir={configDir} agentColor={color.primary} />;
+      if (tabId === 'rules')    return <RulesEditor configDir={configDir} accentColor={color.primary} />;
     }
     if (type === 'gemini') {
       if (tabId === 'settings')   return <GeminiSettingsView configDir={configDir} />;

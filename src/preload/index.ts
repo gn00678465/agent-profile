@@ -12,6 +12,8 @@ import type {
   Skill,
   ConfigFile,
   SessionEntry,
+  ClaudeSessionMessage,
+  RuleFile,
 } from '../shared/types';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResponse<T>> {
@@ -109,6 +111,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<SessionEntry[]>(IPC_CHANNELS.CONFIG_GET_SESSIONS, configDir, agentType),
     deleteSession: (sessionPath: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SESSION, sessionPath),
+    getClaudeSessions: (configDir: string) =>
+      invoke<SessionEntry[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_SESSIONS, configDir),
+    getSessionMessages: (filePath: string) =>
+      invoke<ClaudeSessionMessage[]>(IPC_CHANNELS.CONFIG_GET_SESSION_MESSAGES, filePath),
+    getRules: (configDir: string) =>
+      invoke<RuleFile[]>(IPC_CHANNELS.CONFIG_GET_RULES, configDir),
+    saveRule: (filePath: string, content: string) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_SAVE_RULE, filePath, content),
+    deleteRule: (filePath: string) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE, filePath),
 
     // Plugin enable/disable
     setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) =>
