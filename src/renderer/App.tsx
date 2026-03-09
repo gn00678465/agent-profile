@@ -9,12 +9,14 @@ import { CopilotSettingsView } from './components/agents/CopilotSettings';
 import { ClaudePluginsView } from './components/agents/ClaudePlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpEditor } from './components/editors/McpEditor';
+import { JsonFileEditor } from './components/editors/JsonFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
 import { SessionsView } from './components/editors/SessionsView';
 import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
 import { RulesEditor } from './components/editors/RulesEditor';
 import { SubagentsEditor } from './components/editors/SubagentsEditor';
+import { CopilotSessionsView } from './components/editors/CopilotSessionsView';
 import { ScrollArea } from './components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { electronAPI, callElectron } from './lib/electron';
@@ -146,9 +148,15 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
         />
       );
       if (tabId === 'subagents') return <SubagentsEditor configDir={configDir} accentColor={color.primary} />;
-      if (tabId === 'sessions') return <SessionsView configDir={configDir} agentType="copilot" agentColor={color.primary} />;
+      if (tabId === 'sessions') return <CopilotSessionsView configDir={configDir} agentColor={color.primary} />;
       if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
-      if (tabId === 'mcp') return <McpEditor configDir={configDir} />;
+      if (tabId === 'mcp') return (
+        <JsonFileEditor
+          filePath={`${configDir}/mcp-config.json`}
+          title="MCP Servers"
+          description={`${configDir}/mcp-config.json`}
+        />
+      );
     }
     if (type === 'gemini') {
       if (tabId === 'settings')   return <GeminiSettingsView configDir={configDir} />;

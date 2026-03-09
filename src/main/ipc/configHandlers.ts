@@ -696,6 +696,24 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
               lastModified: stat.mtimeMs,
             });
           }
+
+          // Old format: <uuid>.jsonl files directly in session-state/
+          for (const name of names) {
+            if (!name.endsWith('.jsonl')) continue;
+            const sessionPath = path.join(sessionDir, name);
+            let fileStat;
+            try { fileStat = await fs.stat(sessionPath); } catch { continue; }
+            if (!fileStat.isFile()) continue;
+            const id = name.slice(0, -'.jsonl'.length);
+            sessions.push({
+              id,
+              name: id.slice(0, 8) + '...',
+              path: sessionPath,
+              type: 'hash',
+              agentType: 'copilot',
+              lastModified: fileStat.mtimeMs,
+            });
+          }
         }
 
         // Sort by lastModified descending (newest first)
@@ -1271,6 +1289,62 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         };
         await writeJsonFile(settingsPath, settings);
         return success(undefined);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Copilot session events ────────────────────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_COPILOT_SESSION_EVENTS,
+    async (_event, sessionPath: string) => {
+      try {
+        assertSafePath(sessionPath, os.homedir());
+
+        const stat = await fs.stat(sessionPath);
+        const eventsPath = stat.isDirectory()
+          ? path.join(sessionPath, 'events.jsonl')
+          : sessionPath;
+
+        let content: string;
+        try {
+          content = await fs.readFile(eventsPath, 'utf-8');
+        } catch {
+          return success<ClaudeSessionMessage[]>([]);
+        }
+
+        const messages: ClaudeSessionMessage[] = [];
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const obj = JSON.parse(trimmed) as Record<string, unknown>;
+
+            // Actual Copilot format: { type: 'user.message'|'assistant.message', data: { content } }
+            const type = obj.type as string | undefined;
+            if (type === 'user.message' || type === 'assistant.message') {
+              const data = obj.data as Record<string, unknown> | undefined;
+              const text = (data?.content ?? '') as string;
+              if (typeof text !== 'string' || text === '') continue;
+              messages.push({ role: type === 'user.message' ? 'user' : 'assistant', text });
+              if (messages.length >= 500) break;
+              continue;
+            }
+
+            // Fallback: legacy format with explicit role field
+            const role = obj.role as string | undefined;
+            if (role !== 'user' && role !== 'assistant') continue;
+            const text = (obj.text ?? obj.content ?? obj.message ?? '') as string;
+            if (typeof text !== 'string') continue;
+            messages.push({ role, text });
+            if (messages.length >= 500) break;
+          } catch {
+            // skip malformed lines
+          }
+        }
+        return success(messages);
       } catch (err) {
         return failure(err);
       }

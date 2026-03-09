@@ -168,6 +168,8 @@ export interface ClaudeSessionMessage {
   text: string;
 }
 
+export type CopilotSessionMessage = ClaudeSessionMessage;
+
 // ─── Session types ────────────────────────────────────────────────────────────
 
 export interface GeminiSession {
@@ -276,6 +278,7 @@ export const IPC_CHANNELS = {
   // Copilot
   CONFIG_GET_COPILOT_CONFIG: 'config:get-copilot-config',
   CONFIG_SAVE_COPILOT_CONFIG: 'config:save-copilot-config',
+  CONFIG_GET_COPILOT_SESSION_EVENTS: 'config:get-copilot-session-events',
 
   // MCP (all agents)
   CONFIG_GET_MCP: 'config:get-mcp',

@@ -116,6 +116,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<SessionEntry[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_SESSIONS, configDir),
     getSessionMessages: (filePath: string) =>
       invoke<ClaudeSessionMessage[]>(IPC_CHANNELS.CONFIG_GET_SESSION_MESSAGES, filePath),
+    getCopilotSessionEvents: (sessionPath: string) =>
+      invoke<ClaudeSessionMessage[]>(IPC_CHANNELS.CONFIG_GET_COPILOT_SESSION_EVENTS, sessionPath),
     getRules: (configDir: string) =>
       invoke<RuleFile[]>(IPC_CHANNELS.CONFIG_GET_RULES, configDir),
     createRule: (configDir: string, rulePath: string) =>

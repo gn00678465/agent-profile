@@ -1259,4 +1259,180 @@ Skill instructions here.`;
       expect(result.error).toContain('EACCES');
     });
   });
+
+  describe('config:get-sessions (copilot old-format .jsonl files)', () => {
+    it('includes old-format .jsonl files as sessions', async () => {
+      const sessionDir = path.join(HOME, '.copilot', 'session-state');
+      const uuid = 'abcdef12-0000-0000-0000-000000000001';
+      vi.mocked(fs.readdir).mockResolvedValue([`${uuid}.jsonl`] as any);
+      vi.mocked(fs.stat).mockImplementation(async (p: any) => {
+        if (String(p).endsWith('.jsonl')) {
+          return { isDirectory: () => false, isFile: () => true, mtimeMs: 1000 } as any;
+        }
+        throw new Error('ENOENT');
+      });
+      const result = await ipc.invoke('config:get-sessions', path.join(HOME, '.copilot'), 'copilot');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(uuid);
+      expect(result.data[0].path).toContain(`${uuid}.jsonl`);
+      expect(result.data[0].agentType).toBe('copilot');
+    });
+
+    it('includes both directory sessions and old-format .jsonl sessions', async () => {
+      const uuidDir = 'abcdef12-0000-0000-0000-000000000002';
+      const uuidFile = 'abcdef12-0000-0000-0000-000000000003';
+      vi.mocked(fs.readdir).mockResolvedValue([uuidDir, `${uuidFile}.jsonl`] as any);
+      vi.mocked(fs.stat).mockImplementation(async (p: any) => {
+        const s = String(p);
+        if (s.endsWith('.jsonl')) {
+          return { isDirectory: () => false, isFile: () => true, mtimeMs: 2000 } as any;
+        }
+        if (s.endsWith(uuidDir)) {
+          return { isDirectory: () => true, isFile: () => false, mtimeMs: 1000 } as any;
+        }
+        throw new Error('ENOENT');
+      });
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'));
+      const result = await ipc.invoke('config:get-sessions', path.join(HOME, '.copilot'), 'copilot');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      const ids = result.data.map((s: any) => s.id);
+      expect(ids).toContain(uuidDir);
+      expect(ids).toContain(uuidFile);
+    });
+
+    it('ignores non-.jsonl files in session-state', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['README.txt', 'some-file.json'] as any);
+      vi.mocked(fs.stat).mockResolvedValue({ isDirectory: () => false, isFile: () => true, mtimeMs: 1000 } as any);
+      const result = await ipc.invoke('config:get-sessions', path.join(HOME, '.copilot'), 'copilot');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
+    });
+  });
+
+  describe('config:get-copilot-session-events', () => {
+    it('reads events from a .jsonl file path (old format)', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'abc123.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      const jsonlContent = [
+        JSON.stringify({ role: 'user', content: 'Hello' }),
+        JSON.stringify({ role: 'assistant', content: 'Hi there' }),
+        'invalid-line',
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toEqual({ role: 'user', text: 'Hello' });
+      expect(result.data[1]).toEqual({ role: 'assistant', text: 'Hi there' });
+    });
+
+    it('reads events.jsonl from a directory path (new format)', async () => {
+      const dirPath = path.join(HOME, '.copilot', 'session-state', 'abc-dir');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => false, isDirectory: () => true } as any);
+      const jsonlContent = [
+        JSON.stringify({ role: 'user', text: 'Question?' }),
+        JSON.stringify({ role: 'assistant', text: 'Answer.' }),
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', dirPath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toEqual({ role: 'user', text: 'Question?' });
+    });
+
+    it('returns empty array for malformed JSONL', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'bad.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      vi.mocked(fs.readFile).mockResolvedValue('not-json\nalso-not-json\n' as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('rejects path traversal attempts', async () => {
+      const result = await ipc.invoke('config:get-copilot-session-events', '/etc/passwd');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/outside/i);
+    });
+
+    it('handles entries with content field instead of text', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'abc.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      const jsonlContent = [
+        JSON.stringify({ role: 'user', content: 'Using content field' }),
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data[0].text).toBe('Using content field');
+    });
+
+    it('returns empty array when file is empty', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'empty.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      vi.mocked(fs.readFile).mockResolvedValue('' as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('parses actual Copilot format: type=user.message with data.content', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'real.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      const jsonlContent = [
+        JSON.stringify({ type: 'user.message', data: { content: 'Hello Copilot' } }),
+        JSON.stringify({ type: 'assistant.message', data: { content: 'Hello! How can I help?' } }),
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toEqual({ role: 'user', text: 'Hello Copilot' });
+      expect(result.data[1]).toEqual({ role: 'assistant', text: 'Hello! How can I help?' });
+    });
+
+    it('skips entries where data.content is empty string', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'empty-content.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      const jsonlContent = [
+        JSON.stringify({ type: 'user.message', data: { content: '' } }),
+        JSON.stringify({ type: 'assistant.message', data: { content: 'Valid response' } }),
+        JSON.stringify({ type: 'user.message', data: { content: 'Non-empty' } }),
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].text).toBe('Valid response');
+      expect(result.data[1].text).toBe('Non-empty');
+    });
+
+    it('skips non-message type entries (e.g. tool calls, metadata)', async () => {
+      const filePath = path.join(HOME, '.copilot', 'session-state', 'mixed.jsonl');
+      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true, isDirectory: () => false } as any);
+      const jsonlContent = [
+        JSON.stringify({ type: 'session.start', data: {} }),
+        JSON.stringify({ type: 'user.message', data: { content: 'A question' } }),
+        JSON.stringify({ type: 'tool.call', data: { name: 'read_file' } }),
+        JSON.stringify({ type: 'assistant.message', data: { content: 'An answer' } }),
+        JSON.stringify({ type: 'session.end', data: {} }),
+      ].join('\n');
+      vi.mocked(fs.readFile).mockResolvedValue(jsonlContent as any);
+
+      const result = await ipc.invoke('config:get-copilot-session-events', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].role).toBe('user');
+      expect(result.data[1].role).toBe('assistant');
+    });
+  });
 });

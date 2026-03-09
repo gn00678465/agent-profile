@@ -61,6 +61,7 @@ declare global {
         deleteSession: (sessionPath: string) => Promise<IpcResponse<void>>;
         getClaudeSessions: (configDir: string) => Promise<IpcResponse<SessionEntry[]>>;
         getSessionMessages: (filePath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
+        getCopilotSessionEvents: (sessionPath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
         getRules: (configDir: string) => Promise<IpcResponse<RuleFile[]>>;
         createRule: (configDir: string, rulePath: string) => Promise<IpcResponse<string>>;
         saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;
