@@ -3,9 +3,6 @@ import { Toaster, toast } from 'sonner';
 import { useAgents } from './hooks/useAgents';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
-import { ClaudeSettingsView } from './components/agents/ClaudeSettings';
-import { GeminiSettingsView } from './components/agents/GeminiSettings';
-import { CopilotSettingsView } from './components/agents/CopilotSettings';
 import { ClaudePluginsView } from './components/agents/ClaudePlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpEditor } from './components/editors/McpEditor';
@@ -127,7 +124,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
 
   function renderTabContent(tabId: string) {
     if (type === 'claude-code') {
-      if (tabId === 'settings')  return <ClaudeSettingsView configDir={configDir} />;
+      if (tabId === 'settings')  return <JsonFileEditor filePath={`${configDir}/settings.json`} title="Claude Code Settings" description={`${configDir}/settings.json`} />;
       if (tabId === 'plugins')   return <ClaudePluginsView configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'skills')    return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp')       return <McpEditor configDir={configDir} />;
@@ -138,7 +135,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'rules')    return <RulesEditor configDir={configDir} accentColor={color.primary} />;
     }
     if (type === 'copilot') {
-      if (tabId === 'settings') return <CopilotSettingsView configDir={configDir} />;
+      if (tabId === 'settings') return <JsonFileEditor filePath={`${configDir}/config.json`} title="GitHub Copilot Settings" description={`${configDir}/config.json`} />;
       if (tabId === 'copilot-instructions') return (
         <MarkdownEditor
           filePath={`${configDir}/copilot-instructions.md`}
@@ -159,7 +156,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       );
     }
     if (type === 'gemini') {
-      if (tabId === 'settings')   return <GeminiSettingsView configDir={configDir} />;
+      if (tabId === 'settings')   return <JsonFileEditor filePath={`${configDir}/settings.json`} title="Gemini CLI Settings" description={`${configDir}/settings.json`} />;
       if (tabId === 'sessions')   return <SessionsView configDir={configDir} agentType="gemini" agentColor={color.primary} />;
       if (tabId === 'extensions') return <GeminiExtensionsView configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'skills')     return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;

@@ -1,56 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { ClaudeSettings, McpSettings, Skill, ConfigFile } from '@shared/types';
+import type { McpSettings, Skill, ConfigFile } from '@shared/types';
 import { callElectron, electronAPI } from '../lib/electron';
-
-// Hook for Claude settings
-export function useClaudeSettings(configDir: string | null) {
-  const [config, setConfig] = useState<ConfigFile<ClaudeSettings> | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!configDir) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await callElectron(() =>
-        electronAPI().config.getClaudeSettings(configDir)
-      );
-      setConfig(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load settings');
-    } finally {
-      setLoading(false);
-    }
-  }, [configDir]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const save = useCallback(
-    async (settings: ClaudeSettings) => {
-      if (!configDir) return;
-      setSaving(true);
-      setError(null);
-      try {
-        await callElectron(() =>
-          electronAPI().config.saveClaudeSettings(configDir, settings)
-        );
-        await load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save settings');
-        throw err;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [configDir, load]
-  );
-
-  return { config, loading, saving, error, save, refresh: load };
-}
 
 // Hook for MCP settings
 export function useMcpSettings(configDir: string | null) {

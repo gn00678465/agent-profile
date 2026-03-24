@@ -4,12 +4,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import {
-  useClaudeSettings,
   useMcpSettings,
   useSkills,
   useMarkdown,
 } from '../useConfig';
-import type { ClaudeSettings, McpSettings, Skill, ConfigFile } from '@shared/types';
+import type { McpSettings, Skill, ConfigFile } from '@shared/types';
 
 // Mock the electron module
 vi.mock('../../lib/electron', () => ({
@@ -19,16 +18,6 @@ vi.mock('../../lib/electron', () => ({
 }));
 
 import { callElectron, electronAPI } from '../../lib/electron';
-
-const mockClaudeConfig: ConfigFile<ClaudeSettings> = {
-  path: '/home/user/.claude/settings.json',
-  exists: true,
-  data: {
-    model: 'opus',
-    permissions: { allow: ['Bash(*)'] },
-    env: { MY_VAR: 'value' },
-  },
-};
 
 const mockMcpConfig: ConfigFile<McpSettings> = {
   path: '/home/user/.claude/mcp-config.json',
@@ -54,145 +43,6 @@ const mockSkills: Skill[] = [
     content: '---\nname: GitHub PR\n---\n# GitHub PR',
   },
 ];
-
-describe('useClaudeSettings hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    const mockApi = {
-      config: {
-        getClaudeSettings: vi.fn(),
-        saveClaudeSettings: vi.fn(),
-      },
-    };
-    vi.mocked(electronAPI).mockReturnValue(mockApi as any);
-  });
-
-  it('starts in loading state when configDir is provided', () => {
-    vi.mocked(callElectron).mockImplementation(() => new Promise(() => {}));
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-    expect(result.current.loading).toBe(true);
-    expect(result.current.config).toBeNull();
-  });
-
-  it('does not load when configDir is null', async () => {
-    const { result } = renderHook(() => useClaudeSettings(null));
-    expect(result.current.loading).toBe(false);
-    expect(result.current.config).toBeNull();
-    expect(callElectron).not.toHaveBeenCalled();
-  });
-
-  it('loads Claude settings successfully', async () => {
-    vi.mocked(callElectron).mockResolvedValue(mockClaudeConfig);
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.config).toEqual(mockClaudeConfig);
-    expect(result.current.error).toBeNull();
-  });
-
-  it('sets error state when loading fails', async () => {
-    vi.mocked(callElectron).mockRejectedValue(new Error('Cannot read settings'));
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.error).toBe('Cannot read settings');
-    expect(result.current.config).toBeNull();
-  });
-
-  it('save() calls saveClaudeSettings and reloads config', async () => {
-    vi.mocked(callElectron)
-      .mockResolvedValueOnce(mockClaudeConfig) // initial load
-      .mockResolvedValueOnce(undefined)         // save
-      .mockResolvedValueOnce({                  // reload after save
-        ...mockClaudeConfig,
-        data: { model: 'sonnet' },
-      });
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    await act(async () => {
-      await result.current.save({ model: 'sonnet' });
-    });
-
-    await waitFor(() => expect(result.current.saving).toBe(false));
-
-    expect(callElectron).toHaveBeenCalledTimes(3); // load, save, reload
-  });
-
-  it('sets saving=true during save operation', async () => {
-    let resolveSave: (value: undefined) => void;
-    const savePromise = new Promise<undefined>((resolve) => {
-      resolveSave = resolve;
-    });
-
-    vi.mocked(callElectron)
-      .mockResolvedValueOnce(mockClaudeConfig)  // initial load
-      .mockReturnValueOnce(savePromise as any);  // save - delayed
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    // Start save
-    act(() => {
-      void result.current.save({ model: 'opus' });
-    });
-
-    // During save, saving should be true
-    await waitFor(() => expect(result.current.saving).toBe(true));
-
-    // Resolve save
-    resolveSave!(undefined);
-    vi.mocked(callElectron).mockResolvedValueOnce(mockClaudeConfig);
-
-    await waitFor(() => expect(result.current.saving).toBe(false));
-  });
-
-  it('save() throws and sets error when save fails', async () => {
-    vi.mocked(callElectron)
-      .mockResolvedValueOnce(mockClaudeConfig)
-      .mockRejectedValueOnce(new Error('Write failed'));
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    let caughtError: Error | null = null;
-    await act(async () => {
-      try {
-        await result.current.save({ model: 'bad' });
-      } catch (e) {
-        caughtError = e as Error;
-      }
-    });
-
-    expect(caughtError).not.toBeNull();
-    expect(caughtError?.message).toBe('Write failed');
-    await waitFor(() => expect(result.current.error).toBe('Write failed'));
-  });
-
-  it('refresh() reloads Claude settings', async () => {
-    vi.mocked(callElectron).mockResolvedValue(mockClaudeConfig);
-
-    const { result } = renderHook(() => useClaudeSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    await act(async () => {
-      result.current.refresh();
-    });
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(callElectron).toHaveBeenCalledTimes(2);
-  });
-});
 
 describe('useMcpSettings hook', () => {
   beforeEach(() => {
