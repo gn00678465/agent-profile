@@ -5,7 +5,7 @@ import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
 import { ClaudePluginsView } from './components/agents/ClaudePlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
-import { McpEditor } from './components/editors/McpEditor';
+import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
@@ -14,7 +14,6 @@ import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
 import { RulesEditor } from './components/editors/RulesEditor';
 import { SubagentsEditor } from './components/editors/SubagentsEditor';
 import { CopilotSessionsView } from './components/editors/CopilotSessionsView';
-import { ScrollArea } from './components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { electronAPI, callElectron } from './lib/electron';
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
@@ -81,34 +80,6 @@ export interface SaveState {
   lastSaved?: Date;
 }
 
-// ─── Gemini MCP redirect ──────────────────────────────────────────────────────
-
-function GeminiMcpView({ onNavigate }: { onNavigate: () => void }) {
-  return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-6 p-6">
-        <div>
-          <h2 className="text-sm font-semibold">MCP Servers (via Extensions)</h2>
-          <p className="text-xs text-muted-foreground">
-            Gemini MCP servers are configured inside extension manifests.
-          </p>
-        </div>
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
-          MCP servers for Gemini are defined inside{' '}
-          <code className="font-mono text-xs">gemini-extension.json</code> files in each extension folder.
-          Use the Extensions tab to view and manage them.
-        </div>
-        <button
-          onClick={onNavigate}
-          className="flex items-center gap-2 rounded-md border border-border px-4 py-3 text-sm transition-colors hover:bg-accent text-left w-fit"
-        >
-          Go to Extensions →
-        </button>
-      </div>
-    </ScrollArea>
-  );
-}
-
 // ─── Content view router ──────────────────────────────────────────────────────
 
 interface ContentViewProps {
@@ -127,7 +98,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'settings')  return <JsonFileEditor filePath={`${configDir}/settings.json`} title="Claude Code Settings" description={`${configDir}/settings.json`} />;
       if (tabId === 'plugins')   return <ClaudePluginsView configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'skills')    return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
-      if (tabId === 'mcp')       return <McpEditor configDir={configDir} />;
+      if (tabId === 'mcp') return <McpCommandEditor configDir={configDir} agentType="claude-code" />;
       if (tabId === 'claude-md') return (
         <MarkdownEditor filePath={`${configDir}/CLAUDE.md`} title="CLAUDE.md" description="Global instructions for Claude Code" />
       );
@@ -160,7 +131,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       if (tabId === 'sessions')   return <SessionsView configDir={configDir} agentType="gemini" agentColor={color.primary} />;
       if (tabId === 'extensions') return <GeminiExtensionsView configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'skills')     return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
-      if (tabId === 'mcp')        return <GeminiMcpView onNavigate={() => onTabChange('extensions')} />;
+      if (tabId === 'mcp')        return <McpCommandEditor configDir={configDir} agentType="gemini" />;
       if (tabId === 'gemini-md')  return (
         <MarkdownEditor filePath={`${configDir}/GEMINI.md`} title="GEMINI.md" description="Global instructions for Gemini CLI" />
       );

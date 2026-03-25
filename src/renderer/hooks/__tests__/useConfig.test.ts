@@ -4,11 +4,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import {
-  useMcpSettings,
   useSkills,
   useMarkdown,
 } from '../useConfig';
-import type { McpSettings, Skill, ConfigFile } from '@shared/types';
+import type { Skill, ConfigFile } from '@shared/types';
 
 // Mock the electron module
 vi.mock('../../lib/electron', () => ({
@@ -18,16 +17,6 @@ vi.mock('../../lib/electron', () => ({
 }));
 
 import { callElectron, electronAPI } from '../../lib/electron';
-
-const mockMcpConfig: ConfigFile<McpSettings> = {
-  path: '/home/user/.claude/mcp-config.json',
-  exists: true,
-  data: {
-    mcpServers: {
-      test: { type: 'stdio', command: 'npx', args: ['-y', 'test-mcp'] },
-    },
-  },
-};
 
 const mockSkills: Skill[] = [
   {
@@ -43,53 +32,6 @@ const mockSkills: Skill[] = [
     content: '---\nname: GitHub PR\n---\n# GitHub PR',
   },
 ];
-
-describe('useMcpSettings hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    const mockApi = {
-      config: {
-        getMcp: vi.fn(),
-        saveMcp: vi.fn(),
-      },
-    };
-    vi.mocked(electronAPI).mockReturnValue(mockApi as any);
-  });
-
-  it('does not load when configDir is null', () => {
-    const { result } = renderHook(() => useMcpSettings(null));
-    expect(result.current.loading).toBe(false);
-    expect(callElectron).not.toHaveBeenCalled();
-  });
-
-  it('loads MCP settings successfully', async () => {
-    vi.mocked(callElectron).mockResolvedValue(mockMcpConfig);
-
-    const { result } = renderHook(() => useMcpSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.config).toEqual(mockMcpConfig);
-    expect(result.current.error).toBeNull();
-  });
-
-  it('saves MCP settings and reloads', async () => {
-    vi.mocked(callElectron)
-      .mockResolvedValueOnce(mockMcpConfig)  // load
-      .mockResolvedValueOnce(undefined)       // save
-      .mockResolvedValueOnce(mockMcpConfig); // reload
-
-    const { result } = renderHook(() => useMcpSettings('/home/user/.claude'));
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    await act(async () => {
-      await result.current.save({ mcpServers: {} });
-    });
-
-    expect(callElectron).toHaveBeenCalledTimes(3);
-  });
-});
 
 describe('useSkills hook', () => {
   beforeEach(() => {

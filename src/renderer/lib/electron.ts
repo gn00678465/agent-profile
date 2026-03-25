@@ -1,6 +1,7 @@
 // Type-safe wrapper around the Electron API exposed via preload
 import type {
   AgentProfile,
+  AgentType,
   ClaudeSettings,
   ClaudePlugin,
   GeminiSettings,
@@ -48,8 +49,8 @@ declare global {
         deleteGeminiExtension: (configDir: string, extensionName: string) => Promise<IpcResponse<void>>;
         getCopilotConfig: (configDir: string) => Promise<IpcResponse<ConfigFile<CopilotConfig>>>;
         saveCopilotConfig: (configDir: string, config: CopilotConfig) => Promise<IpcResponse<void>>;
-        getMcp: (configDir: string) => Promise<IpcResponse<ConfigFile<McpSettings>>>;
-        saveMcp: (configDir: string, settings: McpSettings) => Promise<IpcResponse<void>>;
+        getMcp: (configDir: string, agentType?: AgentType) => Promise<IpcResponse<ConfigFile<McpSettings>>>;
+        saveMcp: (configDir: string, agentTypeOrSettings: AgentType | McpSettings, settings?: McpSettings) => Promise<IpcResponse<void>>;
         getSkills: (configDir: string) => Promise<IpcResponse<Skill[]>>;
         saveSkill: (configDir: string, skill: Skill) => Promise<IpcResponse<void>>;
         deleteSkill: (configDir: string, skillId: string) => Promise<IpcResponse<void>>;
