@@ -120,6 +120,7 @@ export interface McpServer {
   alwaysAllow?: string[];
   tools?: string[];
   timeout?: number;
+  trust?: boolean;   // Gemini-specific: bypass confirmation dialogs
 }
 
 export interface McpSettings {

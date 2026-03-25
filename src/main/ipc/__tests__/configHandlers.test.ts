@@ -294,63 +294,78 @@ describe('configHandlers', () => {
       };
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mcpConfig) as any);
 
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot', 'copilot');
       expect(result.success).toBe(true);
       expect(result.data.data?.mcpServers).toBeDefined();
       expect(result.data.path).toContain('mcp-config.json');
     });
 
-    it('falls through candidates to find MCP config in settings.json', async () => {
-      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    it('reads settings.json for gemini agentType', async () => {
       const settingsWithMcp = { mcpServers: { test: { command: 'npx' } } };
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(settingsWithMcp) as any);
 
-      vi.mocked(fs.readFile)
-        .mockRejectedValueOnce(err)          // mcp-config.json not found
-        .mockRejectedValueOnce(err)          // claude_desktop_config.json not found
-        .mockResolvedValue(JSON.stringify(settingsWithMcp) as any); // settings.json found
-
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.gemini');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.gemini', 'gemini');
       expect(result.success).toBe(true);
       expect(result.data.data?.mcpServers).toBeDefined();
     });
 
-    it('returns empty MCP config when no config file has mcpServers', async () => {
+    it('returns empty MCP config on ENOENT', async () => {
       const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       vi.mocked(fs.readFile).mockRejectedValue(err);
 
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot', 'copilot');
       expect(result.success).toBe(true);
       expect(result.data.exists).toBe(false);
       expect(result.data.data).toEqual({ mcpServers: {} });
     });
 
-    it('skips candidate files that exist but have no mcpServers key', async () => {
-      const withoutMcp = { model: 'opus', permissions: { allow: [] } };
-      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    it('getMcp for claude-code reads ~/.claude.json', async () => {
+      const claudeJsonContent = JSON.stringify({
+        model: 'claude-3',
+        mcpServers: { notion: { type: 'http', url: 'https://mcp.notion.com' } },
+      });
+      vi.mocked(fs.readFile).mockResolvedValueOnce(claudeJsonContent as never);
 
-      vi.mocked(fs.readFile)
-        .mockRejectedValueOnce(err)          // mcp-config.json not found
-        .mockRejectedValueOnce(err)          // claude_desktop_config.json not found
-        .mockResolvedValue(JSON.stringify(withoutMcp) as any); // settings.json without mcpServers
-
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
-      // No mcpServers found, returns empty default
+      const result = await ipc.invoke('config:get-mcp', '/some/configDir', 'claude-code');
       expect(result.success).toBe(true);
-      expect(result.data.exists).toBe(false);
+      expect(result.data?.data?.mcpServers).toHaveProperty('notion');
+      expect(result.data?.path).toContain('.claude.json');
+      expect(result.data?.path).not.toContain('configDir');
+    });
+
+    it('getMcp for gemini reads configDir/settings.json', async () => {
+      const content = JSON.stringify({
+        mcpServers: { myserver: { type: 'stdio', command: 'python' } },
+      });
+      vi.mocked(fs.readFile).mockResolvedValueOnce(content as never);
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.gemini', 'gemini');
+      expect(result.success).toBe(true);
+      expect(result.data?.data?.mcpServers).toHaveProperty('myserver');
+    });
+
+    it('getMcp returns empty config on ENOENT', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readFile).mockRejectedValueOnce(err);
+
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot', 'copilot');
+      expect(result.success).toBe(true);
+      expect(result.data?.exists).toBe(false);
+      expect(result.data?.data?.mcpServers).toEqual({});
     });
   });
 
   // ── CONFIG_SAVE_MCP ────────────────────────────────────────────────────────
 
   describe('config:save-mcp', () => {
-    it('creates mcp-config.json when no existing MCP config found', async () => {
+    it('creates mcp-config.json for copilot when no existing MCP config found', async () => {
       const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       vi.mocked(fs.readFile).mockRejectedValue(err);
       vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
 
       const settings = { mcpServers: { test: { command: 'npx' } } };
-      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.claude', settings);
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.copilot', 'copilot', settings);
 
       expect(result.success).toBe(true);
       expect(fs.writeFile).toHaveBeenCalledWith(
@@ -368,7 +383,7 @@ describe('configHandlers', () => {
       vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
 
-      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.claude', newSettings);
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.copilot', 'copilot', newSettings);
       expect(result.success).toBe(true);
 
       const writtenContent = JSON.parse(
@@ -377,6 +392,40 @@ describe('configHandlers', () => {
       // Should merge: keep model, apply new mcpServers
       expect(writtenContent.model).toBe('opus');
       expect(writtenContent.mcpServers).toEqual(newSettings.mcpServers);
+    });
+
+    it('saveMcp for claude-code preserves existing keys', async () => {
+      const existing = JSON.stringify({ model: 'claude-3', permissions: { allow: ['*'] } });
+      vi.mocked(fs.readFile).mockResolvedValueOnce(existing as never);
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      await ipc.invoke(
+        'config:save-mcp',
+        '/ignored',
+        'claude-code',
+        { mcpServers: { test: { type: 'http', url: 'https://x.com' } } }
+      );
+
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const written = JSON.parse(writeCall[1] as string);
+      expect(written.model).toBe('claude-3');
+      expect(written.permissions).toEqual({ allow: ['*'] });
+      expect(written.mcpServers).toHaveProperty('test');
+    });
+
+    it('saveMcp returns error when file is malformed JSON', async () => {
+      vi.mocked(fs.readFile).mockResolvedValueOnce('not valid json {{{' as never);
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
+
+      const result = await ipc.invoke(
+        'config:save-mcp',
+        '/ignored',
+        'claude-code',
+        { mcpServers: {} }
+      );
+      expect(result.success).toBe(false);
     });
   });
 

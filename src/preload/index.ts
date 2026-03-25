@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '../shared/types';
 import type {
   IpcResponse,
+  AgentType,
   DirectoryEntry,
   AgentProfile,
   ClaudeSettings,
@@ -84,10 +85,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<void>(IPC_CHANNELS.CONFIG_SAVE_COPILOT_CONFIG, configDir, config),
 
     // MCP (all agents)
-    getMcp: (configDir: string) =>
-      invoke<ConfigFile<McpSettings>>(IPC_CHANNELS.CONFIG_GET_MCP, configDir),
-    saveMcp: (configDir: string, settings: McpSettings) =>
-      invoke<void>(IPC_CHANNELS.CONFIG_SAVE_MCP, configDir, settings),
+    getMcp: (configDir: string, agentType: AgentType) =>
+      invoke<ConfigFile<McpSettings>>(IPC_CHANNELS.CONFIG_GET_MCP, configDir, agentType),
+    saveMcp: (configDir: string, agentType: AgentType, settings: McpSettings) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_SAVE_MCP, configDir, agentType, settings),
 
     // Skills (all agents)
     getSkills: (configDir: string) =>

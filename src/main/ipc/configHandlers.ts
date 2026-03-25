@@ -7,6 +7,7 @@ import os from 'os';
 import { IPC_CHANNELS } from '../../shared/types';
 import type {
   IpcResponse,
+  AgentType,
   AgentProfile,
   ClaudeSettings,
   ClaudeInstalledPlugins,
@@ -433,28 +434,40 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_GET_MCP,
-    async (_event, configDir: string) => {
+    async (_event, configDir: string, agentType: AgentType) => {
       try {
-        // Try agent-specific MCP config files in priority order
-        const candidates = [
-          path.join(configDir, 'mcp-config.json'),        // Copilot
-          path.join(configDir, 'claude_desktop_config.json'), // Claude Desktop
-          path.join(configDir, 'settings.json'),          // Gemini / Claude Code
-        ];
-
-        for (const candidate of candidates) {
-          const result = await readJsonFile<McpSettings>(candidate);
-          if (result.exists && result.data?.mcpServers != null) {
-            return success(result);
-          }
+        let targetPath: string;
+        if (agentType === 'claude-code') {
+          targetPath = path.join(os.homedir(), '.claude.json');
+        } else if (agentType === 'gemini') {
+          targetPath = path.join(configDir, 'settings.json');
+        } else {
+          targetPath = path.join(configDir, 'mcp-config.json');
         }
 
-        // Return empty config pointing to the most appropriate file
-        const defaultFile = path.join(configDir, 'mcp-config.json');
+        assertSafePath(targetPath, os.homedir());
+
+        let content: string;
+        try {
+          content = await fs.readFile(targetPath, 'utf-8');
+        } catch (err: unknown) {
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+            return success<ConfigFile<McpSettings>>({
+              path: targetPath,
+              exists: false,
+              data: { mcpServers: {} },
+            });
+          }
+          throw err;
+        }
+
+        // Abort on malformed JSON — do not silently use empty object
+        const parsed = JSON.parse(content) as Record<string, unknown>;
+        const mcpServers = (parsed.mcpServers ?? {}) as McpSettings['mcpServers'];
         return success<ConfigFile<McpSettings>>({
-          path: defaultFile,
-          exists: false,
-          data: { mcpServers: {} },
+          path: targetPath,
+          exists: true,
+          data: { mcpServers },
         });
       } catch (err) {
         return failure(err);
@@ -464,39 +477,35 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_SAVE_MCP,
-    async (_event, configDir: string, settings: McpSettings) => {
+    async (_event, configDir: string, agentType: AgentType, settings: McpSettings) => {
       try {
-        // Determine target file: prefer existing MCP config
-        const candidates = [
-          path.join(configDir, 'mcp-config.json'),
-          path.join(configDir, 'claude_desktop_config.json'),
-          path.join(configDir, 'settings.json'),
-        ];
-
-        let targetPath = candidates[0];
-        for (const candidate of candidates) {
-          try {
-            const content = await fs.readFile(candidate, 'utf-8');
-            const data = JSON.parse(content) as Record<string, unknown>;
-            if (data.mcpServers != null) {
-              targetPath = candidate;
-              break;
-            }
-          } catch {
-            // file doesn't exist or isn't JSON
-          }
+        let targetPath: string;
+        if (agentType === 'claude-code') {
+          targetPath = path.join(os.homedir(), '.claude.json');
+        } else if (agentType === 'gemini') {
+          targetPath = path.join(configDir, 'settings.json');
+        } else {
+          targetPath = path.join(configDir, 'mcp-config.json');
         }
 
-        // Merge MCP settings into existing file
+        assertSafePath(targetPath, os.homedir());
+
+        // Read existing file — abort on malformed JSON to prevent data loss
         let existing: Record<string, unknown> = {};
         try {
           const content = await fs.readFile(targetPath, 'utf-8');
           existing = JSON.parse(content) as Record<string, unknown>;
-        } catch {
-          // New file
+        } catch (err: unknown) {
+          if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+            // File exists but is malformed — abort rather than wipe
+            throw err;
+          }
+          // ENOENT: new file, start from empty
         }
 
-        await writeJsonFile(targetPath, { ...existing, ...settings });
+        // Preserve all existing keys; update only mcpServers
+        const merged = { ...existing, mcpServers: settings.mcpServers };
+        await writeJsonFile(targetPath, merged);
         return success(undefined);
       } catch (err) {
         return failure(err);

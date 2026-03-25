@@ -152,49 +152,33 @@ Content here.`;
   // ── MCP config edge cases ─────────────────────────────────────────────────
 
   describe('config:get-mcp - edge cases', () => {
-    it('prioritizes mcp-config.json over settings.json', async () => {
+    it('prioritizes mcp-config.json for copilot agentType', async () => {
       const mcpConfig = { mcpServers: { docker: { command: 'docker' } } };
-      const settingsWithMcp = { mcpServers: { npx: { command: 'npx' } } };
+      vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(mcpConfig) as any);
 
-      vi.mocked(fs.readFile)
-        .mockResolvedValueOnce(JSON.stringify(mcpConfig) as any) // mcp-config.json
-        .mockResolvedValueOnce(JSON.stringify(settingsWithMcp) as any); // settings.json
-
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot', 'copilot');
       expect(result.success).toBe(true);
       expect(result.data.path).toContain('mcp-config.json');
       expect(result.data.data?.mcpServers).toHaveProperty('docker');
     });
 
-    it('returns claude_desktop_config.json if it has mcpServers and mcp-config.json does not', async () => {
-      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
-      const desktopConfig = { mcpServers: { server1: { command: 'server1' } } };
+    it('reads ~/.claude.json for claude-code agentType and returns its mcpServers', async () => {
+      const claudeJson = { model: 'claude-3', mcpServers: { server1: { command: 'server1' } } };
+      vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(claudeJson) as any);
 
-      vi.mocked(fs.readFile)
-        .mockRejectedValueOnce(err) // mcp-config.json not found
-        .mockResolvedValueOnce(JSON.stringify(desktopConfig) as any); // claude_desktop_config.json - has mcpServers
-
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude', 'claude-code');
       expect(result.success).toBe(true);
-      // The path should be for one of the candidates - the one with mcpServers
       expect(result.data.data?.mcpServers).toBeDefined();
       expect(result.data.data?.mcpServers).toHaveProperty('server1');
     });
 
-    it('returns existing config file as exists:true when mcpServers is non-null (even empty object)', async () => {
-      // When a candidate file has mcpServers: {}, it is found and returned with exists:true
-      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    it('returns exists:true when mcpServers is an empty object in the file', async () => {
       const settingsWithEmptyMcp = { model: 'opus', mcpServers: {} };
+      vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(settingsWithEmptyMcp) as any);
 
-      vi.mocked(fs.readFile)
-        .mockRejectedValueOnce(err)  // mcp-config.json not found
-        .mockRejectedValueOnce(err)  // claude_desktop_config.json not found
-        .mockResolvedValueOnce(JSON.stringify(settingsWithEmptyMcp) as any); // settings.json with mcpServers: {}
-
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.gemini', 'gemini');
       expect(result.success).toBe(true);
       expect(result.data.exists).toBe(true);
-      // mcpServers: {} is NOT null, so it matches
       expect(result.data.data?.mcpServers).toEqual({});
     });
   });
@@ -204,21 +188,13 @@ Content here.`;
       const existingGeminiSettings = { general: { vimMode: false }, mcpServers: { old: { command: 'old' } } };
       const newMcpSettings = { mcpServers: { new: { command: 'new' } } };
 
-      // First call for save logic: reads mcp-config.json -> not found
-      // Second call: reads claude_desktop_config.json -> not found
-      // Third call: reads settings.json -> has mcpServers
-      // Fourth call: reads settings.json again for merge
-      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       vi.mocked(fs.readFile)
-        .mockRejectedValueOnce(err)  // mcp-config.json
-        .mockRejectedValueOnce(err)  // claude_desktop_config.json
-        .mockResolvedValueOnce(JSON.stringify(existingGeminiSettings) as any)  // settings.json has mcpServers
-        .mockResolvedValueOnce(JSON.stringify(existingGeminiSettings) as any); // merge read
+        .mockResolvedValueOnce(JSON.stringify(existingGeminiSettings) as any); // settings.json read for merge
 
       vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
 
-      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.gemini', newMcpSettings);
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.gemini', 'gemini', newMcpSettings);
       expect(result.success).toBe(true);
 
       const writtenContent = JSON.parse(
@@ -236,7 +212,7 @@ Content here.`;
       vi.mocked(fs.writeFile).mockResolvedValue(undefined as any);
 
       const newSettings = { mcpServers: { brand_new: { command: 'new' } } };
-      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.copilot', newSettings);
+      const result = await ipc.invoke('config:save-mcp', '/home/testuser/.copilot', 'copilot', newSettings);
 
       expect(result.success).toBe(true);
       expect(fs.writeFile).toHaveBeenCalledWith(
@@ -622,10 +598,8 @@ Content here.`;
     it('get-mcp returns failure when all candidates exist but have malformed JSON', async () => {
       vi.mocked(fs.readFile).mockResolvedValue('{{bad json' as any);
 
-      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.claude');
-      expect(result.success).toBe(true);
-      // The malformed JSON means mcpServers is null, so it falls through to default
-      expect(result.data.exists).toBe(false);
+      const result = await ipc.invoke('config:get-mcp', '/home/testuser/.copilot', 'copilot');
+      expect(result.success).toBe(false);
     });
   });
 });
