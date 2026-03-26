@@ -1,34 +1,34 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { callElectron, electronAPI } from '@/lib/electron';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { RemoveButton } from '@/components/ui/remove-button';
 import { toast } from 'sonner';
+import { useItemLoader } from '@/hooks/useItemLoader';
+import { ExtensionListLayout } from '@/components/shared/ExtensionListLayout';
 
 interface GeminiExtensionsProps {
   configDir: string;
   accentColor: string;
 }
 
-export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtensionsProps) {
-  const [exts, setExts] = useState<Array<{ name: string; enabled: boolean; description?: string; version?: string }>>([]);
-  const [loading, setLoading] = useState(true);
+type GeminiExt = { name: string; enabled: boolean; description?: string; version?: string };
 
-  const load = useCallback(async () => {
-    setLoading(true);
+export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtensionsProps) {
+  const loadFn = useCallback(async (): Promise<GeminiExt[]> => {
     try {
       const d = await callElectron(() => electronAPI().config.getGeminiExtensions(configDir));
-      setExts(d.extensions);
+      return d.extensions;
     } catch {
       toast.error('Failed to load extensions');
-    } finally {
-      setLoading(false);
+      return [];
     }
   }, [configDir]);
 
-  useEffect(() => { void load(); }, [load]);
+  const { items: exts, loading, setItems: setExts } = useItemLoader(loadFn);
 
-  async function handleDelete(ext: { name: string }) {
-    const confirmed = confirm(`Delete extension "${ext.name}"?\n\nThis will remove the enablement entry and the extension folder.`);
+  async function handleDelete(ext: GeminiExt) {
+    const confirmed = confirm(
+      `Delete extension "${ext.name}"?\n\nThis will remove the enablement entry and the extension folder.`
+    );
     if (!confirmed) return;
     try {
       await callElectron(() =>
@@ -43,44 +43,55 @@ export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtension
     }
   }
 
-  if (loading) return <div className="flex h-full items-center justify-center text-muted-foreground text-sm">Loading extensions...</div>;
-
   return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-4 p-6">
-        <div>
-          <h2 className="text-sm font-semibold">Gemini Extensions</h2>
-          <p className="text-xs text-muted-foreground">{configDir}/extensions/</p>
-        </div>
-        {exts.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-            No extensions installed.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {exts.map((ext) => (
-              <div key={ext.name} className="group flex items-center justify-between rounded-md border border-border bg-[var(--bg-surface)] px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full" style={{ background: ext.enabled ? accentColor : 'var(--text-muted)' }} />
-                  <div>
-                    <div className="font-mono text-sm">{ext.name}</div>
-                    {ext.description && <div className="text-xs text-muted-foreground">{ext.description}</div>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RemoveButton
-                    label="Delete extension"
-                    onClick={() => { void handleDelete(ext); }}
-                  />
-                  <span className={`rounded px-2 py-0.5 text-xs ${ext.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
-                    {ext.enabled ? 'enabled' : 'disabled'}
-                  </span>
+    <div className="flex h-full flex-col">
+      <div className="flex flex-col gap-1 border-b border-border px-6 py-4">
+        <h2 className="text-sm font-semibold">Gemini Extensions</h2>
+        <p className="text-xs text-muted-foreground">{configDir}/extensions/</p>
+      </div>
+      <ExtensionListLayout
+        loading={loading}
+        loadingText="Loading extensions..."
+        isEmpty={exts.length === 0}
+        emptyTitle="No extensions installed."
+      >
+        <div className="flex flex-col gap-2 p-6">
+          {exts.map((ext) => (
+            <div
+              key={ext.name}
+              className="group flex items-center justify-between rounded-md border border-border bg-[var(--bg-surface)] px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: ext.enabled ? accentColor : 'var(--text-muted)' }}
+                />
+                <div>
+                  <div className="font-mono text-sm">{ext.name}</div>
+                  {ext.description && (
+                    <div className="text-xs text-muted-foreground">{ext.description}</div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+              <div className="flex items-center gap-2">
+                <RemoveButton
+                  label="Delete extension"
+                  onClick={() => { void handleDelete(ext); }}
+                />
+                <span
+                  className={`rounded px-2 py-0.5 text-xs ${
+                    ext.enabled
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {ext.enabled ? 'enabled' : 'disabled'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </ExtensionListLayout>
+    </div>
   );
 }
