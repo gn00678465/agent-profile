@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Folder, Code, Trash2, RefreshCw, FolderOpen, Search } from 'lucide-react';
+import { Folder, Code, RefreshCw, FolderOpen, Search } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -91,15 +92,11 @@ function SessionDetail({ session, onDelete, onOpenFolder, accentColor }: Session
             <FolderOpen className="h-3.5 w-3.5" />
             Open in Explorer
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="justify-start gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+          <RemoveButton
+            variant="panel"
+            label="Delete Session"
             onClick={() => onDelete(session)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete Session
-          </Button>
+          />
         </div>
       </div>
     </div>
@@ -245,17 +242,13 @@ export function SessionsView({ configDir, agentType, agentColor }: SessionsViewP
                 <span className="text-xs text-muted-foreground">
                   {formatDate(session.updatedAt ?? session.lastModified)}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
+                <RemoveButton
+                  label="Delete session"
                   onClick={(e) => {
                     e.stopPropagation();
                     void handleDelete(session);
                   }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                />
               </div>
             </div>
           ))}

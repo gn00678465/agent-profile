@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FileText, Trash2, RefreshCw, Plus, X, Pencil } from 'lucide-react';
+import { FileText, RefreshCw, Plus, X, Pencil } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -238,14 +239,11 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                          title="Delete"
+                        <RemoveButton
+                          label="Delete"
+                          className="h-5 w-5"
                           onClick={(e) => { e.stopPropagation(); void handleDelete(agent); }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        />
                       </>
                     )}
                   </div>

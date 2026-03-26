@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronRight, Puzzle, Trash2 } from 'lucide-react';
+import { RefreshCw, ChevronRight, Puzzle } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -105,15 +106,11 @@ function PluginDetail({ plugin, onToggle, onDelete, accentColor }: PluginDetailP
         </div>
 
         {/* Delete */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full border-destructive/50 text-destructive hover:bg-destructive/10"
+        <RemoveButton
+          variant="panel"
+          label="Delete Plugin"
           onClick={() => onDelete(plugin)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete Plugin
-        </Button>
+        />
       </div>
     </div>
   );
@@ -279,13 +276,10 @@ export function ClaudePluginsView({ configDir, accentColor }: ClaudePluginsProps
                   onClick={(e) => e.stopPropagation()}
                   onCheckedChange={(v) => { void handleToggle(plugin.id, v); }}
                 />
-                <button
-                  aria-label="Delete plugin"
-                  className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                <RemoveButton
+                  label="Delete plugin"
                   onClick={(e) => { e.stopPropagation(); void handleDelete(plugin); }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                />
                 <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
               </div>
             </div>

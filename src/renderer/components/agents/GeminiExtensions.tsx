@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2 } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { toast } from 'sonner';
 
 interface GeminiExtensionsProps {
@@ -68,13 +68,10 @@ export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtension
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    aria-label="Delete extension"
-                    className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                  <RemoveButton
+                    label="Delete extension"
                     onClick={() => { void handleDelete(ext); }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  />
                   <span className={`rounded px-2 py-0.5 text-xs ${ext.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
                     {ext.enabled ? 'enabled' : 'disabled'}
                   </span>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { parseMcpCommand } from '@/lib/parseMcpCommand';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { callElectron, electronAPI } from '@/lib/electron';
@@ -152,15 +153,12 @@ export function McpCommandEditor({ configDir, agentType }: McpCommandEditorProps
                     </span>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 text-destructive hover:bg-destructive/10"
+                <RemoveButton
+                  alwaysVisible
+                  label={`Delete ${name}`}
+                  className="h-7 w-7"
                   onClick={() => handleDelete(name)}
-                  aria-label={`Delete ${name}`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                />
               </div>
             ))}
           </div>

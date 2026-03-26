@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FolderOpen, FolderClosed, FileText, Trash2, RefreshCw, ChevronRight, Plus, X, Pencil } from 'lucide-react';
+import { FolderOpen, FolderClosed, FileText, RefreshCw, ChevronRight, Plus, X, Pencil } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -235,14 +236,11 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
                         }
                         <span className="truncate">{folder}</span>
                       </button>
-                      <Button
-                        variant="ghost" size="icon"
-                        className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                        title={`Delete folder "${folder}"`}
+                      <RemoveButton
+                        label={`Delete folder "${folder}"`}
+                        className="h-4 w-4"
                         onClick={() => { void handleDeleteFolder(folder); }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      />
                     </div>
                   )}
 
@@ -306,14 +304,11 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
                             >
                               <Pencil className="h-3 w-3" />
                             </Button>
-                            <Button
-                              variant="ghost" size="icon"
-                              className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                              title="Delete"
+                            <RemoveButton
+                              label="Delete"
+                              className="h-5 w-5"
                               onClick={(e) => { e.stopPropagation(); void handleDelete(rule); }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            />
                           </>
                         )}
                       </div>

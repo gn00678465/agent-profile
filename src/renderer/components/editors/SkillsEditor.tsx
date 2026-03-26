@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Trash2, Save, X, RefreshCw, Zap, Link } from 'lucide-react';
+import { Plus, Save, X, RefreshCw, Zap, Link } from 'lucide-react';
 import { useSkills } from '@/hooks/useConfig';
 import { Button } from '@/components/ui/button';
+import { RemoveButton } from '@/components/ui/remove-button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -194,17 +195,13 @@ export function SkillsEditor({ configDir, agentName, agentType = 'custom' }: Ski
                   </div>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 text-destructive"
+              <RemoveButton
+                label="Delete skill"
                 onClick={(e) => {
                   e.stopPropagation();
                   void handleDelete(skill.id);
                 }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              />
             </div>
           ))}
         </ScrollArea>
