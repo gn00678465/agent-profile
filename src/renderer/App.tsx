@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
 import { useAgents } from './hooks/useAgents';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
@@ -9,7 +9,7 @@ import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
-import { SessionsView } from './components/editors/SessionsView';
+import { GeminiSessionsView } from './components/editors/GeminiSessionsView';
 import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
 import { RulesEditor } from './components/editors/RulesEditor';
 import { SubagentsEditor } from './components/editors/SubagentsEditor';
@@ -128,7 +128,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     }
     if (type === 'gemini') {
       if (tabId === 'settings')   return <JsonFileEditor filePath={`${configDir}/settings.json`} title="Gemini CLI Settings" description={`${configDir}/settings.json`} />;
-      if (tabId === 'sessions')   return <SessionsView configDir={configDir} agentType="gemini" agentColor={color.primary} />;
+      if (tabId === 'sessions')   return <GeminiSessionsView configDir={configDir} agentColor={color.primary} />;
       if (tabId === 'extensions') return <GeminiExtensionsView configDir={configDir} accentColor={color.primary} />;
       if (tabId === 'skills')     return <SkillsEditor configDir={configDir} agentName={name} agentType={type} />;
       if (tabId === 'mcp')        return <McpCommandEditor configDir={configDir} agentType="gemini" />;
