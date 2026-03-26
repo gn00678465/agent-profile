@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { ChevronRight, Puzzle } from 'lucide-react';
+import { Puzzle } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { RemoveButton } from '@/components/ui/remove-button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useItemLoader } from '@/hooks/useItemLoader';
 import { ExtensionListLayout } from '@/components/shared/ExtensionListLayout';
+import { ExtensionRow } from '@/components/shared/ExtensionRow';
 import type { ClaudePlugin } from '@shared/types';
 import { FilterToolbar, type FilterValue } from './ClaudePlugins/FilterToolbar';
 
@@ -199,61 +200,30 @@ export function ClaudePluginsView({ configDir, accentColor }: ClaudePluginsProps
         }
       >
         {filtered.map((plugin) => (
-          <div
-            role="button"
-            tabIndex={0}
+          <ExtensionRow
             key={`${plugin.id}-${plugin.scope}-${plugin.installPath}`}
-            onClick={() =>
-              setSelected(
-                selected?.id === plugin.id && selected.scope === plugin.scope ? null : plugin
-              )
+            name={plugin.name}
+            enabled={plugin.enabled ?? false}
+            accentColor={accentColor}
+            subtitle={
+              <span className="flex items-center gap-2">
+                <span className="font-mono">v{plugin.version?.slice(0, 8)}</span>
+                <span>·</span>
+                <span>{plugin.marketplace}</span>
+              </span>
             }
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ')
-                setSelected(
-                  selected?.id === plugin.id && selected.scope === plugin.scope ? null : plugin
-                );
-            }}
-            className={`group flex w-full cursor-pointer items-center justify-between border-b border-border/50 px-4 py-3 text-left transition-colors ${
-              selected?.id === plugin.id && selected?.scope === plugin.scope
-                ? 'bg-accent/60'
-                : 'hover:bg-accent/30'
-            }`}
-          >
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="mt-1 shrink-0">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: plugin.enabled ? accentColor : 'var(--text-muted)' }}
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-medium">{plugin.name}</span>
-                  <span className={`rounded border px-1.5 py-0 text-[10px] ${SCOPE_COLORS[plugin.scope] ?? ''}`}>
-                    {plugin.scope}
-                  </span>
-                </div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-mono">v{plugin.version?.slice(0, 8)}</span>
-                  <span>·</span>
-                  <span>{plugin.marketplace}</span>
-                </div>
-              </div>
-            </div>
-            <div className="ml-2 flex shrink-0 items-center gap-2">
-              <Switch
-                checked={plugin.enabled ?? false}
-                onClick={(e) => e.stopPropagation()}
-                onCheckedChange={(v) => { void handleToggle(plugin.id, v); }}
-              />
-              <RemoveButton
-                label="Delete plugin"
-                onClick={(e) => { e.stopPropagation(); void handleDelete(plugin); }}
-              />
-              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
-            </div>
-          </div>
+            badge={
+              <span className={`rounded border px-1.5 py-0 text-[10px] ${SCOPE_COLORS[plugin.scope] ?? ''}`}>
+                {plugin.scope}
+              </span>
+            }
+            deleteLabel="Delete plugin"
+            onToggle={(v) => { void handleToggle(plugin.id, v); }}
+            onClick={() => setSelected(selected?.id === plugin.id && selected.scope === plugin.scope ? null : plugin)}
+            selected={selected?.id === plugin.id && selected?.scope === plugin.scope}
+            showChevron
+            onDelete={() => { void handleDelete(plugin); }}
+          />
         ))}
       </ExtensionListLayout>
 

@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { callElectron, electronAPI } from '@/lib/electron';
-import { RemoveButton } from '@/components/ui/remove-button';
 import { toast } from 'sonner';
 import { useItemLoader } from '@/hooks/useItemLoader';
 import { ExtensionListLayout } from '@/components/shared/ExtensionListLayout';
+import { ExtensionRow } from '@/components/shared/ExtensionRow';
 
 interface GeminiExtensionsProps {
   configDir: string;
@@ -55,42 +55,28 @@ export function GeminiExtensionsView({ configDir, accentColor }: GeminiExtension
         isEmpty={exts.length === 0}
         emptyTitle="No extensions installed."
       >
-        <div className="flex flex-col gap-2 p-6">
-          {exts.map((ext) => (
-            <div
-              key={ext.name}
-              className="group flex items-center justify-between rounded-md border border-border bg-[var(--bg-surface)] px-4 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: ext.enabled ? accentColor : 'var(--text-muted)' }}
-                />
-                <div>
-                  <div className="font-mono text-sm">{ext.name}</div>
-                  {ext.description && (
-                    <div className="text-xs text-muted-foreground">{ext.description}</div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <RemoveButton
-                  label="Delete extension"
-                  onClick={() => { void handleDelete(ext); }}
-                />
-                <span
-                  className={`rounded px-2 py-0.5 text-xs ${
-                    ext.enabled
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {ext.enabled ? 'enabled' : 'disabled'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {exts.map((ext) => (
+          <ExtensionRow
+            key={ext.name}
+            name={ext.name}
+            enabled={ext.enabled}
+            accentColor={accentColor}
+            subtitle={ext.description}
+            badge={
+              <span
+                className={`rounded px-2 py-0.5 text-xs ${
+                  ext.enabled
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {ext.enabled ? 'enabled' : 'disabled'}
+              </span>
+            }
+            deleteLabel="Delete extension"
+            onDelete={() => { void handleDelete(ext); }}
+          />
+        ))}
       </ExtensionListLayout>
     </div>
   );
