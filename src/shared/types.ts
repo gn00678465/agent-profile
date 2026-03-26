@@ -171,6 +171,23 @@ export interface ClaudeSessionMessage {
 
 export type CopilotSessionMessage = ClaudeSessionMessage;
 
+export interface GeminiSessionMessage {
+  id: string;
+  type: 'user' | 'gemini' | 'info';
+  content: string;
+  timestamp: string;
+  thoughts?: Array<{ subject: string; description: string }>;
+  tokens?: {
+    input: number;
+    output: number;
+    cached?: number;
+    thoughts?: number;
+    tool?: number;
+    total: number;
+  };
+  model?: string;
+}
+
 // ─── Session types ────────────────────────────────────────────────────────────
 
 export interface GeminiSession {
@@ -229,6 +246,14 @@ export interface SessionEntry {
   // Common
   lastModified?: number;
   slug?: string;
+}
+
+export interface GeminiSessionEntry extends SessionEntry {
+  sessionId: string;       // UUID from the JSON file
+  projectHash: string;     // the parent folder hash
+  startTime: string;       // ISO timestamp
+  lastUpdated: string;     // ISO timestamp
+  messageCount?: number;   // total messages in the session
 }
 
 export interface RuleFile {
@@ -301,6 +326,8 @@ export const IPC_CHANNELS = {
   CONFIG_DELETE_SESSION: 'config:delete-session',
   CONFIG_GET_CLAUDE_SESSIONS: 'config:get-claude-sessions',
   CONFIG_GET_SESSION_MESSAGES: 'config:get-session-messages',
+  CONFIG_GET_GEMINI_SESSIONS: 'config:get-gemini-sessions',
+  CONFIG_GET_GEMINI_SESSION_MESSAGES: 'config:get-gemini-session-messages',
 
   // Rules
   CONFIG_GET_RULES: 'config:get-rules',

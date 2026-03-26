@@ -24,6 +24,8 @@ import type {
   ClaudeSessionMessage,
   RuleFile,
   SubagentFile,
+  GeminiSessionEntry,
+  GeminiSessionMessage,
 } from '../../shared/types';
 
 const execFileAsync = promisify(execFile);
@@ -60,6 +62,12 @@ function success<T>(data: T): IpcResponse<T> {
 function failure(error: unknown): IpcResponse<never> {
   const message = error instanceof Error ? error.message : String(error);
   return { success: false, error: message };
+}
+
+function formatGeminiSessionName(iso: string): string {
+  const d = new Date(iso);
+  // Show date + time together as the session's primary identifier
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 async function readJsonFile<T>(filePath: string): Promise<ConfigFile<T>> {
@@ -893,6 +901,120 @@ export function registerConfigHandlers(ipcMain: IpcMain) {
         const result = messages.length > MAX_MESSAGES
           ? messages.slice(messages.length - MAX_MESSAGES)
           : messages;
+        return success(result);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  // ── Gemini Sessions ───────────────────────────────────────────────────────
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_GEMINI_SESSIONS,
+    async (_event, configDir: string) => {
+      try {
+        assertSafePath(configDir, os.homedir());
+
+        const sessions: GeminiSessionEntry[] = [];
+
+        const scanDir = async (baseDir: string) => {
+          let hashDirs: string[];
+          try {
+            hashDirs = await fs.readdir(baseDir);
+          } catch {
+            return;
+          }
+          for (const hashDir of hashDirs) {
+            const chatsDir = path.join(baseDir, hashDir, 'chats');
+            let chatFiles: string[];
+            try {
+              chatFiles = await fs.readdir(chatsDir);
+            } catch {
+              continue;
+            }
+            for (const chatFile of chatFiles) {
+              if (!chatFile.endsWith('.json')) continue;
+              const filePath = path.join(chatsDir, chatFile);
+              try {
+                const content = await fs.readFile(filePath, 'utf-8');
+                const json = JSON.parse(content) as {
+                  sessionId?: string;
+                  projectHash?: string;
+                  startTime?: string;
+                  lastUpdated?: string;
+                  messages?: unknown[];
+                };
+                const stat = await fs.stat(filePath);
+                if (!json.sessionId || !json.startTime) continue;
+                sessions.push({
+                  id: json.sessionId,
+                  name: formatGeminiSessionName(json.startTime),
+                  path: filePath,
+                  type: 'hash',
+                  agentType: 'gemini',
+                  lastModified: stat.mtimeMs,
+                  sessionId: json.sessionId,
+                  projectHash: json.projectHash ?? hashDir,
+                  startTime: json.startTime,
+                  lastUpdated: json.lastUpdated ?? json.startTime,
+                  messageCount: json.messages?.length ?? 0,
+                });
+              } catch {
+                // skip malformed files
+              }
+            }
+          }
+        };
+
+        await scanDir(path.join(configDir, 'tmp'));
+        await scanDir(path.join(configDir, 'history'));
+
+        sessions.sort((a, b) =>
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        );
+
+        return success(sessions);
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_GET_GEMINI_SESSION_MESSAGES,
+    async (_event, filePath: string) => {
+      try {
+        assertSafePath(filePath, os.homedir());
+        const content = await fs.readFile(filePath, 'utf-8');
+        const json = JSON.parse(content) as { messages?: Array<Record<string, unknown>> };
+        const rawMessages = json.messages ?? [];
+        // Normalize content to string — Gemini CLI emits several shapes:
+        //   "string"                  → use as-is
+        //   { text: "..." }           → extract .text
+        //   [{ text: "..." }, ...]    → join all .text values
+        const normalizeContent = (raw: unknown): string => {
+          if (typeof raw === 'string') return raw;
+          if (Array.isArray(raw)) {
+            return raw
+              .map((item) =>
+                item && typeof item === 'object' && 'text' in item
+                  ? String((item as { text: unknown }).text ?? '')
+                  : String(item ?? '')
+              )
+              .join('');
+          }
+          if (raw && typeof raw === 'object' && 'text' in raw) {
+            return String((raw as { text: unknown }).text ?? '');
+          }
+          return String(raw ?? '');
+        };
+        const normalized: GeminiSessionMessage[] = rawMessages.map((msg) => ({
+          ...(msg as GeminiSessionMessage),
+          content: normalizeContent(msg.content),
+        }));
+        const MAX_MESSAGES = 500;
+        const result = normalized.length > MAX_MESSAGES ? normalized.slice(normalized.length - MAX_MESSAGES) : normalized;
         return success(result);
       } catch (err) {
         return failure(err);

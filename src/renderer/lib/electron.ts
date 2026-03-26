@@ -13,6 +13,8 @@ import type {
   IpcResponse,
   SessionEntry,
   ClaudeSessionMessage,
+  GeminiSessionEntry,
+  GeminiSessionMessage,
   RuleFile,
   SubagentFile,
 } from '@shared/types';
@@ -63,6 +65,8 @@ declare global {
         getClaudeSessions: (configDir: string) => Promise<IpcResponse<SessionEntry[]>>;
         getSessionMessages: (filePath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
         getCopilotSessionEvents: (sessionPath: string) => Promise<IpcResponse<ClaudeSessionMessage[]>>;
+        getGeminiSessions: (configDir: string) => Promise<IpcResponse<GeminiSessionEntry[]>>;
+        getGeminiSessionMessages: (sessionPath: string) => Promise<IpcResponse<GeminiSessionMessage[]>>;
         getRules: (configDir: string) => Promise<IpcResponse<RuleFile[]>>;
         createRule: (configDir: string, rulePath: string) => Promise<IpcResponse<string>>;
         saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;

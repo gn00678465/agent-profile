@@ -1484,4 +1484,207 @@ Skill instructions here.`;
       expect(result.data[1].role).toBe('assistant');
     });
   });
+
+  // ── CONFIG_GET_GEMINI_SESSIONS ─────────────────────────────────────────────
+
+  describe('config:get-gemini-sessions', () => {
+    it('returns empty array when tmp dir does not exist', async () => {
+      const err = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      vi.mocked(fs.readdir).mockRejectedValue(err);
+
+      const result = await ipc.invoke('config:get-gemini-sessions', path.join(HOME, '.gemini'));
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('returns parsed session entries from valid JSON files', async () => {
+      const sessionJson = {
+        sessionId: 'session-uuid-1',
+        projectHash: 'proj-hash-1',
+        startTime: '2026-01-06T14:11:00.829Z',
+        lastUpdated: '2026-01-06T14:11:21.791Z',
+        messages: [
+          { id: '1', type: 'user', content: 'hello', timestamp: '2026-01-06T14:11:01Z' },
+          { id: '2', type: 'assistant', content: 'hi', timestamp: '2026-01-06T14:11:02Z' },
+        ],
+      };
+
+      vi.mocked(fs.readdir)
+        .mockResolvedValueOnce(['hash-dir'] as any)     // baseDir (tmp)
+        .mockResolvedValueOnce(['session.json'] as any) // chatsDir
+        .mockRejectedValueOnce(new Error('ENOENT'));    // history scan
+
+      vi.mocked(fs.stat)
+        .mockResolvedValue({ mtimeMs: 1704555060829 } as any);
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValue(JSON.stringify(sessionJson) as any);
+
+      const result = await ipc.invoke('config:get-gemini-sessions', path.join(HOME, '.gemini'));
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].sessionId).toBe('session-uuid-1');
+      expect(result.data[0].projectHash).toBe('proj-hash-1');
+      expect(result.data[0].messageCount).toBe(2);
+    });
+
+    it('skips malformed JSON files gracefully', async () => {
+      vi.mocked(fs.readdir)
+        .mockResolvedValueOnce(['hash-dir'] as any)
+        .mockResolvedValueOnce(['bad.json', 'good.json'] as any)
+        .mockRejectedValueOnce(new Error('ENOENT')); // history
+
+      const goodSession = {
+        sessionId: 'good-session',
+        projectHash: 'hash',
+        startTime: '2026-01-06T14:00:00Z',
+        messages: [],
+      };
+
+      vi.mocked(fs.readFile)
+        .mockRejectedValueOnce(new Error('Invalid JSON')) // bad.json
+        .mockResolvedValueOnce(JSON.stringify(goodSession) as any); // good.json
+
+      vi.mocked(fs.stat)
+        .mockResolvedValue({ mtimeMs: 1704555060829 } as any);
+
+      const result = await ipc.invoke('config:get-gemini-sessions', path.join(HOME, '.gemini'));
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].sessionId).toBe('good-session');
+    });
+
+    it('sorts sessions by startTime descending (newest first)', async () => {
+      const session1 = {
+        sessionId: 'session-1',
+        projectHash: 'hash1',
+        startTime: '2026-01-06T10:00:00Z',
+        messages: [],
+      };
+      const session2 = {
+        sessionId: 'session-2',
+        projectHash: 'hash2',
+        startTime: '2026-01-06T14:00:00Z',
+        messages: [],
+      };
+      const session3 = {
+        sessionId: 'session-3',
+        projectHash: 'hash3',
+        startTime: '2026-01-06T12:00:00Z',
+        messages: [],
+      };
+
+      vi.mocked(fs.readdir)
+        .mockResolvedValueOnce(['h1', 'h2', 'h3'] as any)
+        .mockResolvedValueOnce(['s1.json'] as any)
+        .mockResolvedValueOnce(['s2.json'] as any)
+        .mockResolvedValueOnce(['s3.json'] as any)
+        .mockRejectedValueOnce(new Error('ENOENT')); // history
+
+      vi.mocked(fs.stat)
+        .mockResolvedValue({ mtimeMs: 1704555060829 } as any);
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce(JSON.stringify(session1) as any)
+        .mockResolvedValueOnce(JSON.stringify(session2) as any)
+        .mockResolvedValueOnce(JSON.stringify(session3) as any);
+
+      const result = await ipc.invoke('config:get-gemini-sessions', path.join(HOME, '.gemini'));
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(3);
+      expect(result.data[0].sessionId).toBe('session-2'); // newest (14:00:00)
+      expect(result.data[1].sessionId).toBe('session-3'); // middle (12:00:00)
+      expect(result.data[2].sessionId).toBe('session-1'); // oldest (10:00:00)
+    });
+
+    it('returns only .json files (ignores other files)', async () => {
+      vi.mocked(fs.readdir)
+        .mockResolvedValueOnce(['hash-dir'] as any)
+        .mockResolvedValueOnce(['session.json', 'readme.txt', 'data.yaml'] as any)
+        .mockRejectedValueOnce(new Error('ENOENT')); // history
+
+      const sessionJson = {
+        sessionId: 'test-session',
+        projectHash: 'hash',
+        startTime: '2026-01-06T14:00:00Z',
+        messages: [],
+      };
+
+      vi.mocked(fs.stat)
+        .mockResolvedValue({ mtimeMs: 1704555060829 } as any);
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValue(JSON.stringify(sessionJson) as any);
+
+      const result = await ipc.invoke('config:get-gemini-sessions', path.join(HOME, '.gemini'));
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+    });
+
+    it('throws error when configDir is outside homedir (path traversal guard)', async () => {
+      const result = await ipc.invoke('config:get-gemini-sessions', '/etc/passwd');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/outside/i);
+    });
+  });
+
+  // ── CONFIG_GET_GEMINI_SESSION_MESSAGES ──────────────────────────────────────
+
+  describe('config:get-gemini-session-messages', () => {
+    it('returns messages from a valid session JSON file', async () => {
+      const filePath = path.join(HOME, '.gemini', 'tmp', 'hash-dir', 'chats', 'session.json');
+      const sessionJson = {
+        sessionId: 'session-uuid',
+        messages: [
+          { id: '1', type: 'user', content: 'question', timestamp: '2026-01-06T14:00:00Z' },
+          { id: '2', type: 'assistant', content: 'answer', timestamp: '2026-01-06T14:00:01Z' },
+        ],
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValue(JSON.stringify(sessionJson) as any);
+
+      const result = await ipc.invoke('config:get-gemini-session-messages', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].id).toBe('1');
+      expect(result.data[1].id).toBe('2');
+    });
+
+    it('returns empty array when messages field is missing', async () => {
+      const filePath = path.join(HOME, '.gemini', 'tmp', 'hash-dir', 'chats', 'session.json');
+      const sessionJson = {
+        sessionId: 'session-uuid',
+        startTime: '2026-01-06T14:00:00Z',
+      };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValue(JSON.stringify(sessionJson) as any);
+
+      const result = await ipc.invoke('config:get-gemini-session-messages', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('truncates to last 500 messages if more than 500', async () => {
+      const filePath = path.join(HOME, '.gemini', 'tmp', 'hash-dir', 'chats', 'session.json');
+      const messages = Array.from({ length: 700 }, (_, i) => ({
+        id: String(i),
+        type: i % 2 === 0 ? 'user' : 'assistant',
+        content: `message ${i}`,
+        timestamp: '2026-01-06T14:00:00Z',
+      }));
+
+      const sessionJson = { sessionId: 'session-uuid', messages };
+
+      vi.mocked(fs.readFile)
+        .mockResolvedValue(JSON.stringify(sessionJson) as any);
+
+      const result = await ipc.invoke('config:get-gemini-session-messages', filePath);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(500);
+      expect(result.data[0].id).toBe('200'); // last 500: indices 200-699
+      expect(result.data[499].id).toBe('699');
+    });
+  });
 });
