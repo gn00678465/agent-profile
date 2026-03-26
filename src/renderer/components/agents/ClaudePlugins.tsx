@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronRight, Puzzle } from 'lucide-react';
+import { ChevronRight, Puzzle } from 'lucide-react';
 import { callElectron, electronAPI } from '@/lib/electron';
 import { Button } from '@/components/ui/button';
 import { RemoveButton } from '@/components/ui/remove-button';
@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import type { ClaudePlugin } from '@shared/types';
+import { FilterToolbar, type FilterValue } from './ClaudePlugins/FilterToolbar';
 
 interface ClaudePluginsProps {
   configDir: string;
@@ -120,7 +121,7 @@ export function ClaudePluginsView({ configDir, accentColor }: ClaudePluginsProps
   const [plugins, setPlugins] = useState<ClaudePlugin[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ClaudePlugin | null>(null);
-  const [filter, setFilter] = useState<'all' | 'user' | 'project'>('all');
+  const [filter, setFilter] = useState<FilterValue>('all');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -196,34 +197,13 @@ export function ClaudePluginsView({ configDir, accentColor }: ClaudePluginsProps
     <div className="flex h-full overflow-hidden">
       {/* Plugin list */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Installed Plugins ({plugins.length})
-            </span>
-            {/* Filter pills */}
-            <div className="flex gap-1">
-              {(['all', 'user', 'project'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`rounded px-2 py-0.5 text-xs capitalize transition-colors ${
-                    filter === f
-                      ? 'text-white'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  style={filter === f ? { background: accentColor } : undefined}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { void load(); }}>
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <FilterToolbar
+          filter={filter}
+          count={plugins.length}
+          onChange={setFilter}
+          onRefresh={() => { void load(); }}
+          accentColor={accentColor}
+        />
 
         {/* Empty state */}
         {filtered.length === 0 && (
