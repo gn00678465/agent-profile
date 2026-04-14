@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 bun run dev          # Start Vite dev server + Electron (hot-reload)
-bun test             # Run all tests once (Vitest)
+bun run test         # Run all tests once (Vitest) — do NOT use `bun test` (invokes Bun native runner)
 bun run test:watch   # Run tests in watch mode
 bun run lint         # ESLint check
 bun run lint:fix     # ESLint autofix

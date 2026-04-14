@@ -17,3 +17,13 @@ echo ""
 echo "[3/5] Building project..."
 bun run build
 echo ""
+
+echo "[4/5] Running tests..."
+bun run test
+echo ""
+
+echo "[5/5] Running lint..."
+bun run lint
+echo ""
+
+echo "=== Init complete — project is clean ==="
