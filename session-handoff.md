@@ -15,18 +15,18 @@
 
 ---
 
-## 2. 在 progress.md 新增歷史記錄（一行）
+## 2. 在 session-log.jsonl 追加一行
 
-在「Session 歷史」表格最後加一行：
+在 `session-log.jsonl` 末尾**另起一行**加入：
 
 ```
-| YYYY-MM-DD | <一句話描述本次做了什麼> |
+{"date":"YYYY-MM-DD","summary":"<一句話描述>","tests":<pass count>,"lint_errors":<count>,"lint_warnings":<count>}
 ```
 
 範例：
 
 ```
-| 2026-04-14 | 修正 ESLint 遷移（0 errors）；對齊狀態文件 |
+{"date":"2026-04-15","summary":"對齊 feat-014 狀態文件；刪除測試死碼","tests":391,"lint_errors":0,"lint_warnings":40}
 ```
 
 ---

@@ -1,0 +1,2 @@
+{"date":"2026-04-14","summary":"建立 harness 基礎檔案；修正測試指令（bun run test）；補齊 AGENTS.md / docs / session-handoff.md；修正 ESLint 遷移（0 errors）","tests":391,"lint_errors":0,"lint_warnings":41}
+{"date":"2026-04-15","summary":"對齊 feat-014 狀態文件；刪除測試死碼（_sessionDir）；lint warnings 41 → 40","tests":391,"lint_errors":0,"lint_warnings":40}

@@ -34,7 +34,7 @@ bun run electron:win # Build + package for Windows
 - **IPC envelope.** Every IPC handler returns `{ success, data? }` or `{ success: false, error }`. Never throw across the IPC boundary.
 - **Security guards.** Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs before touching the file system.
 - **Design system compliance.** All UI changes must follow `DESIGN.md`: warm neutral palette, whisper borders (`1px solid rgba(0,0,0,0.1)`), Notion Blue (`#0075de`) for primary CTA, agent accent colors for interactive highlights.
-- **Update state before ending.** Update `feature_list.json` + `progress.md` at the end of every session.
+- **Update state before ending.** Update `feature_list.json` + `progress.md` (snapshot) + `session-log.jsonl` (append history) at the end of every session.
 
 ## Architecture Quick-Reference
 
@@ -60,7 +60,8 @@ A feature is complete when:
 - [ ] `bun run lint` passes (0 errors)
 - [ ] `bun run typecheck` passes
 - [ ] `feature_list.json` entry updated to `"status": "done"` with evidence
-- [ ] `progress.md` updated with what was done and next session entry point
+- [ ] `progress.md` 快照已更新（上次結束點）
+- [ ] `session-log.jsonl` 已追加本次紀錄（一行 JSON）
 
 ## End of Session
 
@@ -69,8 +70,9 @@ Before ending a session:
 1. Run `bun run test` — confirm 0 failures
 2. Run `bun run lint` — confirm 0 errors
 3. Update `feature_list.json` — set completed items to `"done"`, add evidence
-4. Update `progress.md` — log what was done, blockers, next session entry
-5. Commit with a descriptive conventional-commit message
+4. Update `progress.md` — update snapshot (last action, verify status)
+5. Append to `session-log.jsonl` — one JSON line with date, summary, test/lint counts
+6. Commit with a descriptive conventional-commit message
 
 ## Current Focus
 

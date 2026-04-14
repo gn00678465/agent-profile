@@ -36,15 +36,8 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** 修正 ESLint 遷移（0 errors）、對齊狀態文件
+- **最後動作：** 對齊 feat-014 狀態文件；刪除測試死碼；progress.md 拆分為快照 + `session-log.jsonl`
 - **所有 14 個 feature 均已完成**
-- **驗證狀態：** `bun run test` 391 pass / 0 fail；`bun run lint` 0 errors
+- **驗證狀態：** `bun run test` 391 pass / 0 fail；`bun run lint` 0 errors / 40 warnings
 
----
-
-## Session 歷史
-
-| 日期 | 主要工作 |
-|------|----------|
-| 2026-04-14 | 建立 harness 基礎檔案；修正測試指令（bun run test）；補齊 AGENTS.md / docs / session-handoff.md；修正 ESLint 遷移（0 errors）|
-| 2026-04-15 | 對齊 feat-014 狀態文件；刪除測試死碼（_sessionDir）；lint warnings 41 → 40 |
+> Session 歷史已移至 `session-log.jsonl`（append-only）。
