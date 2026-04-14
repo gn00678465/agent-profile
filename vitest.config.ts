@@ -18,8 +18,6 @@ export default defineConfig({
     environmentMatchGlobs: [
       ['src/renderer/**/*.test.tsx', 'jsdom'],
       ['src/renderer/**/*.test.ts', 'jsdom'],
-      ['src/test/renderer/**/*.test.ts', 'jsdom'],
-      ['src/test/renderer/**/*.test.tsx', 'jsdom'],
     ],
     setupFiles: ['src/test/setup.ts'],
   },
