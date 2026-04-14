@@ -1,6 +1,6 @@
 # Progress Log
 
-## 專案狀態快照（2026-04-14）
+## 專案狀態快照（2026-04-15）
 
 **Branch:** `chore/harness-setup`
 **Base:** `main`
@@ -30,14 +30,14 @@
 
 | 風險 | 說明 |
 |------|------|
-| configHandlers.ts 過大 | ~1,000 行，CLAUDE.md 已標注為 split candidate |
+| configHandlers.ts 過大 | ~1,000 行，`AGENTS.md` 已標注為 split candidate |
 
 ---
 
 ## 上次 Session 結束點
 
-- **最後動作：** 對齊 feat-014 狀態文件；刪除測試死碼；progress.md 拆分為快照 + `session-log.jsonl`
+- **最後動作：** src 分層清理（`src/main.tsx` → `src/renderer/main.tsx`、刪除 Vite 範本死碼、移除 `src/test/` 重複測試）；合併 `CLAUDE.md` 內容至 `AGENTS.md`；更新 `docs/ARCHITECTURE.md`（新增 Electron Layers 區塊）
 - **所有 14 個 feature 均已完成**
-- **驗證狀態：** `bun run test` 391 pass / 0 fail；`bun run lint` 0 errors / 40 warnings
+- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 40 warnings
 
 > Session 歷史已移至 `session-log.jsonl`（append-only）。

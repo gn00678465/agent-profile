@@ -1,2 +1,3 @@
 {"date":"2026-04-14","summary":"建立 harness 基礎檔案；修正測試指令（bun run test）；補齊 AGENTS.md / docs / session-handoff.md；修正 ESLint 遷移（0 errors）","tests":391,"lint_errors":0,"lint_warnings":41}
 {"date":"2026-04-15","summary":"對齊 feat-014 狀態文件；刪除測試死碼（_sessionDir）；lint warnings 41 → 40","tests":391,"lint_errors":0,"lint_warnings":40}
+{"date":"2026-04-15","summary":"src 分層清理：src/main.tsx → src/renderer/main.tsx、刪除 Vite 範本死碼（App.tsx/App.css）、移除 src/test/ 重複測試（3 files）；合併 CLAUDE.md 至 AGENTS.md 並修正過時元件清單；docs/ARCHITECTURE.md 新增 Electron Layers 區塊","tests":378,"lint_errors":0,"lint_warnings":40}
