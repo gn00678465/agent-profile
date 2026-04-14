@@ -6,7 +6,7 @@
 
 ## 1. Checklist（離開前確認）
 
-- [ ] `bun run test` — 0 failures（預期：391 pass / 24 files）
+- [ ] `bun run test` — 0 failures（預期：378 pass / 21 files）
 - [ ] `bun run lint` — 0 errors
 - [ ] `bun run typecheck` — 0 errors
 - [ ] `feature_list.json` — 完成的 feature 已改為 `"status": "done"`，附上 evidence

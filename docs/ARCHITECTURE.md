@@ -6,6 +6,41 @@ Agent Profile is an Electron + React 19 + TypeScript desktop app that provides a
 
 ---
 
+## Electron Layers
+
+```
+┌─────────────────────┐        ┌──────────────────┐        ┌─────────────────────┐
+│  Renderer (React)   │◄──────►│  Preload         │◄──────►│  Main (Node.js)     │
+│  src/renderer/      │  IPC   │  src/preload/    │  IPC   │  src/main/          │
+│  Alias: @/          │        │  index.ts        │        │  No alias           │
+└─────────────────────┘        └──────────────────┘        └─────────────────────┘
+                                        │
+                               src/shared/types.ts
+                               (Alias: @shared/)
+```
+
+| Layer | Root | Alias | Allowed APIs |
+|-------|------|-------|-------------|
+| Renderer | `src/renderer/` | `@/` | DOM, React, `window.electronAPI` only |
+| Preload | `src/preload/index.ts` | — | `contextBridge`, `ipcRenderer` |
+| Main | `src/main/` | — | All Node.js + Electron APIs |
+| Shared | `src/shared/` | `@shared/` | Pure TypeScript — no runtime APIs |
+
+**Entry points:**
+
+| What | File |
+|------|------|
+| Renderer HTML shell | `index.html` → `/src/renderer/main.tsx` |
+| Renderer React root | `src/renderer/main.tsx` |
+| Main process | `src/main/index.ts` |
+| Preload bridge | `src/preload/index.ts` |
+
+**Layer rules:**
+- **Renderer** — Never imports Node.js APIs directly. All OS/FS calls go through `callElectron()`.
+- **Preload** — Exposes `window.electronAPI` via `contextBridge`. This is the sole interface between renderer and main.
+- **Main** — All file system, OS dialog, and shell operations happen here.
+- **Shared** — `src/shared/types.ts` is the single source of truth for all types and `IPC_CHANNELS`. Both renderer and main import from `@shared/types`.
+
 ## Process Boundary
 
 ```
