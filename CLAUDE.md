@@ -14,11 +14,6 @@ bun run build        # Vite production build
 bun run electron:win # Build + package for Windows
 ```
 
-Type-check only (no emit):
-```bash
-bunx tsc --noEmit
-```
-
 Run a single test file:
 ```bash
 bunx vitest run src/main/ipc/__tests__/configHandlers.test.ts

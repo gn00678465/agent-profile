@@ -9,6 +9,7 @@
     "dev": "vite",
     "prebuild": "rimraf release dist dist-electron",
     "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.json",
     "electron:mac": "bun run build && electron-builder --mac",
     "electron:win": "bun run build && electron-builder --win",
     "electron:linux": "bun run build && electron-builder --linux",
