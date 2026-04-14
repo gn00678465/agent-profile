@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { isElectron, callElectron } from '../../renderer/lib/electron';
 
 describe('isElectron', () => {

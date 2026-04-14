@@ -26,7 +26,7 @@ export function MarkdownEditor({ filePath, title, description, placeholder, auto
         void save('');
       }
     }
-  }, [config, autoCreate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config, autoCreate]); // eslint-disable-line react/exhaustive-deps
 
   async function handleSave() {
     await save(draft);

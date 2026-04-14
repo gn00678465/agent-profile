@@ -1,72 +1,63 @@
-# Session Handoff Template
+# Session Handoff
 
-Copy this template at the end of each session and paste it into `progress.md` under the **Session 歷史** table, then fill it in.
+三個獨立的動作，依序執行：
 
 ---
 
-## Handoff Checklist
+## 1. Checklist（離開前確認）
 
-Before closing the session, verify each item:
-
-- [ ] `bun run test` — 0 failures (expected: 391 pass / 24 files)
+- [ ] `bun run test` — 0 failures（預期：391 pass / 24 files）
 - [ ] `bun run lint` — 0 errors
 - [ ] `bun run typecheck` — 0 errors
-- [ ] `feature_list.json` updated — completed features set to `"done"` with evidence
-- [ ] `progress.md` updated — new session entry added to Session 歷史 table
-- [ ] Commit created with conventional-commit message
+- [ ] `feature_list.json` — 完成的 feature 已改為 `"status": "done"`，附上 evidence
+- [ ] `progress.md` — 已加入本次 session 的歷史記錄（見下方範本）
+- [ ] Commit 已建立，message 符合 Conventional Commits
 
 ---
 
-## Session Entry Template
+## 2. 在 progress.md 新增歷史記錄（一行）
 
-Add to the **Session 歷史** table in `progress.md`:
+在「Session 歷史」表格最後加一行：
 
-```markdown
-| YYYY-MM-DD | <one-line summary of what was done> |
+```
+| YYYY-MM-DD | <一句話描述本次做了什麼> |
+```
+
+範例：
+
+```
+| 2026-04-14 | 修正 ESLint 遷移（0 errors）；對齊狀態文件 |
 ```
 
 ---
 
-## Progress Update Template
+## 3. 在 progress.md 更新進行中工作（若有）
 
-Replace / update the **進行中工作** section in `progress.md` with:
+若某個 feature 仍 in-progress，在「已完成功能」表格下方補一段：
 
 ```markdown
-### <feat-id>：<feature name>
+### <feat-id>：<feature 名稱>
 
-**狀態：** <🔴 in-progress | ✅ done>
+**狀態：** 🟡 in-progress
 
-**本 session 完成：**
-- <specific thing done>
-- <specific thing done>
+**已完成：**
+- <具體完成項目>
 
 **待完成：**
-- [ ] <next concrete step>
+- [ ] <下次 session 的明確起點>
 
 **阻礙：**
-- <blocker or "none">
+- <阻礙描述，或填「無」>
 ```
 
 ---
 
-## Restart Path
+## 4. 下次 Session 的 Restart Path
 
-The next session agent should:
+新的 session agent 應依序：
 
-1. Read `AGENTS.md`
-2. Read `CLAUDE.md`
-3. Run `./init.sh`
-4. Read `feature_list.json` — find first `in-progress` item
-5. Read `progress.md` — read last session entry and current blockers
-6. Continue from the **待完成** list of the active feature
-
----
-
-## Quick Verification Commands
-
-```bash
-bun run test        # 391 pass expected
-bun run lint        # 0 errors expected
-bun run typecheck   # 0 errors expected
-bun run build       # clean build expected
-```
+1. 讀 `AGENTS.md`
+2. 讀 `CLAUDE.md`
+3. 執行 `./init.sh`
+4. 讀 `feature_list.json` — 找第一個 `in-progress` 或 `planned` 的 feature
+5. 讀 `progress.md` — 找「待完成」清單

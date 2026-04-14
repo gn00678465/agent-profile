@@ -1311,7 +1311,6 @@ Skill instructions here.`;
 
   describe('config:get-sessions (copilot old-format .jsonl files)', () => {
     it('includes old-format .jsonl files as sessions', async () => {
-      const sessionDir = path.join(HOME, '.copilot', 'session-state');
       const uuid = 'abcdef12-0000-0000-0000-000000000001';
       vi.mocked(fs.readdir).mockResolvedValue([`${uuid}.jsonl`] as any);
       vi.mocked(fs.stat).mockImplementation(async (p: any) => {
