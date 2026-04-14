@@ -72,12 +72,14 @@ function PluginDetail({ plugin, onToggle, onDelete, accentColor }: PluginDetailP
           {plugin.installedAt && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Installed</span>
+              {/* eslint-disable-next-line react/purity -- new Date(stableString) is deterministic */}
               <span className="font-mono">{new Date(plugin.installedAt).toLocaleDateString()}</span>
             </div>
           )}
           {plugin.lastUpdated && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Updated</span>
+              {/* eslint-disable-next-line react/purity -- new Date(stableString) is deterministic */}
               <span className="font-mono">{new Date(plugin.lastUpdated).toLocaleDateString()}</span>
             </div>
           )}

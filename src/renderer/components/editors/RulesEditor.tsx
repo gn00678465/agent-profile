@@ -18,7 +18,7 @@ export function RulesEditor({ configDir, accentColor }: RulesEditorProps) {
   const [rules, setRules] = useState<RuleFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRule, setSelectedRule] = useState<RuleFile | null>(null);
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() => new Set());
 
   // Add
   const [showAddInput, setShowAddInput] = useState(false);

@@ -12,6 +12,8 @@ Before writing any code:
 4. Read `progress.md` to see blockers, risks, and last session's endpoint
 5. **For any UI/UX work**: read `DESIGN.md` — the project's design system (Notion-inspired warm neutrals, typography, components, color tokens)
 
+> `CLAUDE.md` is a pointer to this file — no need to read it separately.
+
 ## Commands
 
 ```bash
@@ -174,7 +176,7 @@ A feature is complete when:
 
 - [ ] Implementation matches the description in `feature_list.json`
 - [ ] `bun run test` passes (378 tests, 21 files, 0 failures)
-- [ ] `bun run lint` passes (0 errors)
+- [ ] `bun run lint` passes (0 errors, 0 warnings)
 - [ ] `bun run typecheck` passes
 - [ ] `feature_list.json` entry updated to `"status": "done"` with evidence
 - [ ] `progress.md` 快照已更新（上次結束點）

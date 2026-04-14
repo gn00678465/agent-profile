@@ -111,6 +111,30 @@
       "dependencies": [],
       "status": "done",
       "evidence": "AGENTS.md / feature_list.json / progress.md / init.sh 全部完成 (2026-04-14)"
+    },
+    {
+      "id": "feat-015",
+      "name": "configHandlers.ts 拆分",
+      "description": "將 ~1,000 行的 configHandlers.ts 依領域拆分為多個獨立檔案（claude、gemini、copilot、rules、sessions、skills），降低維護難度。",
+      "dependencies": ["feat-001"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-016",
+      "name": "E2E 測試",
+      "description": "使用 Playwright 為關鍵使用者流程建立 E2E 測試（載入 agent 清單、開啟設定頁、儲存設定）。",
+      "dependencies": ["feat-001"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-017",
+      "name": "init.sh 整合 session-handoff checklist",
+      "description": "在 init.sh 加入啟動前 harness 狀態驗證：確認 AGENTS.md、feature_list.json 存在，顯示 progress.md 上次結束點。",
+      "dependencies": ["feat-014"],
+      "status": "planned",
+      "evidence": ""
     }
   ]
 }

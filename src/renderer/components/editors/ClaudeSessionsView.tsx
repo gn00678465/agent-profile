@@ -85,12 +85,10 @@ interface SessionDetailProps {
 
 function SessionDetail({ session, accentColor, onOpenFolder }: SessionDetailProps) {
   const [messages, setMessages] = useState<ClaudeSessionMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    setMessages([]);
-    setLoadingMessages(true);
 
     callElectron(() => electronAPI().config.getSessionMessages(session.path))
       .then((result) => {
@@ -191,8 +189,8 @@ function SessionDetail({ session, accentColor, onOpenFolder }: SessionDetailProp
             <ScrollArea className="pr-1">
               <div className="flex flex-col gap-3 pb-2">
                 {messages.map((msg, idx) => (
-                  <MessageBubble
-                    key={idx}
+                  // eslint-disable-next-line react/no-array-index-key -- ClaudeSessionMessage has no stable unique id
+                  <MessageBubble key={idx}
                     message={msg}
                     accentColor={accentColor}
                   />
@@ -359,6 +357,7 @@ export function ClaudeSessionsView({ configDir, agentColor }: ClaudeSessionsView
       {/* Detail panel */}
       {selected && (
         <SessionDetail
+          key={selected.path}
           session={selected}
           accentColor={agentColor}
           onOpenFolder={handleOpenFolder}

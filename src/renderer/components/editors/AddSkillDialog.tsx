@@ -199,9 +199,13 @@ export function AddSkillDialog({
   // ── Reset on close ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react/set-state-in-effect -- intentional reset on dialog close
       setView('main');
+      // eslint-disable-next-line react/set-state-in-effect -- intentional reset on dialog close
       setSharedSkills([]);
+      // eslint-disable-next-line react/set-state-in-effect -- intentional reset on dialog close
       setSharedError(null);
+      // eslint-disable-next-line react/set-state-in-effect -- intentional reset on dialog close
       setZipError(null);
     }
   }, [open]);

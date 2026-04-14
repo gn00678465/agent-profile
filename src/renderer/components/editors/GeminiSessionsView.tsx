@@ -110,8 +110,8 @@ function GeminiMessageBubble({ message, accentColor }: GeminiMessageBubbleProps)
           </button>
           {thoughtsExpanded && (
             <div className="flex flex-col gap-1 pl-2">
-              {thoughts.map((thought, i) => (
-                <div key={i} className="text-xs">
+              {thoughts.map((thought) => (
+                <div key={thought.subject} className="text-xs">
                   <span className="font-bold">{thought.subject}</span>{' '}
                   <span className="text-muted-foreground">{thought.description}</span>
                 </div>
@@ -132,12 +132,10 @@ interface GeminiSessionDetailProps {
 
 function GeminiSessionDetail({ session, accentColor, onOpenFolder }: GeminiSessionDetailProps) {
   const [messages, setMessages] = useState<GeminiSessionMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    setMessages([]);
-    setLoadingMessages(true);
 
     callElectron(() => electronAPI().config.getGeminiSessionMessages(session.path))
       .then((result) => {
@@ -423,6 +421,7 @@ export function GeminiSessionsView({ configDir, agentColor }: GeminiSessionsView
       {/* Detail panel */}
       {selected && (
         <GeminiSessionDetail
+          key={selected.path}
           session={selected}
           accentColor={agentColor}
           onOpenFolder={handleOpenFolder}

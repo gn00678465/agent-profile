@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 export type Theme = 'dark' | 'light' | 'system';
 
 export function useTheme() {
+  // eslint-disable-next-line react/use-state -- setter intentionally renamed to avoid collision with exported setTheme wrapper
   const [theme, setThemeState] = useState<Theme>(() => {
     return (localStorage.getItem('theme') as Theme) || 'system';
   });

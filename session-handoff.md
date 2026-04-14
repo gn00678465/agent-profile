@@ -57,7 +57,6 @@
 新的 session agent 應依序：
 
 1. 讀 `AGENTS.md`
-2. 讀 `CLAUDE.md`
-3. 執行 `./init.sh`
-4. 讀 `feature_list.json` — 找第一個 `in-progress` 或 `planned` 的 feature
-5. 讀 `progress.md` — 找「待完成」清單
+2. 執行 `./init.sh`
+3. 讀 `feature_list.json` — 找第一個 `in-progress` 或 `planned` 的 feature
+4. 讀 `progress.md` — 找「待完成」清單

@@ -19,7 +19,9 @@ export function MarkdownEditor({ filePath, title, description, placeholder, auto
 
   useEffect(() => {
     if (config !== null) {
+      // eslint-disable-next-line react/set-state-in-effect -- intentional sync with external config after save/refresh
       setDraft(config.data ?? '');
+      // eslint-disable-next-line react/set-state-in-effect -- intentional sync with external config after save/refresh
       setIsDirty(false);
       // Auto-create: immediately create the file with empty content if it doesn't exist
       if (autoCreate && !config.exists) {

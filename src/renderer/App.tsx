@@ -222,6 +222,7 @@ export default function App() {
 
   // Load active model for status bar
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- early return reset when no agent active
     if (!activeAgent) { setActiveModel(null); return; }
     if (activeAgent.type === 'claude-code') {
       void callElectron(() => electronAPI().config.getClaudeSettings(activeAgent.configDir))
@@ -232,6 +233,7 @@ export default function App() {
         .then((cfg) => setActiveModel(cfg.data?.model ?? null))
         .catch(() => setActiveModel(null));
     } else {
+      // eslint-disable-next-line react/set-state-in-effect -- else branch for agents without model config
       setActiveModel(null);
     }
   }, [activeAgentId, activeAgent]);

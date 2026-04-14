@@ -36,8 +36,8 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** src 分層清理（`src/main.tsx` → `src/renderer/main.tsx`、刪除 Vite 範本死碼、移除 `src/test/` 重複測試）；合併 `CLAUDE.md` 內容至 `AGENTS.md`；更新 `docs/ARCHITECTURE.md`（新增 Electron Layers 區塊）
-- **所有 14 個 feature 均已完成**
-- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 40 warnings
+- **最後動作：** 修正全部 lint warnings（40 → 0）：18 個 `react/no-forward-ref`（React 19 遷移）、session view 用 `key` prop 重構、各類抑制說明；feat-015 ～ feat-017 加入 `feature_list.json`（planned）；DoD lint 門檻更新為 0 warnings
+- **所有 14 個 feature 均已完成，feat-015 ～ feat-017 為 planned**
+- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings
 
 > Session 歷史已移至 `session-log.jsonl`（append-only）。

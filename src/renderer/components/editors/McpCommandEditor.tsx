@@ -73,6 +73,7 @@ export function McpCommandEditor({ configDir, agentType }: McpCommandEditorProps
   }
 
   function handleDelete(name: string) {
+    // eslint-disable-next-line ts/no-unused-vars
     const { [name]: _removed, ...updated } = servers;
     void saveServers(updated);
   }
