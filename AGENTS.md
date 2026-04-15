@@ -71,17 +71,19 @@ A feature is complete when:
 - [ ] `feature_list.json` entry updated to `"status": "done"` with evidence
 - [ ] `progress.md` 快照已更新（上次結束點）
 - [ ] `session-log.jsonl` 已追加本次紀錄（一行 JSON）
+- [ ] `session-handoff.md` 本次實際執行結果
 
 ## End of Session
 
-Run the full gate in `clean-state-checklist.md` before handing off. TL;DR:
+Before ending a session:
 
 1. `bun run typecheck && bun run lint && bun run test` — all green
 2. `bash scripts/check-architecture.sh` — 0 boundary violations
-3. Update `feature_list.json` (status + evidence), `progress.md` (snapshot), `session-log.jsonl` (append one line)
-4. Commit with a Conventional Commits message
+3. Fill `session-handoff.md` — update sections 1–4 (verification results, jsonl line, progress snapshot, next step)
+4. Update `feature_list.json` (status + evidence), `progress.md` (snapshot)
+5. Commit with a Conventional Commits message
 
-See `session-handoff.md` for the narrative steps (progress update, restart path).
+Full binary gate: `clean-state-checklist.md`.
 
 ## Current Focus
 

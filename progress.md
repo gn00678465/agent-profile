@@ -38,7 +38,24 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** feat-016 標記為 blocked — E2E 基礎建設已完整建立（`playwright.config.ts`, `e2e/fixtures.ts`, `e2e/app.spec.ts`, `e2e/electron-entry.cjs`），但 `electron.launch()` 在 Windows 上因 Playwright CDP 初始化觸發 V8 層的 `STATUS_BREAKPOINT` 崩潰無法解決。已撰寫封鎖原因文件 `docs/E2E_BLOCKED.md`（含診斷過程與三條解除封鎖路徑）。
-- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings
+- **最後動作：** feat-016 標記為 blocked — E2E 基礎建設已完整建立，但 `electron.launch()` 在 Windows 觸發 V8 層 `STATUS_BREAKPOINT` 崩潰無法解決。已撰寫 `docs/E2E_BLOCKED.md`（含診斷過程與三條解除封鎖路徑）。
+- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail；`check-architecture.sh` PASS
+
+---
+
+### feat-016：E2E 測試
+
+**狀態：** 🚫 blocked
+
+**已完成：**
+- `playwright.config.ts`、`e2e/fixtures.ts`、`e2e/app.spec.ts`、`e2e/electron-entry.cjs`、`e2e/tsconfig.json` 全部就緒
+- 3 個測試場景：sidebar agents、settings navigation、save-to-disk
+- `package.json` 加入 `test:e2e` script
+
+**待完成：**
+- [ ] 解除封鎖後執行 `bun run test:e2e` 確認 3 tests pass
+
+**阻礙：**
+- `electron.launch()` 在 Windows 上 Playwright CDP 初始化時觸發 `STATUS_BREAKPOINT (0x80000003)` V8 崩潰；Electron 35/41 均重現。詳見 `docs/E2E_BLOCKED.md`（含三條解除封鎖路徑）。
 
 > Session 歷史已移至 `session-log.jsonl`（append-only）。

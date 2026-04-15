@@ -26,6 +26,9 @@ bash scripts/check-architecture.sh   # 0 boundary violations
 
 ## 2. State artifacts
 
+Use `session-handoff.md` sections 2–3 for templates (jsonl format + progress snippet).
+
+- [ ] `session-handoff.md` — sections 1–4 填寫完畢（verification results、jsonl 追加、progress 快照、next step）
 - [ ] `feature_list.json` — completed items set to `"status": "done"` with evidence; no stale `in-progress` carry-overs
 - [ ] `progress.md` — 快照反映當前「上次結束點」；in-progress feature 有明確「待完成」清單
 - [ ] `session-log.jsonl` — appended exactly one JSON line for this session (date, summary, tests, lint_errors, lint_warnings)

@@ -1,59 +1,63 @@
 # Session Handoff
 
-三個獨立的動作，依序執行：
+---
+
+## ▶ 下次 Session 從這裡開始
+
+> 每次 session 結束前更新這個區塊（見下方程序 Step 3）。
+
+**最後更新：** 2026-04-15
+**驗證狀態：** typecheck ✅ · lint ✅ (0 err / 0 warn) · test ✅ (378 pass) · arch ✅
+**上次動作：** feat-016 E2E 基礎建設完整就緒；`electron.launch()` 在 Windows 觸發 `STATUS_BREAKPOINT`，標記 blocked，撰寫 `docs/E2E_BLOCKED.md`
+**下次起點：** feat-017（`init.sh` 整合 session-handoff checklist，`planned`）— 或先以 `chromium.connectOverCDP()` 解除 feat-016
 
 ---
 
-## 1. Checklist（離開前確認）
-
-跑 `clean-state-checklist.md` 的全部四節（verification gates、state artifacts、repo hygiene、restart path）。所有核取方塊都要綠燈才能繼續到 section 2。
-
-> 本檔保留 narrative 步驟；binary gates 改由 `clean-state-checklist.md` 為單一真相來源，避免兩處對不上。
-
----
-
-## 2. 在 session-log.jsonl 追加一行
-
-在 `session-log.jsonl` 末尾**另起一行**加入：
-
-```
-{"date":"YYYY-MM-DD","summary":"<一句話描述>","tests":<pass count>,"lint_errors":<count>,"lint_warnings":<count>}
-```
-
-範例：
-
-```
-{"date":"2026-04-15","summary":"對齊 feat-014 狀態文件；刪除測試死碼","tests":391,"lint_errors":0,"lint_warnings":40}
-```
-
----
-
-## 3. 在 progress.md 更新進行中工作（若有）
-
-若某個 feature 仍 in-progress，在「已完成功能」表格下方補一段：
-
-```markdown
-### <feat-id>：<feature 名稱>
-
-**狀態：** 🟡 in-progress
+### 🚫 feat-016：E2E 測試（blocked）
 
 **已完成：**
-- <具體完成項目>
+- `playwright.config.ts`, `e2e/fixtures.ts`, `e2e/app.spec.ts`, `e2e/electron-entry.cjs`, `e2e/tsconfig.json` 全部就緒
+- 3 個測試場景：sidebar agents · settings navigation · save-to-disk
+- `docs/E2E_BLOCKED.md`：完整診斷報告（根本原因 + 3 條解除封鎖路徑）
 
 **待完成：**
-- [ ] <下次 session 的明確起點>
+- [ ] 解除封鎖後執行 `bun run test:e2e`，確認 3 tests pass
 
 **阻礙：**
-- <阻礙描述，或填「無」>
-```
+`electron.launch()` 在 Windows Playwright CDP 初始化時觸發 `STATUS_BREAKPOINT (0x80000003)` V8 崩潰；Electron 35 / 41 均重現。最有希望的路徑：改用 `chromium.connectOverCDP()`（spawn Electron 加 `--remote-debugging-port`，繞過 Node inspector）。詳見 `docs/E2E_BLOCKED.md`。
 
 ---
 
-## 4. 下次 Session 的 Restart Path
+## Handoff 程序（離開前依序執行）
 
-新的 session agent 應依序：
+### 1. 跑 Verification Gates
 
-1. 讀 `AGENTS.md`
-2. 執行 `./init.sh`
-3. 讀 `feature_list.json` — 找第一個 `in-progress` 或 `planned` 的 feature
-4. 讀 `progress.md` — 找「待完成」清單
+```bash
+bun run typecheck && bun run lint && bun run test
+bash scripts/check-architecture.sh
+```
+
+全部通過後繼續。詳細核取方塊見 `clean-state-checklist.md`。
+
+### 2. 追加 session-log.jsonl
+
+在 `session-log.jsonl` 末尾另起一行：
+
+```
+{"date":"YYYY-MM-DD","summary":"<一句話>","tests":<N>,"lint_errors":0,"lint_warnings":0}
+```
+
+### 3. 更新「▶ 下次 Session 從這裡開始」
+
+- **最後更新** → 今天日期
+- **驗證狀態** → 實際 gate 結果
+- **上次動作** → 一句話摘要本次工作
+- **下次起點** → 具體 feat-id 或動作
+- 若有 in-progress / blocked feature：更新或新增對應小節
+
+### 4. Commit
+
+```bash
+git add feature_list.json progress.md session-log.jsonl session-handoff.md
+git commit -m "chore: end-of-session handoff YYYY-MM-DD
+```
