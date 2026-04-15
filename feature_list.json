@@ -117,8 +117,8 @@
       "name": "configHandlers.ts 拆分",
       "description": "將 ~1,000 行的 configHandlers.ts 依領域拆分為多個獨立檔案（claude、gemini、copilot、rules、sessions、skills），降低維護難度。",
       "dependencies": ["feat-001"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "拆分為 handlers/{configUtils,agentsHandler,claudeHandler,geminiHandler,copilotHandler,mcpHandler,skillsHandler,rulesHandler,markdownHandler}.ts；configHandlers.ts 縮減為 18 行 orchestrator；bun run typecheck + lint + test 378/378 (2026-04-15)"
     },
     {
       "id": "feat-016",

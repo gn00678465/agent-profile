@@ -2,10 +2,10 @@
 
 ## 專案狀態快照（2026-04-15）
 
-**Branch:** `chore/harness-setup`
+**Branch:** `refactor/refactor-ui-by-design.md`
 **Base:** `main`
 
-### 已完成功能（feat-001 ～ feat-014）
+### 已完成功能（feat-001 ～ feat-015）
 
 | ID | 功能 | 狀態 |
 |----|------|------|
@@ -23,6 +23,7 @@
 | feat-012 | 安全性強化（路徑遍歷防護） | ✅ done |
 | feat-013 | 測試套件修復（bun run test vs bun test） | ✅ done |
 | feat-014 | Harness 設定完善 | ✅ done |
+| feat-015 | configHandlers.ts 拆分（9 domain 檔案） | ✅ done |
 
 ---
 
@@ -36,8 +37,8 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** 修正全部 lint warnings（40 → 0）：18 個 `react/no-forward-ref`（React 19 遷移）、session view 用 `key` prop 重構、各類抑制說明；feat-015 ～ feat-017 加入 `feature_list.json`（planned）；DoD lint 門檻更新為 0 warnings
-- **所有 14 個 feature 均已完成，feat-015 ～ feat-017 為 planned**
-- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings
+- **最後動作：** feat-015 完成 — 將 1484 行的 configHandlers.ts 拆分為 9 個 domain 檔案：`handlers/{configUtils,agentsHandler,claudeHandler,geminiHandler,copilotHandler,mcpHandler,skillsHandler,rulesHandler,markdownHandler}.ts`；configHandlers.ts 縮減為 18 行 orchestrator
+- **所有 15 個 feature 均已完成，feat-016 ～ feat-017 為 planned**
+- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings；`bun run typecheck` 通過
 
 > Session 歷史已移至 `session-log.jsonl`（append-only）。
