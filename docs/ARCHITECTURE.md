@@ -6,6 +6,7 @@ Agent Profile is an Electron + React 19 + TypeScript desktop app that provides a
 
 ---
 
+<electron-layers>
 ## Electron Layers
 
 ```
@@ -40,24 +41,11 @@ Agent Profile is an Electron + React 19 + TypeScript desktop app that provides a
 - **Preload** — Exposes `window.electronAPI` via `contextBridge`. This is the sole interface between renderer and main.
 - **Main** — All file system, OS dialog, and shell operations happen here.
 - **Shared** — `src/shared/types.ts` is the single source of truth for all types and `IPC_CHANNELS`. Both renderer and main import from `@shared/types`.
-
-## Process Boundary
-
-```
-┌─────────────────────┐        ┌──────────────────┐        ┌─────────────────────┐
-│  Renderer (React)   │◄──────►│  Preload         │◄──────►│  Main (Node.js)     │
-│  src/renderer/      │  IPC   │  src/preload/    │  IPC   │  src/main/          │
-│  Alias: @/          │        │  index.ts        │        │  No alias           │
-└─────────────────────┘        └──────────────────┘        └─────────────────────┘
-```
-
-- **Renderer** — React UI, never imports Node.js APIs.
-- **Preload** — `contextBridge` bridge. Exposes `window.electronAPI` as the only renderer↔main interface.
-- **Main** — All file system, OS dialog, and shell operations happen here.
-- **Shared** — `src/shared/types.ts` is the single source of truth for all types and `IPC_CHANNELS`. Both renderer and main import from `@shared/types`.
+</electron-layers>
 
 ---
 
+<ipc-pattern>
 ## IPC Pattern
 
 Every renderer call follows the same envelope:
@@ -85,9 +73,11 @@ interface IpcResponse<T> {
 ```
 
 **Rule:** Never throw across the IPC boundary. All errors are wrapped in `{ success: false, error }`.
+</ipc-pattern>
 
 ---
 
+<security-guards>
 ## Security Guards
 
 All renderer-supplied paths and names go through two guards in `configHandlers.ts`:
@@ -101,6 +91,7 @@ assertSafeName(name); // rejects strings containing / \ ..
 ```
 
 PowerShell invocations use `$env:VAR` instead of string interpolation to prevent command injection.
+</security-guards>
 
 ---
 
@@ -115,9 +106,10 @@ PowerShell invocations use `$env:VAR` instead of string interpolation to prevent
 
 ---
 
+<agent-tabs>
 ## Tab Configuration (per agent)
 
-Defined in `App.tsx` → `AGENT_TABS`. Each tab id maps to a component rendered by `ContentView`.
+Defined in `App.tsx` → `AGENT_TABS`. Each tab id maps to a component rendered by `ContentView`. The active agent color propagates as `agentColor` prop throughout the tab content tree.
 
 | Agent | Tabs |
 |-------|------|
@@ -125,19 +117,24 @@ Defined in `App.tsx` → `AGENT_TABS`. Each tab id maps to a component rendered 
 | copilot | Settings, Instructions, Subagents, Sessions, Skills, MCP Servers |
 | gemini | Settings, GEMINI.md, Sessions, Skills, Extensions, MCP Servers |
 | shared | Shared Skills |
+</agent-tabs>
 
 ---
 
+<component-map>
 ## Component Map
 
 ```
 src/renderer/
+  main.tsx                         # Vite entry — mounts React into DOM
   App.tsx                          # Root: AGENT_TABS + ContentView router
   components/
     layout/
       Sidebar.tsx                  # Agent list, theme toggle, collapsible
     agents/
-      ClaudePlugins/               # installed_plugins.json viewer + toggle/delete
+      ClaudePlugins.tsx            # installed_plugins.json viewer + toggle/delete
+      ClaudePlugins/
+        FilterToolbar.tsx          # Filter bar for plugin list
       GeminiExtensions.tsx         # ~/.gemini/extensions/ viewer
     editors/
       JsonFileEditor.tsx           # Generic JSON read/write (Settings pages)
@@ -150,6 +147,7 @@ src/renderer/
       ClaudeSessionsView.tsx       # JSONL session reader
       GeminiSessionsView.tsx       # Gemini session reader
       CopilotSessionsView.tsx      # Copilot session reader
+      SessionsView.tsx             # Generic session list (base / fallback)
     shared/
       ExtensionListLayout.tsx      # Reusable list panel (loading/empty/content states)
       ExtensionRow.tsx             # Single row with toggle, badge, delete
@@ -163,6 +161,7 @@ src/renderer/
     electron.ts                    # callElectron() + electronAPI() wrapper
     parseMcpCommand.ts             # Parses "command args" string into McpServer
 ```
+</component-map>
 
 ---
 
@@ -206,12 +205,16 @@ bun run electron:win → electron-builder Windows package
 
 ---
 
+<testing-strategy>
 ## Testing Strategy
 
-- **Unit tests** — main process IPC handlers, mocked `fs` + `electron`
-- **Component tests** — jsdom environment, vitest + React Testing Library
-- **No E2E tests yet** — manual verification via `bun run dev`
+- **Unit tests** — main process IPC handlers in `src/main/ipc/__tests__/`, mocked `fs` + `electron`.
+- **Component tests** — renderer tests in `src/renderer/**/__tests__/`, jsdom environment (auto-detected by glob in `vitest.config.ts`), vitest + React Testing Library.
+- **Setup file** — `src/test/setup.ts`.
+- **Coverage** — collected from `src/main/**`, `src/shared/**`, and `src/renderer/**`.
+- **No E2E tests yet** — manual verification via `bun run dev`.
 
 Test files live colocated in `__tests__/` subdirectories.
 
 **Important:** use `bun run test`, not `bun test` (Bun native runner does not understand `vi.mock()`).
+</testing-strategy>

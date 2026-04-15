@@ -6,12 +6,9 @@
 
 ## 1. Checklist（離開前確認）
 
-- [ ] `bun run test` — 0 failures（預期：378 pass / 21 files）
-- [ ] `bun run lint` — 0 errors
-- [ ] `bun run typecheck` — 0 errors
-- [ ] `feature_list.json` — 完成的 feature 已改為 `"status": "done"`，附上 evidence
-- [ ] `progress.md` — 已加入本次 session 的歷史記錄（見下方範本）
-- [ ] Commit 已建立，message 符合 Conventional Commits
+跑 `clean-state-checklist.md` 的全部四節（verification gates、state artifacts、repo hygiene、restart path）。所有核取方塊都要綠燈才能繼續到 section 2。
+
+> 本檔保留 narrative 步驟；binary gates 改由 `clean-state-checklist.md` 為單一真相來源，避免兩處對不上。
 
 ---
 

@@ -6,24 +6,28 @@ set -euo pipefail
 echo "=== Project 06 Capstone Init ==="
 echo ""
 
-echo "[1/5] Installing dependencies..."
+echo "[1/6] Installing dependencies..."
 bun install
 echo ""
 
-echo "[2/5] Running type checks..."
+echo "[2/6] Running type checks..."
 bun run typecheck
 echo ""
 
-echo "[3/5] Building project..."
+echo "[3/6] Building project..."
 bun run build
 echo ""
 
-echo "[4/5] Running tests..."
+echo "[4/6] Running tests..."
 bun run test
 echo ""
 
-echo "[5/5] Running lint..."
+echo "[5/6] Running lint..."
 bun run lint
+echo ""
+
+echo "[6/6] Checking architecture boundaries..."
+bash scripts/check-architecture.sh
 echo ""
 
 echo "=== Init complete — project is clean ==="

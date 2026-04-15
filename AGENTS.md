@@ -34,131 +34,21 @@ bunx vitest run src/main/ipc/__tests__/configHandlers.test.ts
 
 ## Architecture
 
-This is an **Electron + React 19 + TypeScript** desktop app using `vite-plugin-electron` for unified Vite builds.
+Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. Full details in `docs/ARCHITECTURE.md`:
 
-### Electron Layers
+| Need… | Read the tagged section |
+|-------|-------------------------|
+| Layer boundaries, aliases, entry points | `<electron-layers>` |
+| IPC envelope & wrapper | `<ipc-pattern>` |
+| `assertSafePath` / `assertSafeName` usage | `<security-guards>` |
+| Renderer file tree | `<component-map>` |
+| Per-agent tab list | `<agent-tabs>` |
+| Test layout, setup, coverage paths | `<testing-strategy>` |
 
-```
-┌─────────────────────┐        ┌──────────────────┐        ┌─────────────────────┐
-│  Renderer (React)   │◄──────►│  Preload         │◄──────►│  Main (Node.js)     │
-│  src/renderer/      │  IPC   │  src/preload/    │  IPC   │  src/main/          │
-│  Alias: @/          │        │  index.ts        │        │  No alias           │
-└─────────────────────┘        └──────────────────┘        └─────────────────────┘
-                                        │
-                               src/shared/types.ts
-                               (Alias: @shared/)
-```
-
-| Layer | Root | Alias | Allowed APIs |
-|-------|------|-------|-------------|
-| Renderer | `src/renderer/` | `@/` | DOM, React, `window.electronAPI` only |
-| Preload | `src/preload/index.ts` | — | `contextBridge`, `ipcRenderer` |
-| Main | `src/main/` | — | All Node.js + Electron APIs |
-| Shared | `src/shared/` | `@shared/` | Pure TypeScript — no runtime APIs |
-
-**Entry points:**
-
-| What | File |
-|------|------|
-| Renderer HTML shell | `index.html` → `/src/renderer/main.tsx` |
-| Renderer React root | `src/renderer/main.tsx` |
-| Main process | `src/main/index.ts` |
-| Preload bridge | `src/preload/index.ts` |
-
-### IPC Pattern
-
-Every renderer-to-main call goes through a consistent wrapper:
-
-```typescript
-// Renderer side
-import { callElectron, electronAPI } from '@/lib/electron';
-const result = await callElectron(() => electronAPI().config.getSkills(configDir));
-
-// IpcResponse<T> envelope: { success: boolean; data?: T; error?: string }
-```
-
-All IPC handlers in `src/main/ipc/configHandlers.ts` respond with `{ success, data }` or `{ success: false, error }`.
-
-**Rule:** Never throw across the IPC boundary. All errors are wrapped in `{ success: false, error }`.
-
-### Path Aliases
-
-- `@/` → `src/renderer/`
-- `@shared/` → `src/shared/`
-
-### Main Process IPC Files
-
-- `src/main/ipc/configHandlers.ts` — All config/session/rules/skills/plugin operations (~1,000 lines, split candidate)
-- `src/main/ipc/fileHandlers.ts` — Generic file/directory/JSON read-write
-- `src/main/ipc/dialogHandlers.ts` — Native file dialog wrappers
-
-### Security Guards in configHandlers.ts
-
-Two utility functions at the top of the file enforce path safety for all renderer-supplied inputs:
-
-- `assertSafePath(inputPath, ...allowedRoots)` — Rejects paths that resolve outside the given roots (prevents path traversal). All session/rule/plugin paths are checked against `os.homedir()`.
-- `assertSafeName(name)` — Rejects strings containing `/`, `\`, or `..` (prevents directory escape via names).
-
-PowerShell invocations use environment variables (`$env:ZIP_SRC`, `$env:ZIP_DST`) rather than string interpolation to prevent command injection.
-
-### Renderer Component Structure
-
-```
-src/renderer/
-  main.tsx                         # Vite entry — mounts React into DOM
-  App.tsx                          # Root: AGENT_TABS + ContentView router
-  components/
-    layout/
-      Sidebar.tsx                  # Agent list, theme toggle, collapsible
-    agents/
-      ClaudePlugins.tsx            # installed_plugins.json viewer + toggle/delete
-      ClaudePlugins/
-        FilterToolbar.tsx          # Filter bar for plugin list
-      GeminiExtensions.tsx         # ~/.gemini/extensions/ viewer
-    editors/
-      JsonFileEditor.tsx           # Generic JSON read/write (Settings pages)
-      MarkdownEditor.tsx           # Generic .md read/write (CLAUDE.md, GEMINI.md)
-      McpCommandEditor.tsx         # MCP server editor with command parsing
-      SkillsEditor.tsx             # Skill list + editor + ZIP install
-      AddSkillDialog.tsx           # ZIP install / symlink dialog
-      RulesEditor.tsx              # ~/.claude/rules/**/*.md CRUD
-      SubagentsEditor.tsx          # ~/.copilot/subagents/*.agent.md CRUD
-      ClaudeSessionsView.tsx       # JSONL session reader
-      GeminiSessionsView.tsx       # Gemini session reader
-      CopilotSessionsView.tsx      # Copilot session reader
-      SessionsView.tsx             # Generic session list (base / fallback)
-    shared/
-      ExtensionListLayout.tsx      # Reusable list panel (loading/empty/content states)
-      ExtensionRow.tsx             # Single row with toggle, badge, delete
-    ui/                            # shadcn/ui primitives (button, dialog, tabs…)
-  hooks/
-    useAgents.ts                   # Loads AgentProfile[] via IPC
-    useConfig.ts                   # useSkills, useMarkdown (IPC + state)
-    useItemLoader.ts               # Generic async data loader hook
-    useTheme.ts                    # Dark/light theme toggle + persistence
-  lib/
-    electron.ts                    # callElectron() + electronAPI() wrapper
-    parseMcpCommand.ts             # Parses "command args" string into McpServer
-```
-
-### Agent Types and Tabs
-
-`App.tsx` maintains `AGENT_TABS` — a map from `AgentType` to the tab list shown for that agent. Each tab id maps to a rendered component. The active agent color propagates as `agentColor` prop throughout the tab content tree.
-
-| Agent | Tabs |
-|-------|------|
-| claude-code | Settings, CLAUDE.md, Sessions, Skills, Plugins, MCP Servers, Rules |
-| copilot | Settings, Instructions, Subagents, Sessions, Skills, MCP Servers |
-| gemini | Settings, GEMINI.md, Sessions, Skills, Extensions, MCP Servers |
-| shared | Shared Skills |
-
-### Testing
-
-- Tests live colocated in `__tests__/` subdirectories.
-- Main process tests: `src/main/ipc/__tests__/` — unit tests with mocked `fs` and `electron`.
-- Renderer tests: `src/renderer/**/__tests__/` — jsdom environment (auto-detected by glob in `vitest.config.ts`).
-- Setup file: `src/test/setup.ts`.
-- Coverage is collected from `src/main/**`, `src/shared/**`, and `src/renderer/**`.
+**Load-bearing rules** (keep in mind at all times — enforced in Working Rules below):
+- Never throw across the IPC boundary — always return `{ success, data? }` or `{ success: false, error }`.
+- Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs.
+- Renderer never imports Node APIs directly — all FS/OS calls go through `callElectron()`.
 
 ## Working Rules
 
@@ -184,14 +74,14 @@ A feature is complete when:
 
 ## End of Session
 
-Before ending a session:
+Run the full gate in `clean-state-checklist.md` before handing off. TL;DR:
 
-1. Run `bun run test` — confirm 0 failures
-2. Run `bun run lint` — confirm 0 errors
-3. Update `feature_list.json` — set completed items to `"done"`, add evidence
-4. Update `progress.md` — update snapshot (last action, verify status)
-5. Append to `session-log.jsonl` — one JSON line with date, summary, test/lint counts
-6. Commit with a descriptive conventional-commit message
+1. `bun run typecheck && bun run lint && bun run test` — all green
+2. `bash scripts/check-architecture.sh` — 0 boundary violations
+3. Update `feature_list.json` (status + evidence), `progress.md` (snapshot), `session-log.jsonl` (append one line)
+4. Commit with a Conventional Commits message
+
+See `session-handoff.md` for the narrative steps (progress update, restart path).
 
 ## Current Focus
 
