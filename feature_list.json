@@ -122,10 +122,11 @@
     },
     {
       "id": "feat-016",
-      "name": "E2E 測試",
-      "description": "使用 Playwright 為關鍵使用者流程建立 E2E 測試（載入 agent 清單、開啟設定頁、儲存設定）。",
-      "dependencies": ["feat-001"],
-      "status": "planned",
+        "name": "E2E 測試",
+        "description": "使用 Playwright 為關鍵使用者流程建立 E2E 測試（載入 agent 清單、開啟設定頁、儲存設定）。",
+        "dependencies": ["feat-001"],
+        "status": "blocked",
+        "evidence": "基礎建設完整（playwright.config.ts, e2e/fixtures.ts, e2e/app.spec.ts, e2e/electron-entry.cjs）；但 electron.launch() 在 Windows 上以 STATUS_BREAKPOINT (0x80000003) 崩潰於 Playwright CDP 初始化時。Electron 35/41 均重現。詳見 docs/E2E_BLOCKED.md",
       "evidence": ""
     },
     {
@@ -138,3 +139,4 @@
     }
   ]
 }
+

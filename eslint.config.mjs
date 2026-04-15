@@ -22,6 +22,9 @@ export default antfu(
       // Config files written without antfu formatting style
       'postcss.config.js',
       '*.config.js',
+      // Playwright E2E tests — separate TypeScript project, not part of main lint gate
+      'playwright.config.ts',
+      'e2e/**',
     ],
 
     rules: {

@@ -1,11 +1,11 @@
 # Progress Log
 
-## 專案狀態快照（2026-04-15）
+## 專案狀態快照（2026-07）
 
 **Branch:** `refactor/refactor-ui-by-design.md`
 **Base:** `main`
 
-### 已完成功能（feat-001 ～ feat-015）
+### 功能清單（feat-001 ～ feat-016）
 
 | ID | 功能 | 狀態 |
 |----|------|------|
@@ -24,6 +24,7 @@
 | feat-013 | 測試套件修復（bun run test vs bun test） | ✅ done |
 | feat-014 | Harness 設定完善 | ✅ done |
 | feat-015 | configHandlers.ts 拆分（9 domain 檔案） | ✅ done |
+| feat-016 | E2E 測試（Playwright） | 🚫 blocked |
 
 ---
 
@@ -31,14 +32,13 @@
 
 | 風險 | 說明 |
 |------|------|
-| configHandlers.ts 過大 | ~1,000 行，`AGENTS.md` 已標注為 split candidate |
+| feat-016 E2E 測試 | `electron.launch()` 在 Windows 上以 `STATUS_BREAKPOINT (0x80000003)` 崩潰，Playwright CDP 初始化觸發 V8 層崩潰。Electron 35/41 均重現。詳見 `docs/E2E_BLOCKED.md` |
 
 ---
 
 ## 上次 Session 結束點
 
-- **最後動作：** feat-015 完成 — 將 1484 行的 configHandlers.ts 拆分為 9 個 domain 檔案：`handlers/{configUtils,agentsHandler,claudeHandler,geminiHandler,copilotHandler,mcpHandler,skillsHandler,rulesHandler,markdownHandler}.ts`；configHandlers.ts 縮減為 18 行 orchestrator
-- **所有 15 個 feature 均已完成，feat-016 ～ feat-017 為 planned**
-- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings；`bun run typecheck` 通過
+- **最後動作：** feat-016 標記為 blocked — E2E 基礎建設已完整建立（`playwright.config.ts`, `e2e/fixtures.ts`, `e2e/app.spec.ts`, `e2e/electron-entry.cjs`），但 `electron.launch()` 在 Windows 上因 Playwright CDP 初始化觸發 V8 層的 `STATUS_BREAKPOINT` 崩潰無法解決。已撰寫封鎖原因文件 `docs/E2E_BLOCKED.md`（含診斷過程與三條解除封鎖路徑）。
+- **驗證狀態：** `bun run test` 378 pass / 0 fail（21 files）；`bun run lint` 0 errors / 0 warnings
 
 > Session 歷史已移至 `session-log.jsonl`（append-only）。
