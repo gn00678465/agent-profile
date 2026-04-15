@@ -5,7 +5,7 @@
 **Branch:** `refactor/refactor-ui-by-design.md`
 **Base:** `main`
 
-### 功能清單（feat-001 ～ feat-016）
+### 功能清單（feat-001 ～ feat-017）
 
 | ID | 功能 | 狀態 |
 |----|------|------|
@@ -25,6 +25,7 @@
 | feat-014 | Harness 設定完善 | ✅ done |
 | feat-015 | configHandlers.ts 拆分（9 domain 檔案） | ✅ done |
 | feat-016 | E2E 測試（Playwright） | 🚫 blocked |
+| feat-017 | init.sh 整合 session-handoff checklist | ✅ done |
 
 ---
 
@@ -38,8 +39,8 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** feat-016 標記為 blocked — E2E 基礎建設已完整建立，但 `electron.launch()` 在 Windows 觸發 V8 層 `STATUS_BREAKPOINT` 崩潰無法解決。已撰寫 `docs/E2E_BLOCKED.md`（含診斷過程與三條解除封鎖路徑）。
-- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail；`check-architecture.sh` PASS
+- **最後動作：** feat-017 完成 — `init.sh` 新增 `[0/6]` harness state check：驗證 `AGENTS.md`、`feature_list.json` 存在，並以 `awk` 擷取並顯示 `progress.md` 的「上次結束點」區塊。
+- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail
 
 ---
 

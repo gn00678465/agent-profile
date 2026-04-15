@@ -8,8 +8,8 @@
 
 **最後更新：** 2026-04-15
 **驗證狀態：** typecheck ✅ · lint ✅ (0 err / 0 warn) · test ✅ (378 pass) · arch ✅
-**上次動作：** feat-016 E2E 基礎建設完整就緒；`electron.launch()` 在 Windows 觸發 `STATUS_BREAKPOINT`，標記 blocked，撰寫 `docs/E2E_BLOCKED.md`
-**下次起點：** feat-017（`init.sh` 整合 session-handoff checklist，`planned`）— 或先以 `chromium.connectOverCDP()` 解除 feat-016
+**上次動作：** feat-017 完成 — `init.sh` 新增 `[0/6]` harness state check：驗證 `AGENTS.md`、`feature_list.json` 存在，`awk` 擷取 `progress.md` 上次結束點
+**下次起點：** 所有 17 個 feature 均已 done 或 blocked；可選：feat-016 以 `chromium.connectOverCDP()` 解除封鎖，或新增 feat-018
 
 ---
 

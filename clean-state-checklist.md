@@ -20,7 +20,7 @@ bash scripts/check-architecture.sh   # 0 boundary violations
 - [ ] `bun run test` — 0 failures
 - [ ] `bash scripts/check-architecture.sh` — PASS (renderer/main/shared/preload boundaries intact)
 
-> Tip: `./init.sh` runs typecheck → build → test → lint. Add the architecture check manually (it is not yet in `init.sh`).
+> Tip: `./init.sh` runs harness check → typecheck → build → test → lint → architecture check.
 
 ---
 

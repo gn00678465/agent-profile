@@ -133,8 +133,8 @@
       "name": "init.sh 整合 session-handoff checklist",
       "description": "在 init.sh 加入啟動前 harness 狀態驗證：確認 AGENTS.md、feature_list.json 存在，顯示 progress.md 上次結束點。",
       "dependencies": ["feat-014"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "init.sh 新增 [0/6] harness state check：驗證 AGENTS.md + feature_list.json 存在（缺少則 exit 1），並以 awk 擷取 progress.md「上次 Session 結束點」區塊顯示給 agent。clean-state-checklist.md Tip 同步更新。bun run test 378 pass；bun run lint 0 errors。"
     }
   ]
 }
