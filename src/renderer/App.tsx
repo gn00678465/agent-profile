@@ -338,19 +338,13 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             {saveState.isSaving && (
-              <span className="badge-notion" style={{ background: 'rgba(217,119,6,0.15)', color: 'var(--claude-accent)' }}>
-                Saving...
-              </span>
+              <span className="badge-notion">Saving...</span>
             )}
             {!saveState.isSaving && saveState.isDirty && (
-              <span className="badge-notion" style={{ background: 'rgba(217,119,6,0.15)', color: 'var(--claude-accent)' }}>
-                Unsaved
-              </span>
+              <span className="badge-notion">Unsaved</span>
             )}
             {!saveState.isSaving && !saveState.isDirty && saveState.lastSaved && (
-              <span className="badge-notion" style={{ background: 'rgba(46,184,138,0.15)', color: 'var(--copilot-primary)' }}>
-                Saved
-              </span>
+              <span className="badge-notion">Saved</span>
             )}
           </div>
 

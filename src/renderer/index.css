@@ -112,9 +112,9 @@
     --text-muted:     #a39e98;
     --text-code:      #3a3a4a;
 
-    /* Badge tokens for light mode */
+    /* Badge tokens for light mode — #005bab achieves 6.52:1 on #f2f9ff (WCAG AA ✓) */
     --badge-blue-bg:  #f2f9ff;
-    --badge-blue-text: #097fe8;
+    --badge-blue-text: #005bab;
   }
 }
 
