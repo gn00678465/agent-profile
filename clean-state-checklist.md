@@ -26,12 +26,13 @@ bash scripts/check-architecture.sh   # 0 boundary violations
 
 ## 2. State artifacts
 
-Use `session-handoff.md` sections 2–3 for templates (jsonl format + progress snippet).
+Follow `session-handoff.md` Steps 2–4 in order (templates + commit command are there).
 
-- [ ] `session-handoff.md` — sections 1–4 填寫完畢（verification results、jsonl 追加、progress 快照、next step）
+- [ ] `session-handoff.md` — "▶ 下次 Session 從這裡開始" 區塊 4 個欄位全部更新（最後更新 = 今天日期、驗證狀態、上次動作、下次起點）
 - [ ] `feature_list.json` — completed items set to `"status": "done"` with evidence; no stale `in-progress` carry-overs
-- [ ] `progress.md` — 快照反映當前「上次結束點」；in-progress feature 有明確「待完成」清單
-- [ ] `session-log.jsonl` — appended exactly one JSON line for this session (date, summary, tests, lint_errors, lint_warnings)
+- [ ] `progress.md` — feature table 含今次完成項目；「上次 Session 結束點」反映實際現況（branch、驗證狀態、動作）
+- [ ] `session-log.jsonl` — 本次 session 恰好追加一行，**日期為今天實際日期**（不得沿用前次 context 的日期）
+- [ ] Handoff commit — 恰好 stage `feature_list.json progress.md session-log.jsonl session-handoff.md`，commit message = `chore: end-of-session handoff YYYY-MM-DD`
 
 ---
 

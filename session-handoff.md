@@ -41,6 +41,9 @@ bash scripts/check-architecture.sh
 
 ### 2. 追加 session-log.jsonl
 
+> ⚠️ **日期必須是今天的實際日期**（執行 `date +%Y-%m-%d` 確認）。不得沿用前次 session context 裡的日期。  
+> 追加前先確認今天的條目是否已存在，避免重複。
+
 在 `session-log.jsonl` 末尾另起一行：
 
 ```
@@ -55,9 +58,9 @@ bash scripts/check-architecture.sh
 - **下次起點** → 具體 feat-id 或動作
 - 若有 in-progress / blocked feature：更新或新增對應小節
 
-### 4. Commit
+### 4. Commit — 只 stage 這 4 個檔案，不多不少
 
 ```bash
 git add feature_list.json progress.md session-log.jsonl session-handoff.md
-git commit -m "chore: end-of-session handoff YYYY-MM-DD
+git commit -m "chore: end-of-session handoff YYYY-MM-DD"
 ```

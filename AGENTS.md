@@ -58,7 +58,7 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 - **IPC envelope.** Every IPC handler returns `{ success, data? }` or `{ success: false, error }`. Never throw across the IPC boundary.
 - **Security guards.** Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs before touching the file system.
 - **Design system compliance.** All UI changes must follow `DESIGN.md`: warm neutral palette, whisper borders (`1px solid rgba(0,0,0,0.1)`), Notion Blue (`#0075de`) for primary CTA, agent accent colors for interactive highlights.
-- **Update state before ending.** Update `feature_list.json` + `progress.md` (snapshot) + `session-log.jsonl` (append history) at the end of every session.
+- **Update state before ending.** Update `feature_list.json` (status + evidence) + `progress.md` (snapshot) + `session-log.jsonl` (append one line) + `session-handoff.md` (▶ 下次 Session 區塊) at the end of every session.
 - **Reusable patterns** Update AGENTS.md files if you discover reusable patterns (see below)
 
 ## Update AGENTS.md Files
@@ -98,21 +98,46 @@ A feature is complete when:
 
 ## End of Session
 
-Before ending a session:
+Before ending a session, execute these steps **in order**:
 
-1. `bun run typecheck && bun run lint && bun run test` — all green
-2. `bash scripts/check-architecture.sh` — 0 boundary violations
-3. Fill `session-handoff.md` — update sections 1–4 (verification results, jsonl line, progress snapshot, next step)
-4. Update `feature_list.json` (status + evidence), `progress.md` (snapshot)
-5. Commit with a Conventional Commits message
+### 1. Verification gates — all must be green
+```bash
+bun run typecheck && bun run lint && bun run test
+bash scripts/check-architecture.sh
+```
 
-Full binary gate: `clean-state-checklist.md`.
+### 2. Append to `session-log.jsonl` — exactly one line, TODAY's date
+> **CRITICAL:** Use today's actual date (`date +%Y-%m-%d`). Do NOT copy the date from previous session context.
+> Check if today's entry already exists before appending to avoid duplicates.
+```
+{"date":"YYYY-MM-DD","summary":"<一句話>","tests":<N>,"lint_errors":0,"lint_warnings":0}
+```
+
+### 3. Update `session-handoff.md` — fill the "▶ 下次 Session 從這裡開始" block
+Four fields, all required:
+- **最後更新** → today's date (same as step 2)
+- **驗證狀態** → actual gate results from step 1
+- **上次動作** → one sentence summary of this session
+- **下次起點** → concrete feat-id or action (not vague)
+
+### 4. Update `feature_list.json` and `progress.md`
+- `feature_list.json`: set completed items to `"status": "done"` with evidence; no stale `in-progress`
+- `progress.md`: update feature table and "上次 Session 結束點" to match current state
+
+### 5. Commit — exactly these 4 files, this exact format
+```bash
+git add feature_list.json progress.md session-log.jsonl session-handoff.md
+git commit -m "chore: end-of-session handoff YYYY-MM-DD"
+```
+> Do NOT use `git add .` — only the 4 listed files belong in the handoff commit.
+
+Full binary gate checklist: `clean-state-checklist.md`.
 
 ## Current Focus
 
-All 14 features are **done**. See `feature_list.json` for the full list with evidence.
+All 18 features are **done** (feat-001 ~ feat-018). See `feature_list.json` for the full list with evidence.
 
 **Next work candidates (add new features to `feature_list.json` as `planned` before starting):**
-- Splitting `configHandlers.ts` (~1,000 lines) into per-domain files
-- E2E tests for critical user flows (Playwright)
-- `session-handoff.md` checklist integration into `init.sh`
+- feat-016 E2E tests — unblock via `chromium.connectOverCDP()` (see `docs/E2E_BLOCKED.md`)
+- Dark mode CTA contrast follow-up — `#ffffff` on `#62aef0` = 2.22:1, below 3:1 for large text
+- Merge `feat/018-notion-ui` → `main`
