@@ -26,6 +26,7 @@
 | feat-015 | configHandlers.ts 拆分（9 domain 檔案） | ✅ done |
 | feat-016 | E2E 測試（Playwright） | 🚫 blocked |
 | feat-017 | init.sh 整合 session-handoff checklist | ✅ done |
+| feat-018 | UI 重構為 Notion 風格設計系統 | ✅ done |
 
 ---
 
@@ -39,9 +40,9 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** feat-018 Phase A-D 完成 — Notion 暖中性設計系統重構。待 UI 評審（subagent evaluator）完成後合約簽署。
-- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail；`check-architecture.sh` 0 violations；`bun run build` ✓
-- **Branch:** `feat/018-notion-ui`（基於 `chore/harness-setup`）
+- **最後動作：** feat-018 完成 — Notion-style UI 重構全部通過，Evaluator 三輪審查 APPROVED（26/28）；sprint-contract §7 執行簽署完成
+- **驗證狀態：** typecheck ✅ 0 errors · lint ✅ 0 errors / 0 warnings · test ✅ 378 pass / 0 fail · arch ✅ 0 violations · build ✅ renderer 836 kB
+- **Branch:** `feat/018-notion-ui`（基於 `chore/harness-setup` @ `252a06b`）— 待 merge 回 `main`
 
 ---
 

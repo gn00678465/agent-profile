@@ -6,10 +6,10 @@
 
 > 每次 session 結束前更新這個區塊（見下方程序 Step 3）。
 
-**最後更新：** 2026-04-15
-**驗證狀態：** typecheck ✅ · lint ✅ (0 err / 0 warn) · test ✅ (378 pass) · arch ✅
-**上次動作：** feat-017 完成 — `init.sh` 新增 `[0/6]` harness state check：驗證 `AGENTS.md`、`feature_list.json` 存在，`awk` 擷取 `progress.md` 上次結束點
-**下次起點：** 所有 17 個 feature 均已 done 或 blocked；可選：feat-016 以 `chromium.connectOverCDP()` 解除封鎖，或新增 feat-018
+**最後更新：** 2026-04-17
+**驗證狀態：** typecheck ✅ · lint ✅ (0 err / 0 warn) · test ✅ (378 pass) · arch ✅ · build ✅
+**上次動作：** feat-018 evaluator 三輪審查 APPROVED（26/28）；修正 C9/C12/C5；sprint-contract §7 執行簽署；progress.md / session-handoff.md / feature_list.json 同步
+**下次起點：** `feat/018-notion-ui` merge 回 `main`；可選 feat-016 解封、dark mode CTA contrast follow-up
 
 ---
 
