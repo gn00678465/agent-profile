@@ -39,8 +39,9 @@
 
 ## 上次 Session 結束點
 
-- **最後動作：** feat-017 完成 — `init.sh` 新增 `[0/6]` harness state check：驗證 `AGENTS.md`、`feature_list.json` 存在，並以 `awk` 擷取並顯示 `progress.md` 的「上次結束點」區塊。
-- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail
+- **最後動作：** feat-018 Phase A-D 完成 — Notion 暖中性設計系統重構。待 UI 評審（subagent evaluator）完成後合約簽署。
+- **驗證狀態：** `bun run typecheck` 0 errors；`bun run lint` 0 errors / 0 warnings；`bun run test` 378 pass / 0 fail；`check-architecture.sh` 0 violations；`bun run build` ✓
+- **Branch:** `feat/018-notion-ui`（基於 `chore/harness-setup`）
 
 ---
 

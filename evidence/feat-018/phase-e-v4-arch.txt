@@ -1,0 +1,9 @@
+=== Architecture Boundary Checks ===
+
+[1/4] Renderer (src/renderer/)
+[2/4] Main (src/main/)
+[3/4] Shared (src/shared/)
+[4/4] Preload (src/preload/)
+
+=== Summary ===
+PASS: All architecture boundary checks passed

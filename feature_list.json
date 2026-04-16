@@ -141,8 +141,8 @@
       "name": "UI 重構為 Notion 風格設計系統",
       "description": "依 DESIGN.md 規範重構 UI：暖中性色盤 (#f6f5f4/#31302e/#615d59)、whisper borders (1px rgba(0,0,0,0.1))、Notion Blue (#0075de) 主 CTA、Inter 字型與 typography scale（display 64px -2.125px letter-spacing）、4-layer shadow stacks、pill badges (9999px)。涵蓋 index.css tokens、tailwind.config.js、App 主框架、Sidebar、ui primitives (button/card/tabs)、ExtensionRow/ExtensionListLayout。衝刺合約待核准後啟動。",
       "dependencies": ["feat-001", "feat-010"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "bun run typecheck: exit 0 (0 errors) | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 378 passed / 21 files / 0 fail | bash scripts/check-architecture.sh: 0 violations | bun run build: ✓ built in 12.83s | D2 border grep: 0 matches | D3 shadow-notion-card applied to card.tsx | R2 bg-accent/60 preserved in ExtensionRow.tsx:60"
     }
   ]
 }
