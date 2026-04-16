@@ -146,8 +146,8 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Agent header band */}
       <div
-        className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
-        style={{ background: color.subtle, borderColor: `${color.primary}40` }}
+        className="flex shrink-0 items-center gap-3 border-b-whisper px-4 py-3"
+        style={{ background: color.subtle }}
       >
         <span className="text-xl" style={{ color: color.primary }}>{AGENT_GLYPHS[type] ?? '◈'}</span>
         <div>
@@ -160,7 +160,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
 
       {/* Section tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-border" style={{ background: 'var(--bg-base)' }}>
+        <div className="shrink-0 border-b-whisper" style={{ background: 'var(--bg-base)' }}>
           <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -271,8 +271,8 @@ export default function App() {
       <div className="flex h-full flex-col overflow-hidden" style={{ background: 'var(--bg-base)' }}>
         {/* Title bar */}
         <div
-          className="titlebar-drag flex h-10 shrink-0 items-center justify-between border-b px-4"
-          style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}
+          className="titlebar-drag flex h-10 shrink-0 items-center justify-between border-b-whisper px-4"
+          style={{ background: 'var(--bg-base)' }}
         >
           <div className="flex items-center gap-2">
             <button
@@ -322,8 +322,8 @@ export default function App() {
 
         {/* Status bar */}
         <div
-          className="flex h-7 shrink-0 items-center justify-between border-t px-4"
-          style={{ background: 'var(--bg-base)', borderColor: 'var(--border-subtle)' }}
+          className="flex h-7 shrink-0 items-center justify-between border-t-[1px] border-t-[var(--border-subtle)] px-4"
+          style={{ background: 'var(--bg-base)' }}
         >
           <div className="flex items-center gap-2 font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>
             {activeAgent && (
@@ -336,22 +336,19 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[11px]">
+          <div className="flex items-center gap-2">
             {saveState.isSaving && (
-              <span className="flex items-center gap-1.5" style={{ color: '#f59e0b' }}>
-                <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+              <span className="badge-notion" style={{ background: 'rgba(217,119,6,0.15)', color: 'var(--claude-accent)' }}>
                 Saving...
               </span>
             )}
             {!saveState.isSaving && saveState.isDirty && (
-              <span className="flex items-center gap-1.5" style={{ color: '#f59e0b' }}>
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                Unsaved changes
+              <span className="badge-notion" style={{ background: 'rgba(217,119,6,0.15)', color: 'var(--claude-accent)' }}>
+                Unsaved
               </span>
             )}
             {!saveState.isSaving && !saveState.isDirty && saveState.lastSaved && (
-              <span className="flex items-center gap-1.5" style={{ color: '#22c55e' }}>
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="badge-notion" style={{ background: 'rgba(46,184,138,0.15)', color: 'var(--copilot-primary)' }}>
                 Saved
               </span>
             )}
