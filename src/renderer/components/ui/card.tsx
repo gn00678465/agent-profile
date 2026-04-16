@@ -5,7 +5,7 @@ function Card({ className, ref, ...props }: React.HTMLAttributes<HTMLDivElement>
   return (
     <div
       ref={ref}
-      className={cn('rounded-xl border bg-card text-card-foreground shadow', className)}
+      className={cn('rounded-card border-whisper shadow-notion-card bg-card text-card-foreground', className)}
       {...props}
     />
   );

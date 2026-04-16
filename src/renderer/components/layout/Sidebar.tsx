@@ -34,10 +34,10 @@ export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect }: Sid
   return (
     <div
       className={cn(
-        'flex h-full flex-col border-r transition-[width] duration-200 p-3 gap-2',
+        'flex h-full flex-col border-r-[1px] border-r-[var(--border-subtle)] transition-[width] duration-200 p-3 gap-2',
         collapsed ? 'w-[58px]' : 'w-[200px]'
       )}
-      style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}
+      style={{ background: 'var(--bg-surface)' }}
     >
       {/* Agent grid / column */}
       <div className="flex-1 overflow-y-auto px-1">
@@ -63,7 +63,8 @@ export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect }: Sid
                 )}
                 style={isActive ? {
                   background: `${agentAccent}20`,
-                  boxShadow: `inset 0 0 0 1.5px ${agentAccent}`,
+                  boxShadow: `inset 0 0 0 2px ${agentAccent}`,
+                  borderRadius: '8px',
                 } : undefined}
                 title={agent.name}
               >
@@ -78,7 +79,7 @@ export function Sidebar({ agents, activeAgentId, collapsed, onAgentSelect }: Sid
       <div className="flex shrink-0 items-center justify-center">
         <button
           onClick={toggleTheme}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
