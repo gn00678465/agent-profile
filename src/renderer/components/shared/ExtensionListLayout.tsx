@@ -36,11 +36,11 @@ export function ExtensionListLayout({
       {toolbar}
       <ScrollArea className="flex-1">
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground [&>svg]:h-10 [&>svg]:w-10 [&>img]:h-10 [&>img]:w-10">
             {emptyIcon}
-            <p className="text-sm">{emptyTitle}</p>
+            <p className="text-card-title" style={{ color: 'var(--text-primary)' }}>{emptyTitle}</p>
             {emptyDescription && (
-              <p className="text-xs text-muted-foreground">{emptyDescription}</p>
+              <p className="text-[14px] text-muted-foreground">{emptyDescription}</p>
             )}
           </div>
         ) : (

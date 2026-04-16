@@ -55,7 +55,7 @@ export function ExtensionRow({
           : undefined
       }
       className={[
-        'group flex w-full items-center justify-between border-b border-border/50 px-4 py-3 text-left transition-colors',
+        'group flex w-full items-center justify-between border-b-whisper px-4 py-3 text-left transition-colors',
         isClickable ? 'cursor-pointer' : '',
         selected ? 'bg-accent/60' : isClickable ? 'hover:bg-accent/30' : '',
       ].join(' ')}
@@ -73,7 +73,7 @@ export function ExtensionRow({
             {badge}
           </div>
           {subtitle && (
-            <div className="mt-0.5 text-xs text-muted-foreground">{subtitle}</div>
+            <div className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>{subtitle}</div>
           )}
         </div>
       </div>
