@@ -59,6 +59,29 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 - **Security guards.** Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs before touching the file system.
 - **Design system compliance.** All UI changes must follow `DESIGN.md`: warm neutral palette, whisper borders (`1px solid rgba(0,0,0,0.1)`), Notion Blue (`#0075de`) for primary CTA, agent accent colors for interactive highlights.
 - **Update state before ending.** Update `feature_list.json` + `progress.md` (snapshot) + `session-log.jsonl` (append history) at the end of every session.
+- **Reusable patterns** Update AGENTS.md files if you discover reusable patterns (see below)
+
+## Update AGENTS.md Files
+
+- **Identify directories with edited files** - Look at which directories you modified
+- **Check for existing AGENTS.md** - Look for AGENTS.md in those directories or parent directories
+- **Add valuable learnings** - If you discovered something future developers/agents should know:
+    - API patterns or conventions specific to that module
+    - Gotchas or non-obvious requirements
+    - Dependencies between files
+    - Testing approaches for that area
+    - Configuration or environment requirements
+
+**Examples of good AGENTS.md additions:**
+- "When modifying X, also update Y to keep them in sync"
+- "This module uses pattern Z for all API calls"
+- "Tests require the dev server running on PORT 3000"
+- "Field names must match the template exactly"
+
+**Do NOT add:**
+- Story-specific implementation details
+- Temporary debugging notes
+- Information already in `progress.md` or `session-log.jsonl`
 
 ## Definition of Done
 
