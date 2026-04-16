@@ -4,49 +4,59 @@
 
 @layer base {
   :root {
-    /* shadcn CSS color vars (used by Tailwind theme extension) */
-    --background:         220 10% 5%;
-    --foreground:         220 10% 95%;
-    --card:               220 10% 8%;
-    --card-foreground:    220 10% 95%;
-    --popover:            220 10% 9%;
-    --popover-foreground: 220 10% 95%;
-    --primary:            220 90% 60%;
+    /* shadcn CSS color vars — warm dark palette */
+    --background:         28 4% 18%;
+    --foreground:         0 0% 95%;
+    --card:               28 4% 14%;
+    --card-foreground:    0 0% 95%;
+    --popover:            28 4% 15%;
+    --popover-foreground: 0 0% 95%;
+    --primary:            208 80% 66%;
     --primary-foreground: 0 0% 100%;
-    --secondary:          220 10% 12%;
-    --secondary-foreground: 220 10% 80%;
-    --muted:              220 10% 12%;
-    --muted-foreground:   220 10% 55%;
-    --accent:             220 10% 15%;
-    --accent-foreground:  220 10% 95%;
+    --secondary:          28 4% 22%;
+    --secondary-foreground: 0 0% 80%;
+    --muted:              28 4% 22%;
+    --muted-foreground:   28 3% 55%;
+    --accent:             28 4% 24%;
+    --accent-foreground:  0 0% 95%;
     --destructive:        0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border:             220 10% 18%;
-    --input:              220 10% 18%;
-    --ring:               220 90% 60%;
+    --border:             28 4% 24%;
+    --input:              28 4% 24%;
+    --ring:               208 80% 66%;
     --radius:             0.375rem;
 
     /* Sidebar vars */
-    --sidebar-background: 220 10% 8%;
-    --sidebar-foreground: 220 10% 80%;
-    --sidebar-primary:    220 90% 60%;
+    --sidebar-background: 28 4% 16%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary:    208 80% 66%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent:     220 10% 12%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border:     220 10% 15%;
-    --sidebar-ring:       220 90% 60%;
+    --sidebar-accent:     28 4% 22%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border:     28 4% 22%;
+    --sidebar-ring:       208 80% 66%;
 
     /* App-level design tokens */
-    --bg-base:        #0d0d0f;
-    --bg-surface:     #141416;
-    --bg-raised:      #1c1c1f;
-    --bg-overlay:     #242428;
-    --border-subtle:  #2a2a2e;
-    --border-strong:  #3d3d44;
-    --text-primary:   #f0f0f3;
-    --text-secondary: #8b8b99;
-    --text-muted:     #4a4a56;
+    --bg-base:        #31302e;
+    --bg-surface:     #3a3836;
+    --bg-raised:      #444240;
+    --bg-overlay:     #4e4c4a;
+    --border-subtle:  rgba(255, 255, 255, 0.1);
+    --text-primary:   rgba(255, 255, 255, 0.95);
+    --text-secondary: #a39e98;
+    --text-muted:     #615d59;
     --text-code:      #c5c5d0;
+
+    /* Notion design tokens */
+    --notion-blue:        #0075de;
+    --notion-blue-active: #005bab;
+    --notion-blue-focus:  #097fe8;
+    --badge-blue-bg:      rgba(0, 117, 222, 0.2);
+    --badge-blue-text:    #62aef0;
+
+    /* Shadow system */
+    --shadow-card: rgba(0, 0, 0, 0.04) 0px 4px 18px, rgba(0, 0, 0, 0.027) 0px 2.025px 7.84688px, rgba(0, 0, 0, 0.02) 0px 0.8px 2.925px, rgba(0, 0, 0, 0.01) 0px 0.175px 1.04062px;
+    --shadow-deep: rgba(0, 0, 0, 0.01) 0px 1px 3px, rgba(0, 0, 0, 0.02) 0px 3px 7px, rgba(0, 0, 0, 0.02) 0px 7px 15px, rgba(0, 0, 0, 0.04) 0px 14px 28px, rgba(0, 0, 0, 0.05) 0px 23px 52px;
 
     /* Agent color identities */
     --gemini-primary:  #7c6ef5;
@@ -60,44 +70,51 @@
   }
 
   .light {
-    /* shadcn overrides */
-    --background: 0 0% 100%;
-    --foreground: 220 10% 10%;
-    --card: 220 10% 97%;
-    --card-foreground: 220 10% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 10%;
-    --primary: 220 90% 50%;
+    /* shadcn overrides — warm white palette */
+    --background:         0 0% 100%;
+    --foreground:         28 5% 11%;
+    --card:               30 5% 96%;
+    --card-foreground:    28 5% 11%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 28 5% 11%;
+    --primary:            208 100% 43%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 10% 93%;
-    --secondary-foreground: 220 10% 30%;
-    --muted: 220 10% 93%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 220 10% 93%;
-    --accent-foreground: 220 10% 10%;
-    --destructive: 0 72% 51%;
-    --border: 220 10% 85%;
-    --input: 220 10% 85%;
-    --ring: 220 90% 50%;
-
-    /* App design tokens */
-    --bg-base: #ffffff;
-    --bg-surface: #f8f8fa;
-    --bg-raised: #f0f0f3;
-    --bg-overlay: #e8e8ec;
-    --border-subtle: #e0e0e5;
-    --border-strong: #c8c8d0;
-    --text-primary: #1a1a1e;
-    --text-secondary: #6b6b7b;
-    --text-muted: #9b9bab;
-    --text-code: #3a3a4a;
+    --secondary:          30 5% 93%;
+    --secondary-foreground: 28 5% 30%;
+    --muted:              30 5% 93%;
+    --muted-foreground:   28 4% 45%;
+    --accent:             30 5% 93%;
+    --accent-foreground:  28 5% 11%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border:             0 0% 90%;
+    --input:              0 0% 90%;
+    --ring:               208 100% 43%;
 
     /* Sidebar */
-    --sidebar-background: 220 10% 97%;
-    --sidebar-foreground: 220 10% 30%;
-    --sidebar-accent: 220 10% 93%;
-    --sidebar-accent-foreground: 220 10% 10%;
-    --sidebar-border: 220 10% 85%;
+    --sidebar-background: 30 5% 97%;
+    --sidebar-foreground: 28 5% 30%;
+    --sidebar-primary:    208 100% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     30 5% 93%;
+    --sidebar-accent-foreground: 28 5% 11%;
+    --sidebar-border:     0 0% 90%;
+    --sidebar-ring:       208 100% 43%;
+
+    /* App design tokens */
+    --bg-base:        #ffffff;
+    --bg-surface:     #f6f5f4;
+    --bg-raised:      #eeeceb;
+    --bg-overlay:     #e5e3e2;
+    --border-subtle:  rgba(0, 0, 0, 0.1);
+    --text-primary:   rgba(0, 0, 0, 0.95);
+    --text-secondary: #615d59;
+    --text-muted:     #a39e98;
+    --text-code:      #3a3a4a;
+
+    /* Badge tokens for light mode */
+    --badge-blue-bg:  #f2f9ff;
+    --badge-blue-text: #097fe8;
   }
 }
 
@@ -113,9 +130,10 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'NotionInter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
     font-size: 13px;
     line-height: 1.5;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
@@ -125,6 +143,34 @@
   }
   button {
     cursor: pointer;
+  }
+
+  /* Typography scale */
+  h1, .text-display {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.00;
+    letter-spacing: -2.125px;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
+  }
+  h2, .text-section {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.00;
+    letter-spacing: -1.5px;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
+  }
+  h3, .text-subhead {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.23;
+    letter-spacing: -0.625px;
+  }
+  h4, .text-card-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.27;
+    letter-spacing: -0.25px;
   }
 }
 
@@ -137,3 +183,35 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+@layer utilities {
+  /* Whisper border utilities */
+  .border-whisper {
+    border: 1px solid var(--border-subtle);
+  }
+  .border-b-whisper {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* Shadow utilities */
+  .shadow-notion-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-notion-deep {
+    box-shadow: var(--shadow-deep);
+  }
+
+  /* Pill badge */
+  .badge-notion {
+    display: inline-flex;
+    align-items: center;
+    background: var(--badge-blue-bg);
+    color: var(--badge-blue-text);
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+    line-height: 1.33;
+  }
+}

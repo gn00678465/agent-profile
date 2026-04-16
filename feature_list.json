@@ -135,6 +135,14 @@
       "dependencies": ["feat-014"],
       "status": "done",
       "evidence": "init.sh 新增 [0/6] harness state check：驗證 AGENTS.md + feature_list.json 存在（缺少則 exit 1），並以 awk 擷取 progress.md「上次 Session 結束點」區塊顯示給 agent。clean-state-checklist.md Tip 同步更新。bun run test 378 pass；bun run lint 0 errors。"
+    },
+    {
+      "id": "feat-018",
+      "name": "UI 重構為 Notion 風格設計系統",
+      "description": "依 DESIGN.md 規範重構 UI：暖中性色盤 (#f6f5f4/#31302e/#615d59)、whisper borders (1px rgba(0,0,0,0.1))、Notion Blue (#0075de) 主 CTA、Inter 字型與 typography scale（display 64px -2.125px letter-spacing）、4-layer shadow stacks、pill badges (9999px)。涵蓋 index.css tokens、tailwind.config.js、App 主框架、Sidebar、ui primitives (button/card/tabs)、ExtensionRow/ExtensionListLayout。衝刺合約待核准後啟動。",
+      "dependencies": ["feat-001", "feat-010"],
+      "status": "planned",
+      "evidence": ""
     }
   ]
 }
