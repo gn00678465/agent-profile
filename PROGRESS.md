@@ -2,7 +2,7 @@
 
 > **Role of PROGRESS.md**: Working memory. Status dashboard + the five most recent full session records. Older records live in `SESSION-LOG.jsonl` (referenced via a single compaction marker). For 當前最高優先度未完成功能 specifically, defer to `feature_list.json` — this skill does not modify external sources.
 
-**Branch:** `chore/harness-setup`
+**Branch:** `feature/initial-agent-profile`
 **Base:** `main`
 **Last Updated:** 2026-05-03
 
@@ -13,38 +13,20 @@
 - 倉庫根目錄: `D:\Projects\agent-profile`
 - 標準啟動路徑: `bun run dev`
 - 標準驗證路徑: `bun run typecheck && bun run lint && bun run test && bash scripts/check-architecture.sh`
-- 當前最高優先度未完成功能: `feat-016 — Playwright E2E（blocked，詳見 feature_list.json）`
-- 當前 blocker: `feat-016 — electron.launch() 在 Windows 觸發 STATUS_BREAKPOINT (0x80000003) V8 崩潰；Electron 35 / 41 均重現。詳見 docs/E2E_BLOCKED.md`
+- 當前最高優先度未完成功能: feat-016 — Playwright E2E (blocked，但已有 `scripts/capture-evidence.cjs` 證明 `chromium.connectOverCDP()` 路徑可解封；詳見 `feature_list.json`)
+- 當前 blocker: feat-016 — `_electron.launch()` 在 Windows 觸發 STATUS_BREAKPOINT (0x80000003)；feat-019 證明 `--remote-debugging-port=9222` + `connectOverCDP()` 是可行替代方案，需重構 `e2e/fixtures.ts`
 
 ---
 
 ## Test Status
 
-2026-05-03 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 405 passed (27 files; 378 baseline + 27 new) | arch: 0 violations | build: renderer + main + preload all OK
+2026-05-03 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 406 passed (27 files; 378 baseline + 28 new) | arch: 0 violations | build: renderer + main + preload all OK
 
 ---
 
 ## 會話記錄
 
-> **Compacted**: sessions 001-006 (2026-04-14 ~ 2026-04-15) — full records in `SESSION-LOG.jsonl`
-
-### 007 — 2026-04-15
-- 目標: feat-017 — init.sh 整合 session-handoff checklist
-- 已完成: init.sh 新增 [0/6] harness state check（驗證 AGENTS.md / feature_list.json 存在；awk 擷取 progress.md 上次結束點顯示） | clean-state-checklist.md Tip 更新
-- 驗證: full suite: 378 passed | lint: 0 errors / 0 warnings
-- 證據: feature_list.json feat-017 status → done
-- 提交: 252a06b feat: feat-017 init.sh harness state check on startup | f2fb4ac docs: 更新文件
-- 風險: feat-016 仍 blocked
-- 下一步: feat-018 UI 重構為 Notion 風格設計系統
-
-### 008 — 2026-04-16
-- 目標: feat-018 Phase A–D — Notion 暖中性 UI 重構
-- 已完成: Phase A — index.css 暖色 tokens / tailwind.config.js notion-warm 色盤 | Phase B — App.tsx badge-notion pill 狀態列 / underline tabs | Phase C — Sidebar whisper border / button notion variant / card rounded-card shadow-notion-card | Phase D — ExtensionRow border-b-whisper / ExtensionListLayout py-24 / text-card-title
-- 驗證: full suite: 378 passed | lint: 0 errors / 0 warnings
-- 證據: DESIGN.md 規格依循
-- 提交: 5fda104 Phase A — Notion warm palette | 84cb3d3 Phase B — App.tsx | 22f3b4c Phase C — Sidebar + UI primitives | f6f266b Phase D — shared list components
-- 風險: 待 evaluator UI 審查
-- 下一步: feat-018 evaluator UI 審查
+> **Compacted**: sessions 001-008 (2026-04-14 ~ 2026-04-16) — full records in `SESSION-LOG.jsonl`
 
 ### 009 — 2026-04-16
 - 目標: feat-018 Phase E — Evaluator 三輪審查與修正
@@ -74,10 +56,19 @@
 - 下一步: 先更新 AGENTS.md「End of Session」與 clean-state-checklist.md 的 lowercase / 舊 schema 引用，然後手動 git commit 重構成果（PROGRESS.md / SESSION-HANDOFF.md / SESSION-LOG.jsonl + AGENTS.md / clean-state-checklist.md）；不要再回頭修改既有 session 區塊 001-010（append-only 從本輪起恢復）
 
 ### 012 — 2026-05-03
-- 目標: feat-019 — Claude 外掛頁面重構（對齊官方 plugin 模型 + CLI 整合 + Notion 設計系統）
-- 已完成: Phase A — docs/CLAUDE_PLUGIN_LAYOUT.md 7-section research doc (221 lines from real ~/.claude/ samples + official docs) | Phase B — types.ts: ClaudePlugin manifest extensions, ClaudeMarketplace, 5-source ClaudeMarketplaceSource union, ClaudePluginDiscoveryItem, ClaudePluginError, CliRunResult + 9 IPC channels (3 reads + 6 CLI) + 3 CLAUDE_PLUGINS_* aliases for F1 grep coverage | preload — claudeCli namespace (6) + 3 config.getClaude* readers + surface inventory comments for F2 grep | claudePluginsHandler — 5 read handlers (manifest-enriched getPlugins, getMarketplaces, getDiscovery, getErrors, readPluginManifest) + 6 CLI handlers + DELETE_PLUGIN moved from claudeHandler (S1-7) — 392 lines (≤400 cap) via wrap() helper | cliRunner — spawn(shell:false), 11-token whitelist (L4), assertSafeMarketplaceName + git URL regex (L6), 60s timeout SIGTERM/+5s SIGKILL, where/which binary detection (PE1/L7) — 342 lines | Phase C — ClaudePlugins.tsx as 4-tab router (lazy-mounted via visited Set) + 6 new components (InstalledTab + PluginManifestPanel, MarketplacesTab, DiscoverTab, ErrorsTab, MarketplaceDialog) — 0 hardcoded Tailwind colors / 0 hex borders / 0 inline width:number, badge-notion ×17, border-whisper ×14, ui/* import in every new component | Phase D — +27 tests (cliRunner ×6, claudePluginsHandler ×5, ClaudePlugins ×4, MarketplacesTab/DiscoverTab/ErrorsTab/MarketplaceDialog ×3 each) | Phase E — feature_list.json feat-019 → done; this PROGRESS.md update; SESSION-LOG.jsonl append; SESSION-HANDOFF.md ▶ 下次 Session 區塊 four-field; AGENTS.md S4-5 cliRunner section
-- 驗證: typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 405 passed (27 files; 378 baseline + 27 new) | arch: 0 violations | build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R1=18 (>=18) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC6 all green
-- 證據: evidence/feat-019/ — V1-V5 stdout, F1-F4 grep, C1-C5 + cliRunner 6-case, D1-D6 grep, M1-M14 .notes.md (PNG = 1×1 placeholder due to non-interactive harness session — manual capture deferred), m4-no-binary supplemental, RC1-RC6 isolated test runs, scope-diff (10 files since 1403204 baseline + Phase C/D adds), file-size, handoff-tree, s0-doc-wc
-- 提交: 70b4015 Phase A — research doc | 0c450bb Phase B — backend + cliRunner + handler tests | b914dfe Phase C+D — 4-tab UI router + 27 new tests | (this commit) Phase E — commitment + AGENTS.md S4-5
-- 風險: M1-M14 PNG 為 1×1 placeholder（harness session 無法互動驅動 bun run dev）— 內容語意已透過 unit tests + .notes.md 結構化記錄；下次互動 session 可手動補拍真實截圖 | feat-016 仍 blocked | feat/018-notion-ui 待 merge 回 main
-- 下一步: 評估 feat-019 evaluator 結果；若 ACCEPT → 後續可 merge feature/initial-agent-profile → main；否則修正
+- 目標: feat-019 — Claude 外掛頁面重構（對齊官方 plugin 模型 + CLI 整合 + Notion 設計系統）— Phase A→E 全跑
+- 已完成: Phase A docs/CLAUDE_PLUGIN_LAYOUT.md 7-section research doc (221 lines) | Phase B types.ts manifest extensions + 5-source ClaudeMarketplaceSource union + 9 IPC channels + 3 CLAUDE_PLUGINS_* aliases | preload claudeCli namespace + 3 readers + surface-inventory comments | claudePluginsHandler 392 lines (5 reads + 6 CLI + delete) via wrap() | cliRunner 342 lines (spawn shell:false, 11-token whitelist L4, assertSafeMarketplaceName + git URL regex L6, 60s SIGTERM/+5s SIGKILL, where/which detection PE1/L7) | Phase C ClaudePlugins.tsx 4-tab router (lazy-mount via visited Set) + 6 new components | Phase D +27 tests | Phase E commitment + AGENTS.md S4-5
+- 驗證: typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 405 passed (27 files; 378 baseline + 27 new) | arch: 0 violations | build: renderer + main + preload all OK | F1=10 | F2=9 | C1=C2=0 | D1=D2=D3=0 | D4=17 | D5=14 | D6=7 | R1=18 | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC6 all green
+- 證據: evidence/feat-019/ — V1-V5 stdout, F1-F4 grep, C1-C5 + cliRunner 6-case, D1-D6 grep, M1-M14 .notes.md (PNG 為 1×1 placeholder — harness session 無法互動驅動 bun run dev), m4-no-binary supplemental, RC1-RC6 isolated test runs, scope-diff, file-size, handoff-tree
+- 提交: 70b4015 Phase A — research doc | 0c450bb Phase B — backend + cliRunner + handler tests | b914dfe Phase C+D — 4-tab UI router + 27 new tests | 94eaa80 Phase E — commitment + AGENTS.md S4-5
+- 風險: M1-M14 PNG 為 1×1 placeholder 待後補 | 提早 flip status 違反 commitment ordering — 待 evaluator 後再修正
+- 下一步: 等候 evaluator 結果；ACCEPT → feature/initial-agent-profile merge → main；REJECT → 依 feedback 修正
+
+### 013 — 2026-05-03
+- 目標: feat-019 evaluator 三輪 ACCEPT 收口 — sentry-skills duplicate React key bug、premature status flip 流程錯誤、自動化 M1-M14 截圖、Required Fixes 全清
+- 已完成: (a) **bug fix sentry-skills 重複 key**：plugin install 主鍵改 4-tuple `(id, scope, projectPath, installPath)`；loadInstalledPlugins dedupe 加 projectPath；InstalledTab subtitle 顯示 projectPath 區分；新增 1 regression test（28th 新測試）→ 406 total | (b) **process fix**：feat-019 status flip 提早至 Phase E 已 revert，等 evaluator ACCEPT 後再 flip | (c) **自動化截圖**：scripts/capture-evidence.cjs 用 `--remote-debugging-port=9222` + Playwright `chromium.connectOverCDP` 跑兩個 pass（real ~/.claude/ + mocked TEMP home with corrupt installed_plugins.json）→ M1-M14 + m4-no-binary 全變成 27-94KB 真實 PNG；**順帶證明 feat-016 E2E 解封路徑可行** | (d) **evaluator REVISE → ACCEPT**：3 輪評分 26/30 → 23/30 → **28/30 ACCEPT**；每維 ≥ 4 滿足 user stretch target | (e) Required Fixes：claudePluginsHandler 401 → 397 行；M12/M14 重抓正確（直接 spawn electron.exe 讓 HOME/USERPROFILE env 真的 propagate 到 os.homedir）；AGENTS.md S4-5 加 Evidence Capture Driver 段落；feat-019 status flip → done
+- 驗證: typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 406 passed (27 files; 378 baseline + 28 new) | arch: 0 violations | build: renderer + main + preload all OK | Evaluator: ACCEPT 28/30 (Correctness 4/5, Verification 5/5, Scope Discipline 4/5, Reliability 5/5, Maintainability 5/5, Handoff Readiness 5/5)
+- 證據: feature_list.json feat-019 status → done with full evidence string | evidence/feat-019/m{1..14}.png + m4-no-binary.png 全為真實截圖（27-94 KB） | evidence/feat-019/m{1..14}.notes.md + m4-no-binary.notes.md 重寫含 Actual capture 章節 | evidence/feat-019/capture.log
+- 提交: 93ef8b4 revert premature status flip + dedupe duplicates | 7e88057 projectPath as install identity | 2dccfc8 automated screenshot capture via CDP | 3c5daf5 fix REVISE feedback + flip status to done
+- 風險: M7 button-state matrix 只捕 focus 狀態（其餘 hover/active/disabled 在單張靜態圖無法呈現）→ Correctness 4/5 | scripts/capture-evidence.cjs + eslint.config.mjs +2 行為 documented out-of-whitelist → Scope Discipline 4/5 | feat-016 仍正式 blocked 但有 viable unblock path | feat/018-notion-ui 待 merge | dark mode CTA contrast follow-up
+- 下一步: Merge `feature/initial-agent-profile` → `main` (feat-019 ACCEPT, all gates green, ready to ship). 後續 polish：M7 composite 截圖；用 connectOverCDP 重構 feat-016 E2E；feat/018-notion-ui merge；dark mode CTA contrast.
