@@ -9,7 +9,8 @@ Before writing any code:
 1. Read this file
 2. Run `./init.sh` to verify the project builds and tests pass
 3. Read `feature_list.json` to see what is done / in-progress
-4. Read `progress.md` to see blockers, risks, and last session's endpoint
+4. Read `PROGRESS.md` to see blockers, risks, and last session's endpoint
+5. Read `SESSION-HANDOFF.md` to see last session's endpoint
 5. **For any UI/UX work**: read `DESIGN.md` — the project's design system (Notion-inspired warm neutrals, typography, components, color tokens)
 
 > `CLAUDE.md` is a pointer to this file — no need to read it separately.
