@@ -146,11 +146,13 @@ export function MarketplacesTab({ configDir, onChanged }: MarketplacesTabProps) 
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{m.pluginCount} plugins</span>
                       <span>·</span>
-                      <span>auto-update</span>
+                      <span title="auto-update flag is read-only in this UI; toggle via Claude CLI directly">
+                        auto-update (read-only)
+                      </span>
                       <Switch
                         checked={m.autoUpdate}
-                        disabled={m.isOfficial}
-                        aria-label={`auto-update for ${m.name}`}
+                        disabled
+                        aria-label={`auto-update for ${m.name} (read-only)`}
                       />
                     </div>
                   </div>
