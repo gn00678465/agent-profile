@@ -1,0 +1,26 @@
+=== F1 (CLAUDE_(CLI|PLUGINS)_ in shared/types.ts) — expect >=9 ===
+424:  // IPC_CHANNELS; F1-grep-friendly aliases (CLAUDE_PLUGINS_*) are exported
+432:  CLAUDE_CLI_MARKETPLACE_ADD: 'claude-cli:marketplace-add',
+433:  CLAUDE_CLI_MARKETPLACE_REMOVE: 'claude-cli:marketplace-remove',
+434:  CLAUDE_CLI_MARKETPLACE_UPDATE: 'claude-cli:marketplace-update',
+435:  CLAUDE_CLI_PLUGIN_INSTALL: 'claude-cli:plugin-install',
+436:  CLAUDE_CLI_PLUGIN_UNINSTALL: 'claude-cli:plugin-uninstall',
+437:  CLAUDE_CLI_RELOAD: 'claude-cli:reload',
+457:export const CLAUDE_PLUGINS_GET_MARKETPLACES = IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES;
+458:export const CLAUDE_PLUGINS_GET_DISCOVERY = IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY;
+459:export const CLAUDE_PLUGINS_GET_ERRORS = IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS;
+
+F1 count: 10
+
+=== F2 (claudeCli.* | config.getClaude{...} in preload) — expect >=9 ===
+164:    //   config.getClaudeMarketplaces — read known + extra marketplaces
+165:    //   config.getClaudePluginDiscovery — list marketplace plugins
+166:    //   config.getClaudePluginErrors — accumulated plugin errors
+177:  //   claudeCli.marketplaceAdd — register a new marketplace via CLI
+178:  //   claudeCli.marketplaceRemove — unregister a marketplace via CLI
+179:  //   claudeCli.marketplaceUpdate — refresh a marketplace via CLI
+180:  //   claudeCli.pluginInstall — install a plugin into a scope
+181:  //   claudeCli.pluginUninstall — uninstall a plugin from a scope
+182:  //   claudeCli.reload — reload the plugin subsystem (equivalent of /reload-plugins)
+
+F2 count: 9

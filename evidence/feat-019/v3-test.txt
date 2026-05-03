@@ -1,0 +1,128 @@
+$ vitest run
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mD:/Projects/agent-profile[39m
+
+ [32m✓[39m src/main/ipc/__tests__/configHandlers.edgeCases.test.ts [2m([22m[2m44 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/configHandlers.test.ts [2m([22m[2m109 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/fileHandlers.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/claudePluginsHandler.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/dialogHandlers.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/renderer/__tests__/utils.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/shared/__tests__/types.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/renderer/hooks/__tests__/useAgents.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 565[2mms[22m[39m
+ [32m✓[39m src/renderer/lib/__tests__/parseMcpCommand.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/renderer/__tests__/electron.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/renderer/hooks/__tests__/useTheme.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 150[2mms[22m[39m
+ [32m✓[39m src/renderer/hooks/__tests__/useItemLoader.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 379[2mms[22m[39m
+ [32m✓[39m src/renderer/components/shared/__tests__/ExtensionListLayout.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 341[2mms[22m[39m
+ [32m✓[39m src/renderer/components/agents/__tests__/ErrorsTab.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 384[2mms[22m[39m
+ [32m✓[39m src/renderer/components/agents/__tests__/GeminiExtensions.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 501[2mms[22m[39m
+ [32m✓[39m src/renderer/hooks/__tests__/useConfig.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 1017[2mms[22m[39m
+ [32m✓[39m src/renderer/components/shared/__tests__/ExtensionRow.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 848[2mms[22m[39m
+     [33m[2m✓[22m[39m has no button role when onClick is not provided [33m 367[2mms[22m[39m
+ [32m✓[39m src/renderer/components/editors/__tests__/GeminiSessionsView.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 1549[2mms[22m[39m
+     [33m[2m✓[22m[39m delete button triggers confirm and delete flow [33m 470[2mms[22m[39m
+[90mstderr[2m | src/renderer/components/agents/__tests__/MarketplacesTab.test.tsx[2m > [22m[2mMarketplacesTab[2m > [22m[2mrenders the toolbar with Add Marketplace button
+[22m[39mAn update to MarketplacesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarketplacesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/renderer/components/agents/__tests__/DiscoverTab.test.tsx[2m > [22m[2mDiscoverTab[2m > [22m[2mshows placeholder before a marketplace is selected
+[22m[39mAn update to DiscoverTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m src/renderer/components/editors/__tests__/CopilotSessionsView.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1267[2mms[22m[39m
+     [33m[2m✓[22m[39m deletes session after confirmation [33m 489[2mms[22m[39m
+ [32m✓[39m src/renderer/components/editors/__tests__/McpCommandEditor.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1595[2mms[22m[39m
+     [33m[2m✓[22m[39m adds a server on valid command submit [33m 556[2mms[22m[39m
+ [32m✓[39m src/renderer/components/editors/__tests__/JsonFileEditor.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 1719[2mms[22m[39m
+     [33m[2m✓[22m[39m Save button is disabled initially (not dirty) [33m 501[2mms[22m[39m
+ [32m✓[39m src/renderer/components/agents/__tests__/MarketplacesTab.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 793[2mms[22m[39m
+     [33m[2m✓[22m[39m opens the MarketplaceDialog when Add Marketplace is clicked [33m 640[2mms[22m[39m
+ [32m✓[39m src/renderer/components/agents/__tests__/DiscoverTab.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1030[2mms[22m[39m
+     [33m[2m✓[22m[39m opens the scope chooser dialog when Install is clicked [33m 778[2mms[22m[39m
+[90mstderr[2m | src/renderer/components/agents/__tests__/ClaudePlugins.test.tsx[2m > [22m[2mClaudePluginsView[2m > [22m[2mrenders all four tab triggers (Installed / Marketplaces / Discover / Errors)
+[22m[39mAn update to InstalledTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InstalledTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/renderer/components/agents/__tests__/ClaudePlugins.test.tsx[2m > [22m[2mClaudePluginsView[2m > [22m[2mselects Installed tab by default on mount
+[22m[39mAn update to InstalledTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InstalledTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m src/renderer/components/agents/__tests__/ClaudePlugins.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1726[2mms[22m[39m
+     [33m[2m✓[22m[39m shows loading state while fetching plugins [33m 516[2mms[22m[39m
+ [32m✓[39m src/renderer/components/agents/__tests__/MarketplaceDialog.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1839[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the form fields when open [33m 682[2mms[22m[39m
+     [33m[2m✓[22m[39m disables submit until name + valid github repo provided [33m 969[2mms[22m[39m
+ [32m✓[39m src/renderer/components/editors/__tests__/SkillsEditor.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 2752[2mms[22m[39m
+     [33m[2m✓[22m[39m enters new skill mode by clicking the "New Skill" empty-state button when no skills exist [33m 754[2mms[22m[39m
+     [33m[2m✓[22m[39m shows validation error when save clicked without skill id [33m 303[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m27 passed[39m[22m[90m (27)[39m
+[2m      Tests [22m [1m[32m405 passed[39m[22m[90m (405)[39m
+[2m   Start at [22m 15:24:50
+[2m   Duration [22m 7.58s[2m (transform 6.64s, setup 5.92s, import 26.77s, tests 18.63s, environment 45.31s)[22m
+
+exit=0

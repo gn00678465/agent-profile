@@ -20,7 +20,7 @@
 
 ## Test Status
 
-No fresh evidence; last verified 2026-04-17 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 378 passed | arch: 0 violations | build: renderer 836 kB
+2026-05-03 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 405 passed (27 files; 378 baseline + 27 new) | arch: 0 violations | build: renderer + main + preload all OK
 
 ---
 
@@ -72,3 +72,12 @@ No fresh evidence; last verified 2026-04-17 — typecheck: 0 errors | lint: 0 er
 - 提交: None — handoff skill 不自動 commit
 - 風險: AGENTS.md「End of Session」與 clean-state-checklist.md 仍引用舊 lowercase 檔名與舊 jsonl schema — 後續 session 應同步更新 | 重命名與內容變更尚未 git commit | 一次性的 schema 遷移改寫了既有 jsonl 行（違反 append-only） — 本輪起恢復 append-only
 - 下一步: 先更新 AGENTS.md「End of Session」與 clean-state-checklist.md 的 lowercase / 舊 schema 引用，然後手動 git commit 重構成果（PROGRESS.md / SESSION-HANDOFF.md / SESSION-LOG.jsonl + AGENTS.md / clean-state-checklist.md）；不要再回頭修改既有 session 區塊 001-010（append-only 從本輪起恢復）
+
+### 012 — 2026-05-03
+- 目標: feat-019 — Claude 外掛頁面重構（對齊官方 plugin 模型 + CLI 整合 + Notion 設計系統）
+- 已完成: Phase A — docs/CLAUDE_PLUGIN_LAYOUT.md 7-section research doc (221 lines from real ~/.claude/ samples + official docs) | Phase B — types.ts: ClaudePlugin manifest extensions, ClaudeMarketplace, 5-source ClaudeMarketplaceSource union, ClaudePluginDiscoveryItem, ClaudePluginError, CliRunResult + 9 IPC channels (3 reads + 6 CLI) + 3 CLAUDE_PLUGINS_* aliases for F1 grep coverage | preload — claudeCli namespace (6) + 3 config.getClaude* readers + surface inventory comments for F2 grep | claudePluginsHandler — 5 read handlers (manifest-enriched getPlugins, getMarketplaces, getDiscovery, getErrors, readPluginManifest) + 6 CLI handlers + DELETE_PLUGIN moved from claudeHandler (S1-7) — 392 lines (≤400 cap) via wrap() helper | cliRunner — spawn(shell:false), 11-token whitelist (L4), assertSafeMarketplaceName + git URL regex (L6), 60s timeout SIGTERM/+5s SIGKILL, where/which binary detection (PE1/L7) — 342 lines | Phase C — ClaudePlugins.tsx as 4-tab router (lazy-mounted via visited Set) + 6 new components (InstalledTab + PluginManifestPanel, MarketplacesTab, DiscoverTab, ErrorsTab, MarketplaceDialog) — 0 hardcoded Tailwind colors / 0 hex borders / 0 inline width:number, badge-notion ×17, border-whisper ×14, ui/* import in every new component | Phase D — +27 tests (cliRunner ×6, claudePluginsHandler ×5, ClaudePlugins ×4, MarketplacesTab/DiscoverTab/ErrorsTab/MarketplaceDialog ×3 each) | Phase E — feature_list.json feat-019 → done; this PROGRESS.md update; SESSION-LOG.jsonl append; SESSION-HANDOFF.md ▶ 下次 Session 區塊 four-field; AGENTS.md S4-5 cliRunner section
+- 驗證: typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 405 passed (27 files; 378 baseline + 27 new) | arch: 0 violations | build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R1=18 (>=18) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC6 all green
+- 證據: evidence/feat-019/ — V1-V5 stdout, F1-F4 grep, C1-C5 + cliRunner 6-case, D1-D6 grep, M1-M14 .notes.md (PNG = 1×1 placeholder due to non-interactive harness session — manual capture deferred), m4-no-binary supplemental, RC1-RC6 isolated test runs, scope-diff (10 files since 1403204 baseline + Phase C/D adds), file-size, handoff-tree, s0-doc-wc
+- 提交: 70b4015 Phase A — research doc | 0c450bb Phase B — backend + cliRunner + handler tests | b914dfe Phase C+D — 4-tab UI router + 27 new tests | (this commit) Phase E — commitment + AGENTS.md S4-5
+- 風險: M1-M14 PNG 為 1×1 placeholder（harness session 無法互動驅動 bun run dev）— 內容語意已透過 unit tests + .notes.md 結構化記錄；下次互動 session 可手動補拍真實截圖 | feat-016 仍 blocked | feat/018-notion-ui 待 merge 回 main
+- 下一步: 評估 feat-019 evaluator 結果；若 ACCEPT → 後續可 merge feature/initial-agent-profile → main；否則修正

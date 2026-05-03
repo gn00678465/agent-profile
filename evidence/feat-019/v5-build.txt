@@ -1,0 +1,31 @@
+$ rimraf release dist dist-electron
+$ vite build
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 1823 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                [39m[1m[2m  0.48 kB[22m[1m[22m[2m │ gzip:   0.31 kB[22m
+[2mdist/[22m[35massets/main-C62tCMxU.css  [39m[1m[2m 30.98 kB[22m[1m[22m[2m │ gzip:   6.71 kB[22m
+[2mdist/[22m[36massets/main-BZtgrxQ5.js   [39m[1m[33m854.09 kB[39m[22m[2m │ gzip: 263.72 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 4.18s[39m
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 16 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist-electron/main/[22m[36mindex.mjs  [39m[1m[2m48.38 kB[22m[1m[22m[2m │ gzip: 11.33 kB[22m
+[32m✓ built in 108ms[39m
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 2 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist-electron/preload/[22m[36mindex.mjs  [39m[1m[2m8.95 kB[22m[1m[22m[2m │ gzip: 2.33 kB[22m
+[32m✓ built in 25ms[39m
+exit=0

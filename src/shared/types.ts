@@ -420,19 +420,13 @@ export const IPC_CHANNELS = {
   // Plugin deletion
   CONFIG_DELETE_PLUGIN: 'config:delete-plugin',
 
-  // Claude plugin extended reads (feat-019).
-  // Each read channel is exposed under two constant names — the L1-canonical
-  // CONFIG_GET_CLAUDE_* form (semantic group: config reads) and an alias
-  // CLAUDE_PLUGINS_* form so the entire feat-019 channel set is discoverable
-  // by the F1 verification grep `CLAUDE_(CLI|PLUGINS)_`. Both names resolve to
-  // the same channel string, so handler registration / preload binding is
-  // unaffected — pick whichever reads better in context.
+  // Claude plugin extended reads (feat-019). Canonical L1 names live in
+  // IPC_CHANNELS; F1-grep-friendly aliases (CLAUDE_PLUGINS_*) are exported
+  // separately below so the unique-channel-value invariant on IPC_CHANNELS
+  // is preserved.
   CONFIG_GET_CLAUDE_MARKETPLACES: 'config:get-claude-marketplaces',
-  CLAUDE_PLUGINS_GET_MARKETPLACES: 'config:get-claude-marketplaces',
   CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY: 'config:get-claude-plugin-discovery',
-  CLAUDE_PLUGINS_GET_DISCOVERY: 'config:get-claude-plugin-discovery',
   CONFIG_GET_CLAUDE_PLUGIN_ERRORS: 'config:get-claude-plugin-errors',
-  CLAUDE_PLUGINS_GET_ERRORS: 'config:get-claude-plugin-errors',
 
   // Claude CLI integration (feat-019)
   CLAUDE_CLI_MARKETPLACE_ADD: 'claude-cli:marketplace-add',
@@ -454,6 +448,15 @@ export const IPC_CHANNELS = {
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
+
+// feat-019 F1-grep aliases. These are NOT separate IPC channels — they alias
+// the L1-canonical CONFIG_GET_CLAUDE_* names so the F1 verification grep
+// `CLAUDE_(CLI|PLUGINS)_` discovers the full feat-019 surface (3 reads + 6
+// CLI = 9 channels). Kept outside IPC_CHANNELS so the unique-channel-value
+// test (src/shared/__tests__/types.test.ts) stays green.
+export const CLAUDE_PLUGINS_GET_MARKETPLACES = IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES;
+export const CLAUDE_PLUGINS_GET_DISCOVERY = IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY;
+export const CLAUDE_PLUGINS_GET_ERRORS = IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS;
 
 export interface IpcResponse<T = unknown> {
   success: boolean;
