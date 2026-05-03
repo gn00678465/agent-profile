@@ -4,20 +4,19 @@
 === C2 (no exec/execSync in cliRunner) — expect 0 ===
 (no matches)
 
-=== C3-C5 — covered by cliRunner.test.ts cases (a)(c)(d)(e) ===
-Re-running with verbose case names:
-
+=== cliRunner test cases (verbose) ===
 [1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mD:/Projects/agent-profile[39m
 
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mreturns NOT_FOUND error when which/where finds no binary[32m 2[2mms[22m[39m
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mon long-running spawn fires SIGTERM after timeout[32m 2[2mms[22m[39m
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mrejects commands outside the whitelist[32m 0[2mms[22m[39m
+ [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mwhitelists `plugin uninstall <id> --scope <scope>`[32m 0[2mms[22m[39m
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mrejects unsafe marketplace names before spawn[32m 0[2mms[22m[39m
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mrejects illegal git URL in marketplace add[32m 0[2mms[22m[39m
  [32m✓[39m src/main/ipc/__tests__/cliRunner.test.ts[2m > [22mcliRunner[2m > [22mreturns stdout on successful exit 0[32m 0[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-[2m   Start at [22m 15:11:45
-[2m   Duration [22m 431ms[2m (transform 55ms, setup 97ms, import 84ms, tests 6ms, environment 0ms)[22m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 18:18:02
+[2m   Duration [22m 408ms[2m (transform 51ms, setup 86ms, import 83ms, tests 6ms, environment 0ms)[22m
 

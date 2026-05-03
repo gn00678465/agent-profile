@@ -1,58 +1,12 @@
-=== D1 (no Tailwind palette) — expect 0 ===
+=== D1 ===
 (no matches)
 
-=== D2 (no inline hex border) — expect 0 ===
+=== D2 ===
 (no matches)
 
-=== D3 (no inline width:number) — expect 0 ===
+=== D3 ===
 (no matches)
-
-=== D4 (badge-notion ≥ 5) ===
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:144:                        {item.category && <span className="badge-notion">{item.category}</span>}
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:145:                        {item.installed && <span className="badge-notion">installed</span>}
-src/renderer/components/agents/ClaudePlugins/ErrorsTab.tsx:62:                  <span className="badge-notion">{e.scope}</span>
-src/renderer/components/agents/ClaudePlugins/ErrorsTab.tsx:63:                  <span className="badge-notion">{e.severity}</span>
-src/renderer/components/agents/ClaudePlugins/InstalledTab.tsx:122:            badge={<span className="badge-notion">{plugin.scope}</span>}
-src/renderer/components/agents/ClaudePlugins/MarketplacesTab.tsx:130:                      {m.isOfficial && <span className="badge-notion">Built-in</span>}
-src/renderer/components/agents/ClaudePlugins/MarketplacesTab.tsx:132:                        <span className="badge-notion" title="extraKnownMarketplaces declared but not yet materialized">
-src/renderer/components/agents/ClaudePlugins/MarketplacesTab.tsx:136:                      <span className="badge-notion">{m.source.source}</span>
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:61:          <span className="badge-notion">scope: {plugin.scope}</span>
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:62:          {plugin.category && <span className="badge-notion">{plugin.category}</span>}
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:63:          {isManaged && <span className="badge-notion">read-only</span>}
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:92:                <span className="badge-notion">{plugin.components.skills} skills</span>
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:95:                <span className="badge-notion">{plugin.components.agents} agents</span>
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:97:              {plugin.components.hooks > 0 && <span className="badge-notion">hooks</span>}
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:98:              {plugin.components.mcp && <span className="badge-notion">MCP</span>}
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:99:              {plugin.components.lsp && <span className="badge-notion">LSP</span>}
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:100:              {plugin.components.monitors > 0 && <span className="badge-notion">monitors</span>}
 
 D4 count: 17
-
-=== D5 (shadow-notion-card | border-whisper ≥ 4) ===
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:110:                  ? 'rounded-md border-whisper bg-accent px-3 py-1 text-xs'
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:111:                  : 'rounded-md border-whisper bg-card px-3 py-1 text-xs hover:bg-accent/50'
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:139:                <Card key={pluginId} className="border-whisper p-4">
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:202:                    ? 'flex items-center justify-between rounded-md border-whisper bg-accent px-3 py-2 text-sm'
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx:203:                    : 'flex items-center justify-between rounded-md border-whisper bg-card px-3 py-2 text-sm hover:bg-accent/50'
-src/renderer/components/agents/ClaudePlugins/ErrorsTab.tsx:57:            className="border-whisper p-4"
-src/renderer/components/agents/ClaudePlugins/MarketplaceDialog.tsx:118:                      ? 'rounded-md border-whisper bg-accent px-3 py-1 text-xs'
-src/renderer/components/agents/ClaudePlugins/MarketplaceDialog.tsx:119:                      : 'rounded-md border-whisper bg-card px-3 py-1 text-xs hover:bg-accent/50'
-src/renderer/components/agents/ClaudePlugins/MarketplaceDialog.tsx:177:          <div className="flex items-center justify-between rounded-card border-whisper bg-card px-3 py-2">
-src/renderer/components/agents/ClaudePlugins/MarketplacesTab.tsx:125:              <Card key={m.name} className="border-whisper p-4">
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:43:    <div className="border-l border-whisper bg-card flex flex-col min-w-[320px] max-w-[360px]">
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:66:        <div className="rounded-card border-whisper bg-card p-3 flex flex-col gap-2">
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:86:          <div className="rounded-card border-whisper bg-card p-3 flex flex-col gap-2">
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx:122:        <div className="flex items-center justify-between rounded-card border-whisper bg-card px-3 py-2">
-
 D5 count: 14
-
-=== D6 (each new component has ui/* import) — expect ≥ 6 ===
-src/renderer/components/agents/ClaudePlugins/DiscoverTab.tsx
-src/renderer/components/agents/ClaudePlugins/ErrorsTab.tsx
-src/renderer/components/agents/ClaudePlugins/FilterToolbar.tsx
-src/renderer/components/agents/ClaudePlugins/InstalledTab.tsx
-src/renderer/components/agents/ClaudePlugins/MarketplaceDialog.tsx
-src/renderer/components/agents/ClaudePlugins/MarketplacesTab.tsx
-src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx
-
 D6 count: 7

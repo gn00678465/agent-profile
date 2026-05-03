@@ -59,19 +59,38 @@ export function InstalledTab({ configDir, accentColor }: InstalledTabProps) {
     return a.id === b.id && a.scope === b.scope && a.projectPath === b.projectPath && a.installPath === b.installPath;
   }
 
+  // Heuristic for directory-source plugins: their installPath is the user's
+  // own project root (e.g., D:\Projects\harness-helper) instead of being
+  // under ~/.claude/plugins/cache/. Detect by checking if installPath
+  // contains the standard cache fragment. False negatives are safe (extra
+  // confirmation only); false positives would be unsafe (skip warning).
+  function isDirectorySource(p: ClaudePlugin): boolean {
+    return !p.installPath.includes('plugins\\cache\\') && !p.installPath.includes('plugins/cache/');
+  }
+
   async function handleDelete(plugin: ClaudePlugin) {
     const projectHint = plugin.projectPath ? ` @ ${plugin.projectPath}` : '';
-    const confirmed = confirm(`Delete plugin "${plugin.name}" (${plugin.scope}${projectHint})?\n\nThis will remove the plugin config and its install folder.`);
+    const dirSource = isDirectorySource(plugin);
+    const baseMsg = `Delete plugin "${plugin.name}" (${plugin.scope}${projectHint})?`;
+    const tail = dirSource
+      ? `\n\n⚠ This is a directory-source plugin. Install path is\n  ${plugin.installPath}\n— probably your own project. The CLI will only unregister it; the folder will NOT be deleted.`
+      : `\n\nThis runs \`claude plugin uninstall ${plugin.id} --scope ${plugin.scope}\` and removes the plugin config + cache folder. If the CLI is unavailable, falls back to local file delete.`;
+    const confirmed = confirm(baseMsg + tail);
     if (!confirmed) return;
     try {
-      await callElectron(() =>
-        electronAPI().config.deletePlugin(configDir, plugin.id, plugin.installPath)
+      const cliScope = (plugin.scope === 'managed' ? 'user' : plugin.scope) as 'user' | 'project' | 'local';
+      const result = await callElectron(() =>
+        electronAPI().config.deletePlugin(configDir, plugin.id, plugin.installPath, {
+          scope: cliScope,
+          fileFallback: dirSource, // directory-source: skip CLI, use file path (which respects assertSafePath + share-check)
+        })
       );
       setPlugins((prev) => prev.filter((p) => !sameInstall(p, plugin)));
       if (selected && sameInstall(selected, plugin)) {
         setSelected(null);
       }
-      toast.success('Plugin deleted', { description: plugin.id });
+      const via = result?.via === 'cli' ? 'via CLI' : 'via local file delete';
+      toast.success(`Plugin deleted ${via}`, { description: plugin.id });
     } catch (err) {
       toast.error('Failed to delete plugin', {
         description: err instanceof Error ? err.message : 'Unknown error',

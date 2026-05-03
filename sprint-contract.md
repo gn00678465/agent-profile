@@ -54,6 +54,7 @@
 - **S1-5**：新增 `src/main/ipc/handlers/cliRunner.ts` — 唯一允許 spawn `claude` binary 之模組；`child_process.spawn` 採 array args、`shell: false`；明文白名單只接受 L4 列舉的 11 條 token 模式；對所有使用者輸入跑 `assertSafeName`（marketplace 名 / plugin id / scope）或 git URL regex（L6）；timeout 60s 觸發 `SIGTERM`，5s 後 `SIGKILL`；binary 偵測：Windows 用 `where claude`（解析 `%PATHEXT%`、優先 `claude.cmd` → `claude.exe`），macOS / Linux 用 `which claude`，未找到回 `success:false` + 錯誤訊息「claude CLI not found in PATH; install via instructions at https://code.claude.com/docs/zh-TW/setup」
 - **S1-6**：`claudePluginsHandler.ts` 註冊 6 個 CLI handler：`marketplaceAdd` / `marketplaceRemove` / `marketplaceUpdate` / `pluginInstall` / `pluginUninstall` / `reload` — 全部委派至 `cliRunner`，回傳 `IpcResponse<CliRunResult>`
 - **S1-7**：`src/main/ipc/configHandlers.ts` orchestrator 註冊新 handler；`src/main/ipc/handlers/claudeHandler.ts` 移除被搬走的 plugin handler 區塊（保留 settings / agents / sessions / rules / skills 等其他 Claude handler）
+- **S1-8（DV6 patch）**：`CONFIG_DELETE_PLUGIN` handler 預設委派至 `cliRunner.runPluginUninstall(pluginId, scope)`（走 L4 既有 token `plugin uninstall <id> --scope <scope>`），CLI 失敗或 `fileFallback:true`（directory-source 偵測）時改走 `deletePluginFile` fallback；fallback 走原本流程（`installed_plugins.json` JSON cleanup → `settings.json#enabledPlugins` cleanup → `fs.rm(installPath, recursive:true)`），且加 share-check：若另一筆 install record 仍 reference 同一 `installPath`（4-tuple 的 `(scope, projectPath)` 不同但 `installPath` 同），**不**做 `fs.rm`，避免 sentry-skills 跨 project 共用 cache 被誤刪。Handler 回傳 `{ via: 'cli' | 'file', cli?: { stdout?, stderr? } }`。Renderer 在 `directory`-source plugin 時 prompt 額外警告（installPath = 使用者專案根，CLI 不會刪實體檔案，只會 unregister）。
 
 ### S2. Renderer UI 重構（**Phase C**）
 
@@ -66,14 +67,14 @@
 - **S2-7**：新增 `src/renderer/components/agents/ClaudePlugins/PluginManifestPanel.tsx`：顯示完整 manifest 欄位 + components 計數；採用 feat-018 token（`badge-notion`、`border-whisper`、`shadow-notion-card`、`bg-card`）
 - **S2-8**：所有新檔案不得包含硬寫 Tailwind 顏色 class（驗證見 D1）；scope/category badge 一律使用 `.badge-notion` pill；borders 一律使用 `.border-whisper` 或 `border-border`；所有可重用元件（Card/Button/Tabs/Switch/Dialog/Select）必須 import 自 `@/components/ui/`（驗證見 D6）
 
-### S3. 測試（**Phase D**：vitest + RTL）— 共 **27 個新 case**
+### S3. 測試（**Phase D**：vitest + RTL）— 共 **30 個新 case**（round-3 patch +3：cliRunner uninstall whitelist x1、handler CLI delegation x1、handler fileFallback x1）
 
-- **S3-1**：新增 `src/main/ipc/__tests__/cliRunner.test.ts` — **6 cases**：(a) binary not found path、(b) timeout 後 SIGTERM、(c) 非白名單指令拒絕、(d) marketplace name 含 `..` / `;` 觸發 assertSafeName 拒絕、(e) git URL 不合法拒絕、(f) 成功 exit 0 回傳 stdout
-- **S3-2**：新增 `src/main/ipc/__tests__/claudePluginsHandler.test.ts` — **5 cases**：(a) installed_plugins.json 正常解析（含 components 計數讀 plugin.json）、(b) installed_plugins.json 不存在 → 回空陣列、(c) installed_plugins.json 損毀 → 回 success:false、(d) getMarketplaces 合併 known_marketplaces.json + extraKnownMarketplaces、(e) getDiscovery 讀指定市場 marketplace.json 並標記 `installed` flag
+- **S3-1**：新增 `src/main/ipc/__tests__/cliRunner.test.ts` — **7 cases**：(a) binary not found path、(b) timeout 後 SIGTERM、(c) 非白名單指令拒絕、**(c2 round-3) `plugin uninstall` whitelist 驗證**、(d) marketplace name 含 `..` / `;` 觸發 assertSafeName 拒絕、(e) git URL 不合法拒絕、(f) 成功 exit 0 回傳 stdout
+- **S3-2**：新增 `src/main/ipc/__tests__/claudePluginsHandler.test.ts` — **7 cases**：(a) installed_plugins.json 正常解析（含 components 計數讀 plugin.json）、**(a2 round-2) dedupe duplicate installs within same pluginId**、(b) installed_plugins.json 不存在 → 回空陣列、(c) installed_plugins.json 損毀 → 回 success:false、(d) getMarketplaces 合併 known_marketplaces.json + extraKnownMarketplaces、(e) getDiscovery 讀指定市場 marketplace.json 並標記 `installed` flag、**(f round-3) DELETE_PLUGIN 預設 delegate cliRunner.runPluginUninstall**、**(g round-3) fileFallback:true 跳過 CLI 走 file-delete**
 - **S3-3**：更新 `src/renderer/components/agents/__tests__/ClaudePlugins.test.tsx` — **保留現有 4 個 case 不刪**，新增 **4 case**：(a) 4 個 tab trigger 渲染、(b) 預設選 Installed、(c) 切到 Marketplaces 觸發 `getClaudeMarketplaces`、(d) 切到 Errors 觸發 `getClaudePluginErrors`
 - **S3-4**：新增 4 個檔案 — `MarketplacesTab.test.tsx` / `DiscoverTab.test.tsx` / `ErrorsTab.test.tsx` / `MarketplaceDialog.test.tsx`，**每檔 3 case** = 12 cases；單檔最少含：(i) 基本 render、(ii) 主互動（Add / Install / Remove / scope chooser）、(iii) 邊界（空狀態 / 錯誤 / 表單驗證）
 
-> 每檔 case 數合計：6 + 5 + 4（新）+ 12 = **27**；總測試數基線（feat-018 完成時）378 → 完成後 ≥ 405
+> 每檔 case 數合計（round-3 patched）：7 + 7 + 4（新）+ 12 = **30**；總測試數基線（feat-018 完成時）378 → round-3 完成後 ≥ 408（實際 409）
 
 ### S4. 狀態檔案更新（**Phase E**：Commitment）
 
@@ -90,7 +91,7 @@
 | A | S0-1（research doc） | 文件七章節 ≥ 12 行；`wc -l docs/CLAUDE_PLUGIN_LAYOUT.md` ≥ 84 |
 | B | S1-1 ~ S1-7（backend） | V1, V2, V4, F1–F4, C1–C5 全綠 |
 | C | S2-1 ~ S2-8（renderer UI） | V1, V2, D1–D6 全綠 |
-| D | S3-1 ~ S3-4（tests） | V3 ≥ 405 cases；新測試檔合計 ≥ 27 case |
+| D | S3-1 ~ S3-4（tests） | V3 ≥ 408 cases (round-3 patched)；新測試檔合計 ≥ 30 case |
 | E | S4-1 ~ S4-5（commitment + AGENTS.md） | 全部 V/F/C/D/M/R/RC + Commitment Gates 落地 |
 
 ## Verification Standards
@@ -99,7 +100,7 @@
 
 - V1：`bun run typecheck` → exit 0 / 0 errors
 - V2：`bun run lint` → exit 0 / **0 errors / 0 warnings**
-- V3：`bun run test` → 較基線（378 pass）僅可增加，不得新增失敗；新測試合計 ≥ 27 case；測試總數 ≥ 405
+- V3：`bun run test` → 較基線（378 pass）僅可增加，不得新增失敗；新測試合計 ≥ 30 case (round-3 patched)；測試總數 ≥ 408
 - V4：`bash scripts/check-architecture.sh` → 0 boundary violations
 - V5：`bun run build` → renderer + main + preload 三段全成功（mtime 對齊；evidence 不得截斷）
 
@@ -205,6 +206,12 @@
 - **RC6：`known_marketplaces.json` 與 `settings.json#extraKnownMarketplaces` 衝突**（同名但 source 不同） → handler 以 `known_marketplaces.json` 為準（CLI 寫入優先），`extraKnownMarketplaces` 視為待註冊；UI 在衝突項顯示 warn pill「unsynced」並提供「Sync」按鈕。
   **Source**：https://code.claude.com/docs/zh-TW/discover-plugins § 配置團隊市場 — `extraKnownMarketplaces` 屬待安裝建議，需使用者信任資料夾後才被 CLI 寫入 `known_marketplaces.json`
 
+- **RC7（round-3 patch）：plugin delete 對應三個分支**（DV6 落地）：
+  (a) **CLI 路徑成功** → `runPluginUninstall(pluginId, scope)` exit 0 → handler 回 `{ via: 'cli', cli: { stdout, stderr } }`；UI toast「Plugin deleted via CLI」；CLI 自身已清 cache + uninstall hook + multi-scope registry。
+  (b) **CLI 失敗或不存在** → handler 自動 fallback 至 `deletePluginFile`（檔案 + JSON cleanup + share-check + 條件 `fs.rm`），share-check 通過才 `fs.rm(installPath)`；handler 回 `{ via: 'file', cli: { stderr } }`；UI toast「Plugin deleted via local file delete」。
+  (c) **directory-source plugin**（renderer 偵測 installPath 不在 `~/.claude/plugins/cache/` 底下） → renderer 直接 `fileFallback:true` 跳過 CLI；deletePluginFile share-check 執行；若 installPath 是使用者源頭專案根（`assertSafePath` 偵測在 homedir 之外），handler throw `Access denied: path is outside allowed directories`，UI toast 顯示錯誤；renderer 在 confirm dialog 已加警告。**核心邊界**：handler 永不對 directory-source 的 installPath 做 `fs.rm`，僅清 JSON registry。
+  **Source**：`AGENTS.md` Working Rules「Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs」+ DV6（本合約 round-3 patch）
+
 ## Commitment Gates
 
 | Commitment | Gate | Failure Handling |
@@ -247,7 +254,7 @@
 | `["plugin","marketplace","update",<name>]` | S1-6 marketplaceUpdate |
 | `["plugin","marketplace","list","--json"]` | M2 安全列舉 |
 | `["plugin","install",<id>,"--scope",<scope>]` | S1-6 pluginInstall |
-| `["plugin","uninstall",<id>,"--scope",<scope>]` | S1-6 pluginUninstall |
+| `["plugin","uninstall",<id>,"--scope",<scope>]` | S1-6 pluginUninstall **+ S1-8 deletePlugin (DV6 default path)** |
 | `["plugin","enable",<id>]` | 預留，本次未透過 CLI（仍走 settings.json） |
 | `["plugin","disable",<id>]` | 同上預留 |
 | `["plugin","reload"]` | S1-6 reload |
@@ -278,7 +285,8 @@
 - **DV2**：`claude-plugins-official` 內建市場在 Marketplaces tab 顯示但 Remove 按鈕永久 disabled（顯示 tooltip）。理由：官方文件「官方 Anthropic 市場在您啟動 Claude Code 時自動可用」。
 - **DV3**：cliRunner 不解析 stdout/stderr 為結構化資料 — 全部以 raw 字串回傳；`marketplace list --json` 例外（L4），由 handler 層 `JSON.parse`。理由：CLI 輸出格式未公開穩定 schema；非 `--json` 指令以純文字 tail 4 行顯示於 toast。
 - **DV4**：當 `extraKnownMarketplaces` 條目尚未被 CLI 寫入 `known_marketplaces.json`（使用者尚未信任專案資料夾），UI 在 Marketplaces tab 顯示 warn pill「unsynced」但不主動觸發 CLI add — 由使用者手動點「Sync」按鈕。理由：避免 IPC 啟動階段執行有副作用的 git clone。
-- **DV5**：plugin enable/disable 仍走原本 `setPluginEnabled` IPC（直接寫 `settings.json#enabledPlugins`），不透過 cliRunner 的 `claude plugin enable/disable`。理由：避免簡單布林 toggle 引入 child_process 開銷與 binary 依賴；L4 預留兩條指令供未來切換時使用。
+- **DV5（patched round-3）**：plugin enable/disable **only**（不含 delete）仍走原本 `setPluginEnabled` IPC（直接寫 `settings.json#enabledPlugins`），不透過 cliRunner 的 `claude plugin enable/disable`。理由：避免簡單布林 toggle 引入 child_process 開銷與 binary 依賴；L4 預留兩條指令供未來切換時使用（FC4）。**Delete 不在 DV5 範圍**（已遷移至 DV6 走 CLI）。
+- **DV6（round-3 patch）**：plugin delete 預設走 `cliRunner.runPluginUninstall(pluginId, scope)`（L4 既有 token `plugin uninstall <id> --scope <scope>`），CLI 不可用或失敗時 fallback 至 file-based delete（`installed_plugins.json` JSON cleanup → `settings.json#enabledPlugins` cleanup → `fs.rm(installPath)`），fallback 路徑加 share-check 避免跨 project 共用 cache 被誤刪（sentry-skills / harness 場景）。對 directory-source plugin（installPath 不在 `~/.claude/plugins/cache/` 底下），renderer 偵測後直接 `fileFallback:true` 跳過 CLI 並提示警告。理由：CLI 路徑會清 plugin cache、跑 uninstall hook、處理 multi-scope registry — file-based 路徑做不到；但 directory-source 的 installPath 是使用者源頭專案，CLI uninstall 可能誤刪實體目錄，以 file-fallback 配合 share-check 雙重保護。
 
 ## Forward-compat Notes
 

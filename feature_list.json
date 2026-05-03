@@ -150,7 +150,15 @@
       "description": "依 https://code.claude.com/docs/zh-TW/plugins 與 https://code.claude.com/docs/zh-TW/discover-plugins 重構 ClaudePlugins 頁面：研究前置 docs/CLAUDE_PLUGIN_LAYOUT.md (S0) → 後端 IPC + claudePluginsHandler + cliRunner (S1) → 4-tab UI router (S2) → 27 new tests (S3) → commitment (S4). cliRunner 11-token whitelist + assertSafeMarketplaceName + git URL regex + 60s timeout SIGTERM/SIGKILL。完整合約見 sprint-contract.md / evaluator-rubric.md。",
       "dependencies": ["feat-006", "feat-018"],
       "status": "done",
-      "evidence": "bun run typecheck: exit 0 | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 406 passed / 27 files / 0 fail (baseline 378 + 28 new) | bash scripts/check-architecture.sh: 0 violations | bun run build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R1=18 (>=18) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC6 all green via cliRunner.test.ts + claudePluginsHandler.test.ts | M1-M14 + m4-no-binary auto-captured via scripts/capture-evidence.cjs (Playwright connectOverCDP, 1280×800 PE5) — real PNGs 27-94 KB, no placeholders. Full evidence at evidence/feat-019/"
+      "evidence": "Round-3 ACCEPT 27/30 (Correctness 5/5, Verification 5/5, Scope Discipline 3/5, Reliability 5/5, Maintainability 5/5, Handoff Readiness 4/5). bun run typecheck: exit 0 | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 409 passed / 27 files / 0 fail (baseline 378 + 31 new) | bash scripts/check-architecture.sh: 0 violations | bun run build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R1=18 (>=18) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC7 all green | M1-M14 + m4-no-binary auto-captured PNGs (27-94 KB) | DV6 delete via cliRunner.runPluginUninstall + file-fallback share-check | claudePluginsDelete.ts 77 + claudePluginsHandler.ts 380 + cliRunner.ts 342 (all <= 400). Full evidence at evidence/feat-019/"
+    },
+    {
+      "id": "feat-020",
+      "name": "Marketplace auto-update toggle 寫入路徑",
+      "description": "把 MarketplacesTab 的 auto-update Switch 從 read-only (feat-019 落地) 升級為可寫：(1) 確認 `claude plugin marketplace` CLI 是否原生支援 auto-update flag 寫入（若無，fallback 直接寫 ~/.claude/plugins/known_marketplaces.json 的 autoUpdate 欄位，並在 Errors tab 顯示 sync 警告）；(2) 在 cliRunner L4 白名單加 token pattern `[plugin marketplace set <name> --auto-update <bool>]` 或對應指令；(3) 加 IPC channel CLAUDE_CLI_MARKETPLACE_SET_AUTO_UPDATE + handler；(4) preload binding；(5) Switch onCheckedChange 串通；(6) test cases (cliRunner + handler + UI)。需求變動：feat-019 sprint contract L4 / DV4 / FC3 都需要 patch（重跑 evaluator）。",
+      "dependencies": ["feat-019"],
+      "status": "planned",
+      "evidence": ""
     }
   ]
 }

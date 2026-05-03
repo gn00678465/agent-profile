@@ -13,14 +13,28 @@
 F1 count: 10
 
 === F2 (claudeCli.* | config.getClaude{...} in preload) — expect >=9 ===
-164:    //   config.getClaudeMarketplaces — read known + extra marketplaces
-165:    //   config.getClaudePluginDiscovery — list marketplace plugins
-166:    //   config.getClaudePluginErrors — accumulated plugin errors
-177:  //   claudeCli.marketplaceAdd — register a new marketplace via CLI
-178:  //   claudeCli.marketplaceRemove — unregister a marketplace via CLI
-179:  //   claudeCli.marketplaceUpdate — refresh a marketplace via CLI
-180:  //   claudeCli.pluginInstall — install a plugin into a scope
-181:  //   claudeCli.pluginUninstall — uninstall a plugin from a scope
-182:  //   claudeCli.reload — reload the plugin subsystem (equivalent of /reload-plugins)
+174:    //   config.getClaudeMarketplaces — read known + extra marketplaces
+175:    //   config.getClaudePluginDiscovery — list marketplace plugins
+176:    //   config.getClaudePluginErrors — accumulated plugin errors
+187:  //   claudeCli.marketplaceAdd — register a new marketplace via CLI
+188:  //   claudeCli.marketplaceRemove — unregister a marketplace via CLI
+189:  //   claudeCli.marketplaceUpdate — refresh a marketplace via CLI
+190:  //   claudeCli.pluginInstall — install a plugin into a scope
+191:  //   claudeCli.pluginUninstall — uninstall a plugin from a scope
+192:  //   claudeCli.reload — reload the plugin subsystem (equivalent of /reload-plugins)
 
 F2 count: 9
+
+=== F3 (claudePluginsHandler.test.ts pass) ===
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+[2m   Start at [22m 18:18:00
+[2m   Duration [22m 471ms[2m (transform 73ms, setup 95ms, import 130ms, tests 7ms, environment 0ms)[22m
+
+
+=== F4 (cliRunner.test.ts pass) ===
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 18:18:01
+[2m   Duration [22m 414ms[2m (transform 50ms, setup 91ms, import 83ms, tests 6ms, environment 0ms)[22m
+
