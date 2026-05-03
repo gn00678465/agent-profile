@@ -1,16 +1,13 @@
 import { IpcMain } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import { IPC_CHANNELS } from '../../../shared/types';
 import type {
   ClaudeSettings,
-  ClaudeInstalledPlugins,
-  ClaudePlugin,
   ClaudeSessionMessage,
   SessionEntry,
 } from '../../../shared/types';
-import { assertSafePath, assertSafeName, success, failure, readJsonFile, writeJsonFile } from './configUtils';
+import { success, failure, readJsonFile, writeJsonFile } from './configUtils';
 
 export function registerClaudeHandler(ipcMain: IpcMain, _home: string): void {
   ipcMain.handle(
@@ -38,53 +35,8 @@ export function registerClaudeHandler(ipcMain: IpcMain, _home: string): void {
     }
   );
 
-  // Claude plugins (read-only, parsed from installed_plugins.json)
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGINS,
-    async (_event, configDir: string) => {
-      try {
-        const pluginsDir = path.join(configDir, 'plugins');
-        const installedPath = path.join(pluginsDir, 'installed_plugins.json');
-        const settingsPath = path.join(configDir, 'settings.json');
-
-        const [installedResult, settingsResult] = await Promise.all([
-          readJsonFile<ClaudeInstalledPlugins>(installedPath),
-          readJsonFile<ClaudeSettings>(settingsPath),
-        ]);
-
-        const enabledPlugins = settingsResult.data?.enabledPlugins ?? {};
-        const plugins: ClaudePlugin[] = [];
-
-        if (installedResult.data?.plugins) {
-          for (const [pluginId, installs] of Object.entries(installedResult.data.plugins)) {
-            const parts = pluginId.split('@');
-            const pluginName = parts[0] ?? pluginId;
-            const marketplace = parts[1] ?? 'unknown';
-
-            for (const install of installs) {
-              plugins.push({
-                id: pluginId,
-                name: pluginName,
-                marketplace,
-                scope: install.scope,
-                projectPath: install.projectPath,
-                installPath: install.installPath,
-                version: install.version,
-                installedAt: install.installedAt,
-                lastUpdated: install.lastUpdated,
-                gitCommitSha: install.gitCommitSha,
-                enabled: enabledPlugins[pluginId] ?? false,
-              });
-            }
-          }
-        }
-
-        return success(plugins);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
+  // CONFIG_GET_CLAUDE_PLUGINS / CONFIG_DELETE_PLUGIN / CONFIG_SET_PLUGIN_ENABLED
+  // moved to claudePluginsHandler.ts (feat-019, S1-7).
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_GET_CLAUDE_SESSIONS,
@@ -239,53 +191,9 @@ export function registerClaudeHandler(ipcMain: IpcMain, _home: string): void {
     }
   );
 
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
-    async (_event, configDir: string, pluginId: string, installPath: string) => {
-      try {
-        assertSafeName(pluginId);
-        assertSafePath(installPath, os.homedir());
-        // 1. Remove from installed_plugins.json
-        const pluginsDir = path.join(configDir, 'plugins');
-        const installedPath = path.join(pluginsDir, 'installed_plugins.json');
-        const installedResult = await readJsonFile<ClaudeInstalledPlugins>(installedPath);
-
-        if (installedResult.data?.plugins?.[pluginId]) {
-          const installs = installedResult.data.plugins[pluginId].filter(
-            (i) => i.installPath !== installPath
-          );
-          if (installs.length === 0) {
-            delete installedResult.data.plugins[pluginId];
-          } else {
-            installedResult.data.plugins[pluginId] = installs;
-          }
-          await writeJsonFile(installedPath, installedResult.data);
-        }
-
-        // 2. If no installs remain for this pluginId, remove from settings.json enabledPlugins
-        const remainingInstalls = installedResult.data?.plugins?.[pluginId];
-        if (!remainingInstalls || remainingInstalls.length === 0) {
-          const settingsPath = path.join(configDir, 'settings.json');
-          try {
-            const content = await fs.readFile(settingsPath, 'utf-8');
-            const settings = JSON.parse(content) as ClaudeSettings;
-            if (settings.enabledPlugins?.[pluginId] !== undefined) {
-              delete settings.enabledPlugins[pluginId];
-              await writeJsonFile(settingsPath, settings);
-            }
-          } catch { /* settings file may not exist */ }
-        }
-
-        // 3. Remove install folder
-        await fs.rm(installPath, { recursive: true, force: true });
-
-        return success(undefined);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
-
+  // CONFIG_SET_PLUGIN_ENABLED — kept here as a settings-mutation helper
+  // (writes ~/.claude/settings.json; not plugin-data-specific). DV5: enable/disable
+  // intentionally bypasses cliRunner to avoid spawn cost on a simple boolean toggle.
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_SET_PLUGIN_ENABLED,
     async (_event, configDir: string, pluginId: string, enabled: boolean) => {

@@ -25,11 +25,26 @@ export interface ClaudeSettings {
   [key: string]: unknown;
 }
 
+export interface ClaudePluginAuthor {
+  name: string;
+  email?: string;
+  url?: string;
+}
+
+export interface ClaudePluginComponents {
+  skills: number;
+  agents: number;
+  hooks: number;
+  mcp: boolean;
+  lsp: boolean;
+  monitors: number;
+}
+
 export interface ClaudePlugin {
   id: string; // "name@marketplace"
   name: string;
   marketplace: string;
-  scope: 'user' | 'project';
+  scope: 'user' | 'project' | 'managed';
   projectPath?: string;
   installPath: string;
   version: string;
@@ -37,12 +52,20 @@ export interface ClaudePlugin {
   lastUpdated: string;
   gitCommitSha?: string;
   enabled?: boolean;
+  // S1-1 manifest extensions
+  description?: string;
+  author?: ClaudePluginAuthor;
+  homepage?: string;
+  repository?: string;
+  license?: string;
+  category?: string;
+  components?: ClaudePluginComponents;
 }
 
 export interface ClaudeInstalledPlugins {
   version: 2;
   plugins: Record<string, Array<{
-    scope: 'user' | 'project';
+    scope: 'user' | 'project' | 'managed';
     projectPath?: string;
     installPath: string;
     version: string;
@@ -50,6 +73,52 @@ export interface ClaudeInstalledPlugins {
     lastUpdated: string;
     gitCommitSha?: string;
   }>>;
+}
+
+// Marketplace source — discriminated union covers all 5 source types (L5)
+export type ClaudeMarketplaceSource =
+  | { source: 'github'; repo: string }
+  | { source: 'git'; url: string; ref?: string; sha?: string }
+  | { source: 'git-subdir'; url: string; path: string; ref?: string; sha?: string }
+  | { source: 'url'; url: string; sha?: string }
+  | { source: 'directory'; path: string };
+
+export interface ClaudeMarketplace {
+  name: string;
+  source: ClaudeMarketplaceSource;
+  installLocation: string;
+  lastUpdated?: string;
+  autoUpdate: boolean;
+  isOfficial: boolean;
+  pluginCount: number;
+  // Tracks if extraKnownMarketplaces declares this name but known_marketplaces.json hasn't materialized it
+  unsynced?: boolean;
+}
+
+export interface ClaudePluginDiscoveryItem {
+  name: string;
+  marketplace: string;
+  description?: string;
+  author?: { name: string; email?: string };
+  category?: string;
+  homepage?: string;
+  installed: boolean;
+}
+
+export interface ClaudePluginError {
+  scope: 'plugin' | 'marketplace' | 'cli';
+  targetId: string;
+  severity: 'error' | 'warn';
+  message: string;
+  raisedAt: string;
+}
+
+export interface CliRunResult {
+  success: boolean;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+  error?: string;
 }
 
 // ─── Gemini (`~/.gemini/`) ───────────────────────────────────────────────────
@@ -350,6 +419,19 @@ export const IPC_CHANNELS = {
 
   // Plugin deletion
   CONFIG_DELETE_PLUGIN: 'config:delete-plugin',
+
+  // Claude plugin extended reads (feat-019)
+  CONFIG_GET_CLAUDE_MARKETPLACES: 'config:get-claude-marketplaces',
+  CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY: 'config:get-claude-plugin-discovery',
+  CONFIG_GET_CLAUDE_PLUGIN_ERRORS: 'config:get-claude-plugin-errors',
+
+  // Claude CLI integration (feat-019)
+  CLAUDE_CLI_MARKETPLACE_ADD: 'claude-cli:marketplace-add',
+  CLAUDE_CLI_MARKETPLACE_REMOVE: 'claude-cli:marketplace-remove',
+  CLAUDE_CLI_MARKETPLACE_UPDATE: 'claude-cli:marketplace-update',
+  CLAUDE_CLI_PLUGIN_INSTALL: 'claude-cli:plugin-install',
+  CLAUDE_CLI_PLUGIN_UNINSTALL: 'claude-cli:plugin-uninstall',
+  CLAUDE_CLI_RELOAD: 'claude-cli:reload',
 
   // Dialog operations
   DIALOG_OPEN_DIR: 'dialog:open-dir',

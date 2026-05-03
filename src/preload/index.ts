@@ -7,6 +7,11 @@ import type {
   AgentProfile,
   ClaudeSettings,
   ClaudePlugin,
+  ClaudeMarketplace,
+  ClaudeMarketplaceSource,
+  ClaudePluginDiscoveryItem,
+  ClaudePluginError,
+  CliRunResult,
   GeminiSettings,
   CopilotConfig,
   McpSettings,
@@ -153,6 +158,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Plugin deletion
     deletePlugin: (configDir: string, pluginId: string, installPath: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_PLUGIN, configDir, pluginId, installPath),
+
+    // Claude plugin extended reads (feat-019)
+    getClaudeMarketplaces: (configDir: string) =>
+      invoke<ClaudeMarketplace[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES, configDir),
+    getClaudePluginDiscovery: (configDir: string, marketplaceName: string) =>
+      invoke<ClaudePluginDiscoveryItem[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY, configDir, marketplaceName),
+    getClaudePluginErrors: (configDir: string) =>
+      invoke<ClaudePluginError[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS, configDir),
+  },
+
+  // Claude CLI integration (feat-019)
+  claudeCli: {
+    marketplaceAdd: (name: string, source: ClaudeMarketplaceSource) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_ADD, name, source),
+    marketplaceRemove: (name: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_REMOVE, name),
+    marketplaceUpdate: (name: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_UPDATE, name),
+    pluginInstall: (pluginId: string, scope: 'user' | 'project' | 'local') =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_PLUGIN_INSTALL, pluginId, scope),
+    pluginUninstall: (pluginId: string, scope: 'user' | 'project' | 'local') =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_PLUGIN_UNINSTALL, pluginId, scope),
+    reload: () =>
+      invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_RELOAD),
   },
 
   // Dialog operations
