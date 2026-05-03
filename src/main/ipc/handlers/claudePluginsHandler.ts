@@ -6,7 +6,6 @@
 import { IpcMain } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import { IPC_CHANNELS } from '../../../shared/types';
 import type {
   ClaudeSettings,
@@ -19,7 +18,7 @@ import type {
   ClaudePluginDiscoveryItem,
   ClaudePluginError,
 } from '../../../shared/types';
-import { assertSafePath, assertSafeName, success, failure, readJsonFile, writeJsonFile } from './configUtils';
+import { assertSafeName, success, failure, readJsonFile } from './configUtils';
 import {
   runMarketplaceAdd,
   runMarketplaceRemove,
@@ -28,6 +27,7 @@ import {
   runPluginUninstall,
   runPluginReload,
 } from './cliRunner';
+import { deletePlugin, deletePluginFile, type DeletePluginOpts } from './claudePluginsDelete';
 
 const OFFICIAL_MARKETPLACE = 'claude-plugins-official';
 
@@ -334,33 +334,7 @@ function wrap<Args extends unknown[], R>(
   };
 }
 
-async function deletePlugin(configDir: string, pluginId: string, installPath: string): Promise<void> {
-  assertSafeName(pluginId);
-  assertSafePath(installPath, os.homedir());
-  const installedPath = path.join(configDir, 'plugins', 'installed_plugins.json');
-  const installedResult = await readJsonFile<ClaudeInstalledPlugins>(installedPath);
-
-  if (installedResult.data?.plugins?.[pluginId]) {
-    const installs = installedResult.data.plugins[pluginId].filter((i) => i.installPath !== installPath);
-    if (installs.length === 0) delete installedResult.data.plugins[pluginId];
-    else installedResult.data.plugins[pluginId] = installs;
-    await writeJsonFile(installedPath, installedResult.data);
-  }
-
-  const remaining = installedResult.data?.plugins?.[pluginId];
-  if (!remaining || remaining.length === 0) {
-    const settingsPath = path.join(configDir, 'settings.json');
-    try {
-      const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8')) as ClaudeSettings;
-      if (settings.enabledPlugins?.[pluginId] !== undefined) {
-        delete settings.enabledPlugins[pluginId];
-        await writeJsonFile(settingsPath, settings);
-      }
-    } catch { /* settings file may not exist */ }
-  }
-
-  await fs.rm(installPath, { recursive: true, force: true });
-}
+// Delete is split into ./claudePluginsDelete (DV6 patch). Re-imported above.
 
 export function registerClaudePluginsHandler(ipcMain: IpcMain, _home: string): void {
   // Reads (S1-4)
@@ -384,8 +358,15 @@ export function registerClaudePluginsHandler(ipcMain: IpcMain, _home: string): v
   ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_PLUGIN_UNINSTALL, wrap((pluginId: string, scope: 'user' | 'project' | 'local') => runPluginUninstall(pluginId, scope)));
   ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_RELOAD, wrap(() => runPluginReload()));
 
-  // Mutations (DELETE_PLUGIN moved from claudeHandler — S1-7).
-  ipcMain.handle(IPC_CHANNELS.CONFIG_DELETE_PLUGIN, wrap(deletePlugin));
+  // Mutations (DELETE_PLUGIN moved from claudeHandler — S1-7; DV6 patch
+  // delegates to cliRunner with file-fallback). 4th arg is optional opts:
+  // { scope?, fileFallback? } — undefined args are tolerated by destructure.
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
+    wrap((configDir: string, pluginId: string, installPath: string, opts?: DeletePluginOpts) =>
+      deletePlugin(configDir, pluginId, installPath, opts ?? {}),
+    ),
+  );
 }
 
 // Test-only re-exports
@@ -394,4 +375,6 @@ export const _internals = {
   loadMarketplaces,
   loadDiscovery,
   readPluginManifest,
+  deletePlugin,
+  deletePluginFile,
 };

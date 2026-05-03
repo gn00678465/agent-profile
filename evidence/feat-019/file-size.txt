@@ -1,5 +1,6 @@
-  392 src/main/ipc/handlers/claudePluginsHandler.ts
+  380 src/main/ipc/handlers/claudePluginsHandler.ts
   342 src/main/ipc/handlers/cliRunner.ts
-  734 total
+   77 src/main/ipc/handlers/claudePluginsDelete.ts
+  799 total
 
-Both files <= 400 lines (coding-style maintainability cap)
+All files <= 400 lines (coding-style maintainability cap)

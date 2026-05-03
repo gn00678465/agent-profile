@@ -114,6 +114,15 @@ describe('cliRunner', () => {
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
+  // (c2) DV6 — plugin uninstall is whitelisted (delete-via-CLI path)
+  it('whitelists `plugin uninstall <id> --scope <scope>`', async () => {
+    expect(isWhitelisted(['plugin', 'uninstall', 'foo@bar', '--scope', 'user'])).toBe(true);
+    expect(isWhitelisted(['plugin', 'uninstall', 'foo@bar', '--scope', 'project'])).toBe(true);
+    expect(isWhitelisted(['plugin', 'uninstall', 'foo@bar', '--scope', 'local'])).toBe(true);
+    // missing --scope → reject
+    expect(isWhitelisted(['plugin', 'uninstall', 'foo@bar'])).toBe(false);
+  });
+
   // (d) marketplace name 含 .. / ; 觸發 assertSafeName 拒絕
   it('rejects unsafe marketplace names before spawn', async () => {
     const r1 = await runMarketplaceRemove('../etc/passwd');

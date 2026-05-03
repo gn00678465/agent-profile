@@ -30,6 +30,7 @@ vi.mock('../handlers/cliRunner', () => ({
 
 import fs from 'fs/promises';
 import { registerClaudePluginsHandler, _resetErrorBufferForTests } from '../handlers/claudePluginsHandler';
+import { runPluginUninstall } from '../handlers/cliRunner';
 
 function createMockIpcMain() {
   const handlers: Record<string, Function> = {};
@@ -258,5 +259,51 @@ describe('claudePluginsHandler', () => {
     expect(p1.installed).toBe(true);
     const p2 = res.data.find((d: any) => d.name === 'p2');
     expect(p2.installed).toBe(false);
+  });
+
+  // (f) DV6 — DELETE_PLUGIN delegates to cliRunner.runPluginUninstall by default
+  it('delegates DELETE_PLUGIN to cliRunner with scope by default', async () => {
+    (runPluginUninstall as any).mockResolvedValue({ success: true, exitCode: 0, stdout: 'Uninstalled.\n' });
+    (fs.readFile as any).mockImplementation(async () => { throw fileNotFound(); });
+
+    const res = await ipc.invoke(
+      IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
+      CONFIG_DIR,
+      'plug-a@m1',
+      '/home/testuser/.claude/plugins/cache/m1/plug-a/1.0.0',
+      { scope: 'user' },
+    );
+    expect(res.success).toBe(true);
+    expect(res.data.via).toBe('cli');
+    expect(runPluginUninstall).toHaveBeenCalledWith('plug-a@m1', 'user');
+    // CLI succeeded → no fs.rm fallback
+    expect(fs.rm).not.toHaveBeenCalled();
+  });
+
+  // (g) DV6 fallback — fileFallback:true skips CLI and uses file-delete path
+  it('uses file-delete fallback when fileFallback:true (directory-source)', async () => {
+    const installPath = '/home/testuser/dir-source-mp/my-plugin';
+    (fs.readFile as any).mockImplementation(async (p: string) => {
+      if (p === INSTALLED) {
+        return JSON.stringify({
+          version: 2,
+          plugins: { 'my-plugin@dir-source-mp': [{ scope: 'local', installPath, version: '1', installedAt: '', lastUpdated: '' }] },
+        });
+      }
+      throw fileNotFound();
+    });
+    (fs.writeFile as any).mockResolvedValue(undefined);
+    (fs.mkdir as any).mockResolvedValue(undefined);
+
+    const res = await ipc.invoke(
+      IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
+      CONFIG_DIR,
+      'my-plugin@dir-source-mp',
+      installPath,
+      { fileFallback: true },
+    );
+    expect(res.success).toBe(true);
+    expect(res.data.via).toBe('file');
+    expect(runPluginUninstall).not.toHaveBeenCalled();
   });
 });

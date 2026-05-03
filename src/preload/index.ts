@@ -155,9 +155,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) =>
       invoke<void>(IPC_CHANNELS.CONFIG_SET_PLUGIN_ENABLED, configDir, pluginId, enabled),
 
-    // Plugin deletion
-    deletePlugin: (configDir: string, pluginId: string, installPath: string) =>
-      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_PLUGIN, configDir, pluginId, installPath),
+    // Plugin deletion (DV6: routes through cliRunner with file fallback —
+    // pass `opts.scope` so `claude plugin uninstall <id> --scope <scope>`
+    // matches the install record; pass `opts.fileFallback: true` to skip
+    // CLI for directory-source plugins or known-no-CLI environments).
+    deletePlugin: (
+      configDir: string,
+      pluginId: string,
+      installPath: string,
+      opts?: { scope?: 'user' | 'project' | 'local'; fileFallback?: boolean },
+    ) =>
+      invoke<{ via: 'cli' | 'file'; cli?: { stdout?: string; stderr?: string } }>(
+        IPC_CHANNELS.CONFIG_DELETE_PLUGIN, configDir, pluginId, installPath, opts,
+      ),
 
     // Claude plugin extended reads (feat-019).
     // Surface inventory (1-line per binding for F2 grep discoverability):
