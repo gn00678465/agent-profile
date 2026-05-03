@@ -108,7 +108,7 @@ export function InstalledTab({ configDir, accentColor }: InstalledTabProps) {
       >
         {filtered.map((plugin) => (
           <ExtensionRow
-            key={`${plugin.id}-${plugin.scope}-${plugin.installPath}`}
+            key={`${plugin.id}-${plugin.scope}-${plugin.projectPath ?? ''}-${plugin.installPath}`}
             name={plugin.name}
             enabled={plugin.enabled ?? false}
             accentColor={accentColor}

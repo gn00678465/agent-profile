@@ -140,6 +140,29 @@ describe('claudePluginsHandler', () => {
     });
   });
 
+  // (a2) duplicate installs (same scope + same installPath) are deduped
+  it('dedupes duplicate installs within the same pluginId', async () => {
+    const installPath = '/home/testuser/.claude/plugins/cache/sentry-skills/sentry-skills/abc';
+    (fs.readFile as any).mockImplementation(async (p: string) => {
+      if (p === INSTALLED) {
+        return JSON.stringify({
+          version: 2,
+          plugins: {
+            'sentry-skills@sentry-skills': [
+              { scope: 'local', installPath, version: 'abc', installedAt: '', lastUpdated: '' },
+              { scope: 'local', installPath, version: 'abc', installedAt: '', lastUpdated: '' },
+            ],
+          },
+        });
+      }
+      throw fileNotFound();
+    });
+
+    const res = await ipc.invoke(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGINS, CONFIG_DIR);
+    expect(res.success).toBe(true);
+    expect(res.data).toHaveLength(1);
+  });
+
   // (b) installed_plugins.json 不存在 → 回空陣列 (RC2)
   it('returns empty array when installed_plugins.json is missing', async () => {
     (fs.readFile as any).mockImplementation(async () => {

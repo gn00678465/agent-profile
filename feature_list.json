@@ -149,8 +149,8 @@
       "name": "Claude 外掛頁面重構：對齊官方 plugin 模型 + Notion 設計系統",
       "description": "依 https://code.claude.com/docs/zh-TW/plugins 與 https://code.claude.com/docs/zh-TW/discover-plugins 重構 ClaudePlugins 頁面：研究前置 docs/CLAUDE_PLUGIN_LAYOUT.md (S0) → 後端 IPC + claudePluginsHandler + cliRunner (S1) → 4-tab UI router (S2) → 27 new tests (S3) → commitment (S4). cliRunner 11-token whitelist + assertSafeMarketplaceName + git URL regex + 60s timeout SIGTERM/SIGKILL。完整合約見 sprint-contract.md / evaluator-rubric.md。",
       "dependencies": ["feat-006", "feat-018"],
-      "status": "done",
-      "evidence": "bun run typecheck: exit 0 | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 405 passed / 27 files / 0 fail (baseline 378 + 27 new) | bash scripts/check-architecture.sh: 0 violations | bun run build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC6 all green via cliRunner.test.ts + claudePluginsHandler.test.ts. Full evidence at evidence/feat-019/"
+      "status": "planned",
+      "evidence": ""
     }
   ]
 }
