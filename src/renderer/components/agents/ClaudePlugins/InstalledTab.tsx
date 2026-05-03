@@ -55,15 +55,20 @@ export function InstalledTab({ configDir, accentColor }: InstalledTabProps) {
     }
   }
 
+  function sameInstall(a: ClaudePlugin, b: ClaudePlugin): boolean {
+    return a.id === b.id && a.scope === b.scope && a.projectPath === b.projectPath && a.installPath === b.installPath;
+  }
+
   async function handleDelete(plugin: ClaudePlugin) {
-    const confirmed = confirm(`Delete plugin "${plugin.name}" (${plugin.scope})?\n\nThis will remove the plugin config and its install folder.`);
+    const projectHint = plugin.projectPath ? ` @ ${plugin.projectPath}` : '';
+    const confirmed = confirm(`Delete plugin "${plugin.name}" (${plugin.scope}${projectHint})?\n\nThis will remove the plugin config and its install folder.`);
     if (!confirmed) return;
     try {
       await callElectron(() =>
         electronAPI().config.deletePlugin(configDir, plugin.id, plugin.installPath)
       );
-      setPlugins((prev) => prev.filter((p) => !(p.id === plugin.id && p.installPath === plugin.installPath)));
-      if (selected?.id === plugin.id && selected?.installPath === plugin.installPath) {
+      setPlugins((prev) => prev.filter((p) => !sameInstall(p, plugin)));
+      if (selected && sameInstall(selected, plugin)) {
         setSelected(null);
       }
       toast.success('Plugin deleted', { description: plugin.id });
@@ -106,32 +111,38 @@ export function InstalledTab({ configDir, accentColor }: InstalledTabProps) {
           </div>
         }
       >
-        {filtered.map((plugin) => (
-          <ExtensionRow
-            key={`${plugin.id}-${plugin.scope}-${plugin.projectPath ?? ''}-${plugin.installPath}`}
-            name={plugin.name}
-            enabled={plugin.enabled ?? false}
-            accentColor={accentColor}
-            subtitle={
-              <span className="flex items-center gap-2">
-                <span className="font-mono">v{plugin.version?.slice(0, 8)}</span>
-                <span>·</span>
-                <span>{plugin.marketplace}</span>
-              </span>
-            }
-            badge={<span className="badge-notion">{plugin.scope}</span>}
-            deleteLabel="Delete plugin"
-            onToggle={(v) => { void handleToggle(plugin.id, v); }}
-            onClick={() =>
-              setSelected(
-                selected?.id === plugin.id && selected.scope === plugin.scope ? null : plugin
-              )
-            }
-            selected={selected?.id === plugin.id && selected?.scope === plugin.scope}
-            showChevron
-            onDelete={() => { void handleDelete(plugin); }}
-          />
-        ))}
+        {filtered.map((plugin) => {
+          const projectLabel = plugin.projectPath ? plugin.projectPath.split(/[\\/]/).pop() : undefined;
+          const isSelected = !!selected && sameInstall(selected, plugin);
+          return (
+            <ExtensionRow
+              key={`${plugin.id}-${plugin.scope}-${plugin.projectPath ?? ''}-${plugin.installPath}`}
+              name={plugin.name}
+              enabled={plugin.enabled ?? false}
+              accentColor={accentColor}
+              subtitle={
+                <span className="flex items-center gap-2">
+                  <span className="font-mono">v{plugin.version?.slice(0, 8)}</span>
+                  <span>·</span>
+                  <span>{plugin.marketplace}</span>
+                  {projectLabel && (
+                    <>
+                      <span>·</span>
+                      <span className="font-mono" title={plugin.projectPath}>{projectLabel}</span>
+                    </>
+                  )}
+                </span>
+              }
+              badge={<span className="badge-notion">{plugin.scope}</span>}
+              deleteLabel="Delete plugin"
+              onToggle={(v) => { void handleToggle(plugin.id, v); }}
+              onClick={() => setSelected(isSelected ? null : plugin)}
+              selected={isSelected}
+              showChevron
+              onDelete={() => { void handleDelete(plugin); }}
+            />
+          );
+        })}
       </ExtensionListLayout>
 
       {selected && (

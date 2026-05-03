@@ -66,6 +66,7 @@ export function PluginManifestPanel({ plugin, onToggle, onDelete, accentColor }:
         <div className="rounded-card border-whisper bg-card p-3 flex flex-col gap-2">
           <MetaRow label="Version" value={plugin.version} mono />
           <MetaRow label="Marketplace" value={plugin.marketplace} mono />
+          {plugin.projectPath && <MetaRow label="Project" value={plugin.projectPath} mono />}
           {plugin.author?.name && (
             <MetaRow
               label="Author"
