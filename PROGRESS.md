@@ -20,22 +20,13 @@
 
 ## Test Status
 
-2026-05-03 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 406 passed (27 files; 378 baseline + 28 new) | arch: 0 violations | build: renderer + main + preload all OK
+2026-05-03 — typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 409 passed (27 files; 378 baseline + 31 new) | arch: 0 violations | build: renderer + main + preload all OK
 
 ---
 
 ## 會話記錄
 
-> **Compacted**: sessions 001-008 (2026-04-14 ~ 2026-04-16) — full records in `SESSION-LOG.jsonl`
-
-### 009 — 2026-04-16
-- 目標: feat-018 Phase E — Evaluator 三輪審查與修正
-- 已完成: Evaluator R1 → R3 APPROVED（26/28） | C9 修正：CTA 改用 var(--notion-blue) | C12 修正：badge-blue-text #005bab 提升對比 | C5 修正：完整 build 證據（renderer + main + preload）
-- 驗證: full suite: 378 passed | lint: 0 errors / 0 warnings | typecheck: 0 errors
-- 證據: sprint-contract §7 修正紀錄
-- 提交: d5f350d Phase E evidence collected | b504c07 evaluator corrections | 1762cac replace truncated build evidence
-- 風險: dark mode CTA contrast follow-up（#ffffff on #62aef0 = 2.22:1，低於 3:1） | feat/018-notion-ui 待 merge 回 main
-- 下一步: sprint-contract §7 執行簽署
+> **Compacted**: sessions 001-009 (2026-04-14 ~ 2026-04-16) — full records in `SESSION-LOG.jsonl`
 
 ### 010 — 2026-04-17
 - 目標: feat-018 sprint-contract §7 執行簽署 + handoff procedure 收緊
@@ -72,3 +63,12 @@
 - 提交: 93ef8b4 revert premature status flip + dedupe duplicates | 7e88057 projectPath as install identity | 2dccfc8 automated screenshot capture via CDP | 3c5daf5 fix REVISE feedback + flip status to done
 - 風險: M7 button-state matrix 只捕 focus 狀態（其餘 hover/active/disabled 在單張靜態圖無法呈現）→ Correctness 4/5 | scripts/capture-evidence.cjs + eslint.config.mjs +2 行為 documented out-of-whitelist → Scope Discipline 4/5 | feat-016 仍正式 blocked 但有 viable unblock path | feat/018-notion-ui 待 merge | dark mode CTA contrast follow-up
 - 下一步: Merge `feature/initial-agent-profile` → `main` (feat-019 ACCEPT, all gates green, ready to ship). 後續 polish：M7 composite 截圖；用 connectOverCDP 重構 feat-016 E2E；feat/018-notion-ui merge；dark mode CTA contrast.
+
+### 014 — 2026-05-03
+- 目標: feat-019 round-3 patch — delete plugin 改走 cliRunner CLI uninstall + DV5/L4/RC7 sprint contract patch + 重評 + S4-1 commitment 收口；額外回答使用者「auto-update Switch 沒反應」(改 read-only) 與「delete 是否走 CLI」(改 DV6 走 CLI 預設、file fallback for directory-source 與 sentry-skills share-check)；docs/claude/claude-plugin.md 開發者指南
+- 已完成: (a) Marketplace auto-update Switch 改全部 disabled + (read-only) 標籤 + tooltip + feat-020 placeholder | (b) DV6 patch：deletePlugin 預設走 cliRunner.runPluginUninstall(id, scope)，CLI 失敗或 fileFallback:true 走 deletePluginFile fallback；fallback 加 share-check 避免 sentry-skills 跨 project 共用 cache 被誤刪 | (c) 拆檔：claudePluginsDelete.ts (77 行) 獨立模組讓 claudePluginsHandler 從 456 → 380 行 ≤ 400 cap | (d) preload deletePlugin 簽章加 opts:{scope, fileFallback}，回 {via:'cli'|'file', cli?} envelope | (e) InstalledTab.handleDelete 加 directory-source heuristic + 警告 confirm + scope 傳遞 + toast 顯示 via CLI/file | (f) cliRunner.test.ts (c2) whitelist plugin uninstall + handler.test.ts (f) CLI delegate + (g) fileFallback — 共 +3 tests → 409 total | (g) sprint-contract.md round-3 patch：DV5 縮限 enable/disable only、新增 DV6/RC7/S1-8、L4 token 註解、S3 27→30、V3 405→408 | (h) 重評：rubric 自動 regenerate (新 hash 11d018e6...)，evaluator return ACCEPT 27/30 (Correctness/Verification/Reliability/Maintainability 全 5/5；Scope Discipline 3/5 因新增 docs/claude/claude-plugin.md 等 out-of-whitelist；Handoff Readiness 4/5 因 status 待 flip) | (i) feat-019 status flip planned → done with 完整 evidence string | (j) docs/claude/claude-plugin.md 11-section 開發者指南；feature/initial-agent-profile → feature/feat-019 分支正名；PR #2 開於 feature/feat-019 → main
+- 驗證: typecheck: 0 errors | lint: 0 errors / 0 warnings | full suite: 409 passed (27 files; 378 baseline + 31 new) | arch: 0 violations | build: renderer + main + preload all OK | Evaluator round-3: ACCEPT 27/30 (5/5/3/5/5/4)
+- 證據: feature_list.json feat-019 status → done 含完整 evidence | evidence/feat-019/ V/F/C/D/R/RC + M-screenshots 全部 refresh | evaluator-rubric.md SCORED with new ContractBaselineHash 11d018e6
+- 提交: dee0a15 marketplace Switch read-only | de961a8 end-of-session handoff | 6cd60b4 docs/claude/claude-plugin.md | 3f51465 round-3 DV6 patch | (this commit) feat-019 status flip + handoff sync
+- 風險: Scope Discipline 3/5 因 scripts/capture-evidence.cjs + eslint.config.mjs + docs/claude/claude-plugin.md 為 out-of-whitelist；要 5/5 需擴 contract Exclusions 或寫 ADR formal exception | feat-020 (auto-update CLI write path) planned | feat-016 E2E 仍 blocked 但 connectOverCDP 為 viable unblock path | feat/018-notion-ui 待 merge | dark mode CTA contrast
+- 下一步: PR #2 (https://github.com/gn00678465/agent-profile/pull/2) merge 後刪 feature/initial-agent-profile；後續排 feat-020 auto-update CLI write、feat-016 connectOverCDP 解封、feat/018-notion-ui merge、dark mode CTA contrast、optional Scope Discipline 5/5 ADR
