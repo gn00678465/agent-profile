@@ -75,6 +75,10 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 
 新增 cliRunner 指令的步驟：(1) 在 L4 加 token pattern；(2) 加 `Commands.*` builder + 對應 `assertSafe*` 校驗；(3) 加 `runWith(args)` 包裝函式；(4) 加 vitest case 涵蓋 reject path；(5) 對應 IPC handler 委派至新 builder。
 
+### Evidence Capture Driver (feat-019 dev-only)
+
+`scripts/capture-evidence.cjs` spawns the production-built Electron app with `--remote-debugging-port=9222` (renderer V8 CDP — different mechanism from the `--inspect=0` Node inspector that crashes on Windows per `docs/E2E_BLOCKED.md`), connects via Playwright `chromium.connectOverCDP`, drives 14 UI scenarios + writes PNGs to `evidence/feat-019/m{1..14}.png` + `m4-no-binary.png`. Two passes: real `~/.claude/` (M1-M11) + mocked TEMP home with corrupt `installed_plugins.json` (M12-M14 + m4-no-binary). Run via `bun run build && node scripts/capture-evidence.cjs`. Out-of-whitelist by sprint contract Exclusions but kept because (a) dev-only — never shipped, (b) no production code touched, (c) unblocks the same E2E infrastructure feat-016 was waiting on (`connectOverCDP` works where `_electron.launch()` doesn't). `eslint.config.mjs` adds one ignore entry for this CJS script.
+
 ## Update AGENTS.md Files
 
 - **Identify directories with edited files** - Look at which directories you modified

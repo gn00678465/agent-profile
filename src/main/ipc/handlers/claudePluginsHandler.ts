@@ -162,16 +162,12 @@ async function loadInstalledPlugins(configDir: string): Promise<ClaudePlugin[]> 
   const out: ClaudePlugin[] = [];
 
   if (installedResult.data?.plugins) {
-    // Dedupe within a pluginId by (scope, projectPath ?? '', installPath).
-    // Real-world installed_plugins.json sometimes contains duplicate entries
-    // (same scope + same installPath) from CLI re-install races; without
-    // dedupe the renderer would emit duplicate React keys.
+    // Dedupe by (id, scope, projectPath ?? '', installPath) — real-world
+    // installed_plugins.json sometimes contains duplicates from CLI re-install
+    // races; without dedupe renderer emits duplicate React keys.
     const seen = new Set<string>();
     for (const [pluginId, installs] of Object.entries(installedResult.data.plugins)) {
-      const parts = pluginId.split('@');
-      const pluginName = parts[0] ?? pluginId;
-      const marketplace = parts[1] ?? 'unknown';
-
+      const [pluginName = pluginId, marketplace = 'unknown'] = pluginId.split('@');
       for (const install of installs) {
         const dedupeKey = `${pluginId}|${install.scope}|${install.projectPath ?? ''}|${install.installPath}`;
         if (seen.has(dedupeKey)) continue;

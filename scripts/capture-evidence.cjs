@@ -30,8 +30,11 @@ const { chromium } = require('@playwright/test');
 
 const ROOT = path.resolve(__dirname, '..');
 const EVIDENCE_DIR = path.join(ROOT, 'evidence', 'feat-019');
-const ELECTRON_BIN = path.join(ROOT, 'node_modules', '.bin',
-  process.platform === 'win32' ? 'electron.cmd' : 'electron');
+// Direct .exe (Windows) / dist binary (Unix) — avoids the npm .cmd shim which
+// can strip env overrides (USERPROFILE/HOME) before reaching Electron's main process.
+const ELECTRON_BIN = process.platform === 'win32'
+  ? path.join(ROOT, 'node_modules', 'electron', 'dist', 'electron.exe')
+  : path.join(ROOT, 'node_modules', 'electron', 'dist', 'electron');
 const MAIN_ENTRY = path.join(ROOT, 'dist-electron', 'main', 'index.mjs');
 const CDP_PORT = 9222;
 const CDP_ENDPOINT = `http://127.0.0.1:${CDP_PORT}`;
@@ -61,20 +64,29 @@ async function waitForCdp(timeoutMs = 30_000) {
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 function spawnElectron(env = {}) {
-  log('Spawning Electron with --remote-debugging-port=' + CDP_PORT);
-  // On Windows, .cmd shims must be invoked through the shell.
-  const isWin = process.platform === 'win32';
+  log('Spawning Electron (direct .exe) with --remote-debugging-port=' + CDP_PORT);
+  if (env.HOME || env.USERPROFILE) {
+    log('  HOME=' + (env.HOME || '(unset)'));
+    log('  USERPROFILE=' + (env.USERPROFILE || '(unset)'));
+  }
+  // Per-pass user-data-dir so renderer state never leaks between passes.
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'electron-userdata-'));
   const child = spawn(
     ELECTRON_BIN,
-    [MAIN_ENTRY, `--remote-debugging-port=${CDP_PORT}`],
+    [
+      MAIN_ENTRY,
+      `--remote-debugging-port=${CDP_PORT}`,
+      `--user-data-dir=${userDataDir}`,
+    ],
     {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, ...env, NODE_ENV: 'production' },
       windowsHide: false,
-      shell: isWin,
+      shell: false,
     }
   );
+  child._userDataDir = userDataDir; // for cleanup
   child.stdout.on('data', (d) => log('[electron]', d.toString().trim()));
   child.stderr.on('data', (d) => log('[electron:err]', d.toString().trim()));
   child.on('error', (err) => log('[electron:spawn-error]', err.message));
