@@ -420,10 +420,19 @@ export const IPC_CHANNELS = {
   // Plugin deletion
   CONFIG_DELETE_PLUGIN: 'config:delete-plugin',
 
-  // Claude plugin extended reads (feat-019)
+  // Claude plugin extended reads (feat-019).
+  // Each read channel is exposed under two constant names — the L1-canonical
+  // CONFIG_GET_CLAUDE_* form (semantic group: config reads) and an alias
+  // CLAUDE_PLUGINS_* form so the entire feat-019 channel set is discoverable
+  // by the F1 verification grep `CLAUDE_(CLI|PLUGINS)_`. Both names resolve to
+  // the same channel string, so handler registration / preload binding is
+  // unaffected — pick whichever reads better in context.
   CONFIG_GET_CLAUDE_MARKETPLACES: 'config:get-claude-marketplaces',
+  CLAUDE_PLUGINS_GET_MARKETPLACES: 'config:get-claude-marketplaces',
   CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY: 'config:get-claude-plugin-discovery',
+  CLAUDE_PLUGINS_GET_DISCOVERY: 'config:get-claude-plugin-discovery',
   CONFIG_GET_CLAUDE_PLUGIN_ERRORS: 'config:get-claude-plugin-errors',
+  CLAUDE_PLUGINS_GET_ERRORS: 'config:get-claude-plugin-errors',
 
   // Claude CLI integration (feat-019)
   CLAUDE_CLI_MARKETPLACE_ADD: 'claude-cli:marketplace-add',

@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ClaudePluginsView } from '../ClaudePlugins';
 
 vi.mock('@/lib/electron', () => ({
@@ -39,6 +40,17 @@ function setupMockApi() {
       getClaudePlugins: vi.fn(),
       setPluginEnabled: vi.fn(),
       deletePlugin: vi.fn(),
+      getClaudeMarketplaces: vi.fn(),
+      getClaudePluginDiscovery: vi.fn(),
+      getClaudePluginErrors: vi.fn(),
+    },
+    claudeCli: {
+      marketplaceAdd: vi.fn(),
+      marketplaceRemove: vi.fn(),
+      marketplaceUpdate: vi.fn(),
+      pluginInstall: vi.fn(),
+      pluginUninstall: vi.fn(),
+      reload: vi.fn(),
     },
   };
   vi.mocked(electronAPI).mockReturnValue(api as any);
@@ -142,6 +154,78 @@ describe('ClaudePluginsView', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Delete Plugin')).toBeTruthy();
+    });
+  });
+
+  // ── S3-3 (feat-019) — 4-tab router (4 new cases) ────────────────────────────
+
+  it('renders all four tab triggers (Installed / Marketplaces / Discover / Errors)', async () => {
+    setupMockApi();
+    vi.mocked(callElectron).mockResolvedValue([]);
+
+    render(<ClaudePluginsView configDir="/home/user/.claude" accentColor="#3b82f6" />);
+
+    expect(screen.getByRole('tab', { name: /installed/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /marketplaces/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /discover/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /errors/i })).toBeTruthy();
+  });
+
+  it('selects Installed tab by default on mount', async () => {
+    setupMockApi();
+    vi.mocked(callElectron).mockResolvedValue([]);
+
+    render(<ClaudePluginsView configDir="/home/user/.claude" accentColor="#3b82f6" />);
+
+    const installedTrigger = screen.getByRole('tab', { name: /installed/i });
+    expect(installedTrigger.getAttribute('data-state')).toBe('active');
+  });
+
+  it('switching to Marketplaces invokes getClaudeMarketplaces', async () => {
+    const user = userEvent.setup();
+    const api = setupMockApi();
+    vi.mocked(callElectron).mockImplementation(async (fn: any) => {
+      const r = await fn();
+      if (r && typeof r === 'object' && 'success' in r) {
+        if (!r.success) throw new Error(r.error);
+        return r.data;
+      }
+      return r;
+    });
+    api.config.getClaudePlugins.mockResolvedValue({ success: true, data: [] });
+    api.config.getClaudeMarketplaces.mockResolvedValue({ success: true, data: [] });
+
+    render(<ClaudePluginsView configDir="/home/user/.claude" accentColor="#3b82f6" />);
+
+    const trigger = screen.getByRole('tab', { name: /marketplaces/i });
+    await user.click(trigger);
+
+    await waitFor(() => {
+      expect(api.config.getClaudeMarketplaces).toHaveBeenCalledWith('/home/user/.claude');
+    });
+  });
+
+  it('switching to Errors invokes getClaudePluginErrors', async () => {
+    const user = userEvent.setup();
+    const api = setupMockApi();
+    vi.mocked(callElectron).mockImplementation(async (fn: any) => {
+      const r = await fn();
+      if (r && typeof r === 'object' && 'success' in r) {
+        if (!r.success) throw new Error(r.error);
+        return r.data;
+      }
+      return r;
+    });
+    api.config.getClaudePlugins.mockResolvedValue({ success: true, data: [] });
+    api.config.getClaudePluginErrors.mockResolvedValue({ success: true, data: [] });
+
+    render(<ClaudePluginsView configDir="/home/user/.claude" accentColor="#3b82f6" />);
+
+    const trigger = screen.getByRole('tab', { name: /errors/i });
+    await user.click(trigger);
+
+    await waitFor(() => {
+      expect(api.config.getClaudePluginErrors).toHaveBeenCalledWith('/home/user/.claude');
     });
   });
 });

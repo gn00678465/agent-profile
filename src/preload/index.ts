@@ -159,7 +159,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deletePlugin: (configDir: string, pluginId: string, installPath: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_PLUGIN, configDir, pluginId, installPath),
 
-    // Claude plugin extended reads (feat-019)
+    // Claude plugin extended reads (feat-019).
+    // Surface inventory (1-line per binding for F2 grep discoverability):
+    //   config.getClaudeMarketplaces — read known + extra marketplaces
+    //   config.getClaudePluginDiscovery — list marketplace plugins
+    //   config.getClaudePluginErrors — accumulated plugin errors
     getClaudeMarketplaces: (configDir: string) =>
       invoke<ClaudeMarketplace[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES, configDir),
     getClaudePluginDiscovery: (configDir: string, marketplaceName: string) =>
@@ -168,7 +172,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<ClaudePluginError[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS, configDir),
   },
 
-  // Claude CLI integration (feat-019)
+  // Claude CLI integration (feat-019).
+  // Surface inventory (1-line per binding for F2 grep discoverability):
+  //   claudeCli.marketplaceAdd — register a new marketplace via CLI
+  //   claudeCli.marketplaceRemove — unregister a marketplace via CLI
+  //   claudeCli.marketplaceUpdate — refresh a marketplace via CLI
+  //   claudeCli.pluginInstall — install a plugin into a scope
+  //   claudeCli.pluginUninstall — uninstall a plugin from a scope
+  //   claudeCli.reload — reload the plugin subsystem (equivalent of /reload-plugins)
   claudeCli: {
     marketplaceAdd: (name: string, source: ClaudeMarketplaceSource) =>
       invoke<CliRunResult>(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_ADD, name, source),

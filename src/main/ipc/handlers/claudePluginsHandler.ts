@@ -318,152 +318,69 @@ async function loadDiscovery(configDir: string, marketplaceName: string): Promis
   }));
 }
 
+// Wrap a handler body in the standard try/catch → IpcResponse envelope.
+// Keeps registration table compact while preserving "never throw across IPC".
+function wrap<Args extends unknown[], R>(
+  fn: (...args: Args) => Promise<R>
+): (event: unknown, ...args: Args) => Promise<ReturnType<typeof success<R>> | ReturnType<typeof failure>> {
+  return async (_event, ...args) => {
+    try { return success(await fn(...args)); }
+    catch (err) { return failure(err); }
+  };
+}
+
+async function deletePlugin(configDir: string, pluginId: string, installPath: string): Promise<void> {
+  assertSafeName(pluginId);
+  assertSafePath(installPath, os.homedir());
+  const installedPath = path.join(configDir, 'plugins', 'installed_plugins.json');
+  const installedResult = await readJsonFile<ClaudeInstalledPlugins>(installedPath);
+
+  if (installedResult.data?.plugins?.[pluginId]) {
+    const installs = installedResult.data.plugins[pluginId].filter((i) => i.installPath !== installPath);
+    if (installs.length === 0) delete installedResult.data.plugins[pluginId];
+    else installedResult.data.plugins[pluginId] = installs;
+    await writeJsonFile(installedPath, installedResult.data);
+  }
+
+  const remaining = installedResult.data?.plugins?.[pluginId];
+  if (!remaining || remaining.length === 0) {
+    const settingsPath = path.join(configDir, 'settings.json');
+    try {
+      const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8')) as ClaudeSettings;
+      if (settings.enabledPlugins?.[pluginId] !== undefined) {
+        delete settings.enabledPlugins[pluginId];
+        await writeJsonFile(settingsPath, settings);
+      }
+    } catch { /* settings file may not exist */ }
+  }
+
+  await fs.rm(installPath, { recursive: true, force: true });
+}
+
 export function registerClaudePluginsHandler(ipcMain: IpcMain, _home: string): void {
-  // CONFIG_GET_CLAUDE_PLUGINS — manifest-enriched implementation (S1-7 moved from claudeHandler).
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGINS,
-    async (_event, configDir: string) => {
-      try {
-        const plugins = await loadInstalledPlugins(configDir);
-        return success(plugins);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
+  // Reads (S1-4)
+  ipcMain.handle(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGINS, wrap(loadInstalledPlugins));
+  ipcMain.handle(IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES, wrap(loadMarketplaces));
+  ipcMain.handle(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY, wrap(async (configDir: string, marketplaceName: string) => {
+    assertSafeName(marketplaceName);
+    return loadDiscovery(configDir, marketplaceName);
+  }));
+  ipcMain.handle(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS, wrap(async (configDir: string) => {
+    await loadInstalledPlugins(configDir).catch(() => undefined);
+    await loadMarketplaces(configDir).catch(() => undefined);
+    return [...errorBuffer];
+  }));
 
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_GET_CLAUDE_MARKETPLACES,
-    async (_event, configDir: string) => {
-      try {
-        const marketplaces = await loadMarketplaces(configDir);
-        return success(marketplaces);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
+  // CLI delegations (S1-6) — every handler returns CliRunResult; cliRunner never throws.
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_ADD, wrap((name: string, source: ClaudeMarketplaceSource) => runMarketplaceAdd(name, source)));
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_REMOVE, wrap((name: string) => runMarketplaceRemove(name)));
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_UPDATE, wrap((name: string) => runMarketplaceUpdate(name)));
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_PLUGIN_INSTALL, wrap((pluginId: string, scope: 'user' | 'project' | 'local') => runPluginInstall(pluginId, scope)));
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_PLUGIN_UNINSTALL, wrap((pluginId: string, scope: 'user' | 'project' | 'local') => runPluginUninstall(pluginId, scope)));
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CLI_RELOAD, wrap(() => runPluginReload()));
 
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY,
-    async (_event, configDir: string, marketplaceName: string) => {
-      try {
-        assertSafeName(marketplaceName);
-        const items = await loadDiscovery(configDir, marketplaceName);
-        return success(items);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS,
-    async (_event, configDir: string) => {
-      try {
-        // Force a refresh of installed/marketplaces so errors get repopulated
-        await loadInstalledPlugins(configDir).catch(() => undefined);
-        await loadMarketplaces(configDir).catch(() => undefined);
-        return success([...errorBuffer]);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
-
-  // CLI handlers (S1-6) — delegate to cliRunner
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_ADD,
-    async (_event, name: string, source: ClaudeMarketplaceSource) => {
-      const result = await runMarketplaceAdd(name, source);
-      return success(result);
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_REMOVE,
-    async (_event, name: string) => {
-      const result = await runMarketplaceRemove(name);
-      return success(result);
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_MARKETPLACE_UPDATE,
-    async (_event, name: string) => {
-      const result = await runMarketplaceUpdate(name);
-      return success(result);
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_PLUGIN_INSTALL,
-    async (_event, pluginId: string, scope: 'user' | 'project' | 'local') => {
-      const result = await runPluginInstall(pluginId, scope);
-      return success(result);
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_PLUGIN_UNINSTALL,
-    async (_event, pluginId: string, scope: 'user' | 'project' | 'local') => {
-      const result = await runPluginUninstall(pluginId, scope);
-      return success(result);
-    }
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLAUDE_CLI_RELOAD,
-    async () => {
-      const result = await runPluginReload();
-      return success(result);
-    }
-  );
-
-  // Plugin deletion (moved here from claudeHandler so it stays with plugin domain).
-  // Keeps existing semantics: assertSafeName + assertSafePath.
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIG_DELETE_PLUGIN,
-    async (_event, configDir: string, pluginId: string, installPath: string) => {
-      try {
-        assertSafeName(pluginId);
-        assertSafePath(installPath, os.homedir());
-        const pluginsDir = path.join(configDir, 'plugins');
-        const installedPath = path.join(pluginsDir, 'installed_plugins.json');
-        const installedResult = await readJsonFile<ClaudeInstalledPlugins>(installedPath);
-
-        if (installedResult.data?.plugins?.[pluginId]) {
-          const installs = installedResult.data.plugins[pluginId].filter(
-            (i) => i.installPath !== installPath
-          );
-          if (installs.length === 0) {
-            delete installedResult.data.plugins[pluginId];
-          } else {
-            installedResult.data.plugins[pluginId] = installs;
-          }
-          await writeJsonFile(installedPath, installedResult.data);
-        }
-
-        const remainingInstalls = installedResult.data?.plugins?.[pluginId];
-        if (!remainingInstalls || remainingInstalls.length === 0) {
-          const settingsPath = path.join(configDir, 'settings.json');
-          try {
-            const content = await fs.readFile(settingsPath, 'utf-8');
-            const settings = JSON.parse(content) as ClaudeSettings;
-            if (settings.enabledPlugins?.[pluginId] !== undefined) {
-              delete settings.enabledPlugins[pluginId];
-              await writeJsonFile(settingsPath, settings);
-            }
-          } catch { /* settings file may not exist */ }
-        }
-
-        await fs.rm(installPath, { recursive: true, force: true });
-        return success(undefined);
-      } catch (err) {
-        return failure(err);
-      }
-    }
-  );
+  // Mutations (DELETE_PLUGIN moved from claudeHandler — S1-7).
+  ipcMain.handle(IPC_CHANNELS.CONFIG_DELETE_PLUGIN, wrap(deletePlugin));
 }
 
 // Test-only re-exports
