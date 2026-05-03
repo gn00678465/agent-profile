@@ -25,6 +25,8 @@ export default antfu(
       // Playwright E2E tests — separate TypeScript project, not part of main lint gate
       'playwright.config.ts',
       'e2e/**',
+      // Dev-only evidence capture driver (CommonJS, ad-hoc Node script)
+      'scripts/capture-evidence.cjs',
     ],
 
     rules: {
