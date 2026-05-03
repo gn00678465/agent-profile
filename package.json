@@ -1,7 +1,7 @@
 {
   "name": "agent-profile",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI Agent Profile Manager - Electron app to manage agent configurations",
   "main": "dist-electron/main/index.mjs",
   "type": "module",
