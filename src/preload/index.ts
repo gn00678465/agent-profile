@@ -16,6 +16,11 @@ import type {
   CopilotConfig,
   McpSettings,
   Skill,
+  SkillLinkedBy,
+  SkillLock,
+  InstallRegistryOptions,
+  InstallRegistryResult,
+  InstallRegistryStartedEvent,
   ConfigFile,
   SessionEntry,
   ClaudeSessionMessage,
@@ -106,6 +111,45 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<void>(IPC_CHANNELS.SKILL_LINK_SHARED, agentConfigDir, sharedSkillPath, skillId),
     installSkillFromZip: (agentConfigDir: string, zipFilePath: string) =>
       invoke<void>(IPC_CHANNELS.SKILL_INSTALL_ZIP, agentConfigDir, zipFilePath),
+    installSkillFromRegistry: (sharedConfigDir: string, input: string, options: InstallRegistryOptions) =>
+      invoke<InstallRegistryResult>(IPC_CHANNELS.SKILL_INSTALL_REGISTRY, sharedConfigDir, input, options),
+    cancelInstallSkillFromRegistry: (requestId: string) =>
+      invoke<{ killed: boolean }>(IPC_CHANNELS.SKILL_INSTALL_REGISTRY_CANCEL, requestId),
+    onInstallSkillFromRegistryStarted: (
+      handler: (payload: InstallRegistryStartedEvent) => void
+    ): (() => void) => {
+      const listener = (_event: unknown, payload: InstallRegistryStartedEvent) => handler(payload);
+      ipcRenderer.on(IPC_CHANNELS.SKILL_INSTALL_REGISTRY_STARTED, listener);
+      return () => { ipcRenderer.removeListener(IPC_CHANNELS.SKILL_INSTALL_REGISTRY_STARTED, listener); };
+    },
+    importSkillFromFolder: (sharedConfigDir: string, sourcePath: string) =>
+      invoke<{ skillId: string }>(IPC_CHANNELS.SKILL_IMPORT_FOLDER, sharedConfigDir, sourcePath),
+    getSkillsLinkedBy: (sharedConfigDir: string) =>
+      invoke<SkillLinkedBy[]>(IPC_CHANNELS.SKILL_GET_LINKED_BY, sharedConfigDir),
+    getSkillLock: (sharedConfigDir: string) =>
+      invoke<SkillLock | null>(IPC_CHANNELS.SKILL_GET_LOCK, sharedConfigDir),
+    updateSkillFromRegistry: (sharedConfigDir: string, skillIds: string[]) =>
+      invoke<InstallRegistryResult>(IPC_CHANNELS.SKILL_UPDATE_REGISTRY, sharedConfigDir, skillIds),
+    cancelUpdateSkillFromRegistry: (requestId: string) =>
+      invoke<{ killed: boolean }>(IPC_CHANNELS.SKILL_UPDATE_REGISTRY_CANCEL, requestId),
+    onUpdateSkillFromRegistryStarted: (
+      handler: (payload: InstallRegistryStartedEvent) => void
+    ): (() => void) => {
+      const listener = (_event: unknown, payload: InstallRegistryStartedEvent) => handler(payload);
+      ipcRenderer.on(IPC_CHANNELS.SKILL_UPDATE_REGISTRY_STARTED, listener);
+      return () => { ipcRenderer.removeListener(IPC_CHANNELS.SKILL_UPDATE_REGISTRY_STARTED, listener); };
+    },
+    removeSkillFromRegistry: (sharedConfigDir: string, skillIds: string[]) =>
+      invoke<InstallRegistryResult>(IPC_CHANNELS.SKILL_REMOVE_REGISTRY, sharedConfigDir, skillIds),
+    cancelRemoveSkillFromRegistry: (requestId: string) =>
+      invoke<{ killed: boolean }>(IPC_CHANNELS.SKILL_REMOVE_REGISTRY_CANCEL, requestId),
+    onRemoveSkillFromRegistryStarted: (
+      handler: (payload: InstallRegistryStartedEvent) => void
+    ): (() => void) => {
+      const listener = (_event: unknown, payload: InstallRegistryStartedEvent) => handler(payload);
+      ipcRenderer.on(IPC_CHANNELS.SKILL_REMOVE_REGISTRY_STARTED, listener);
+      return () => { ipcRenderer.removeListener(IPC_CHANNELS.SKILL_REMOVE_REGISTRY_STARTED, listener); };
+    },
 
     // Markdown
     getMarkdown: (filePath: string) =>
