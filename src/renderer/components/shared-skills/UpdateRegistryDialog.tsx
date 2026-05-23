@@ -12,6 +12,18 @@ import type { InstallRegistryResult } from '@shared/types';
 
 // ─── Output parsing ──────────────────────────────────────────────────────────
 
+/** Strip ANSI/CSI escape sequences (colors, cursor moves, spinner state) so
+ *  parsing and the raw-log view show clean text. The CLI uses chalk-style
+ *  color codes which leave artefacts like `\x1b[38;5;145m...\x1b[0m` if not
+ *  stripped. */
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /\x1B\[[0-9;]*[a-z]/gi;
+
+// eslint-disable-next-line react-refresh/only-export-components -- pure helper exported for tests + InstallFromRegistryDialog
+export function stripAnsi(s: string): string {
+  return s.replace(ANSI_RE, '');
+}
+
 type SkillUpdateResult = 'up-to-date' | 'updated' | 'failed' | 'pending';
 
 interface UpdateSummary {
@@ -36,9 +48,22 @@ export function parseUpdateOutput(stdout: string): UpdateSummary {
   let status: UpdateSummary['status'] = 'unknown';
   let message = '';
 
-  for (const raw of stdout.split('\n')) {
+  for (const raw of stripAnsi(stdout).split('\n')) {
     const line = raw.trim();
     if (!line) continue;
+
+    // Total summary line. The "✓ Updated N skill(s)" line is the CLI's terminal
+    // success signal — bulk-mark any still-pending entries as updated. This is
+    // the safety net for per-skill success lines the parser failed to match
+    // (e.g. variant phrasing, partial output, leading whitespace anomalies).
+    if (/^✓\s*Updated \d+ skill\(s\)$/i.test(line)) {
+      for (const c of checked) {
+        if (c.result === 'pending') c.result = 'updated';
+      }
+      if (status === 'unknown' || status === 'up-to-date') status = 'updated';
+      continue;
+    }
+    if (/^Total:\s*\d+/i.test(line)) continue;
 
     let m: RegExpExecArray | null;
 
@@ -93,8 +118,11 @@ export function parseUpdateOutput(stdout: string): UpdateSummary {
     }
   }
 
-  if (status === 'unknown' && checked.length > 0) {
-    // We saw "Updating X" or "Checking X" but no terminal status line — fallback.
+  // Fallback: only promote 'unknown' → 'updated' when at least one checked
+  // entry has a concrete terminal result. Pending-only entries (we saw
+  // "Updating X..." but no "✓ Updated X") must NOT count as success — that
+  // produces the misleading "0 skill(s) updated" banner.
+  if (status === 'unknown' && checked.some((c) => c.result !== 'pending')) {
     status = 'updated';
   }
   return { status, message, checked };
@@ -128,10 +156,25 @@ export function UpdateRegistryDialog({
   const requestIdRef = useRef<string | null>(null);
   const startedRef = useRef(false);
 
-  const summary = useMemo<UpdateSummary | null>(
-    () => (stdout ? parseUpdateOutput(stdout) : null),
-    [stdout]
-  );
+  const summary = useMemo<UpdateSummary | null>(() => {
+    if (!stdout) return null;
+    const raw = parseUpdateOutput(stdout);
+    // Once the CLI has exited (busy=false) and there is no serverError, any
+    // pending entries are the parser failing to catch a CLI variant — the CLI
+    // itself reported success (exitCode 0). Promote pending → updated so the
+    // per-skill row stops showing a spinner forever.
+    if (!busy && !serverError) {
+      const promoted = {
+        ...raw,
+        checked: raw.checked.map((c) => (c.result === 'pending' ? { ...c, result: 'updated' as const } : c)),
+      };
+      if (promoted.status === 'unknown' && promoted.checked.some((c) => c.result === 'updated')) {
+        promoted.status = 'updated';
+      }
+      return promoted;
+    }
+    return raw;
+  }, [stdout, busy, serverError]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -171,13 +214,18 @@ export function UpdateRegistryDialog({
         setStderr(result.stderr);
         if (result.exitCode !== 0) {
           setServerError(`npx skills update exited with code ${result.exitCode}`);
-          setBusy(false);
           return;
         }
-        await onUpdateComplete(result);
-        setBusy(false);
+        try {
+          await onUpdateComplete(result);
+        } catch (refreshErr) {
+          // Refresh failure should NOT keep the dialog in a busy state — the
+          // CLI itself succeeded; surface the refresh error but unblock the UI.
+          setServerError(refreshErr instanceof Error ? refreshErr.message : 'Post-update refresh failed');
+        }
       } catch (e) {
         setServerError(e instanceof Error ? e.message : 'Update failed');
+      } finally {
         setBusy(false);
       }
     })();
@@ -236,7 +284,7 @@ export function UpdateRegistryDialog({
                   <span className="font-medium text-emerald-600">All skills are up to date</span>
                 </div>
               )}
-              {summary.status === 'updated' && (
+              {summary.status === 'updated' && summary.checked.filter((c) => c.result === 'updated').length > 0 && (
                 <div className="flex items-center gap-2 rounded-md border-whisper bg-emerald-500/5 px-3 py-2 text-xs">
                   <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                   <span className="font-medium text-emerald-600">
@@ -297,9 +345,9 @@ export function UpdateRegistryDialog({
               data-testid="update-registry-output"
               className="max-h-48 overflow-auto rounded-md border-whisper bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap"
             >
-              {stdout && <div>{stdout}</div>}
+              {stdout && <div>{stripAnsi(stdout)}</div>}
               {stderr && (
-                <div className="text-amber-600">{stderr}</div>
+                <div className="text-amber-600">{stripAnsi(stderr)}</div>
               )}
             </div>
           )}

@@ -326,9 +326,15 @@ export function registerSkillsHandler(ipcMain: IpcMain, home: string): void {
 
       const requestId = randomUUID();
 
+      // The CLI creates its universal pool at `<cwd>/.agents/skills/`. Setting
+      // cwd to sharedConfigDir itself produces a nested `<sharedConfigDir>/.agents/skills/`
+      // which is wrong. cwd must be the PARENT of sharedConfigDir (e.g. `$HOME`)
+      // so the CLI's `<cwd>/.agents/skills/` resolves to sharedConfigDir itself.
+      const cliCwd = path.dirname(sharedConfigDir);
+
       try {
         const child = spawn('npx', args, {
-          cwd: sharedConfigDir,
+          cwd: cliCwd,
           timeout: 90_000,
           env: augmentedEnv,
         });
@@ -509,10 +515,13 @@ export function registerSkillsHandler(ipcMain: IpcMain, home: string): void {
       };
 
       const requestId = randomUUID();
+      // Same cwd reasoning as install: the CLI looks at `<cwd>/.agents/skills/`
+      // for tracked skills, so cwd must be the PARENT of sharedConfigDir.
+      const cliCwd = path.dirname(sharedConfigDir);
       try {
         const args = ['skills', 'update', ...ids, '--yes'];
         const child = spawn('npx', args, {
-          cwd: sharedConfigDir,
+          cwd: cliCwd,
           timeout: 90_000,
           env: augmentedEnv,
         });

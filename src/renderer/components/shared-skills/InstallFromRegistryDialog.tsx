@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { callElectron, electronAPI } from '@/lib/electron';
+import { stripAnsi } from './UpdateRegistryDialog';
 import type { InstallRegistryResult, SkillsCliAgent } from '@shared/types';
 
 interface InstallFromRegistryDialogProps {
@@ -240,9 +241,9 @@ export function InstallFromRegistryDialog({
               data-testid="registry-output"
               className="max-h-48 overflow-auto rounded-md border-whisper bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap"
             >
-              {stdout && <div>{stdout}</div>}
+              {stdout && <div>{stripAnsi(stdout)}</div>}
               {stderr && (
-                <div className="text-amber-600">{stderr}</div>
+                <div className="text-amber-600">{stripAnsi(stderr)}</div>
               )}
             </div>
           )}

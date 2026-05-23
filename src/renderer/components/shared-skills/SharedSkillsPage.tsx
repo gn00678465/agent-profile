@@ -347,10 +347,13 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
         </div>
       )}
 
-      {/* List */}
-      <div data-testid="shared-skills-list" className="flex-1 overflow-hidden">
-        {/* D-02: Create blank link moved to top-left of list region per UI Spec */}
-        <div className="flex items-center justify-start border-b-whisper px-4 py-1.5">
+      {/* List region — flex column so the ScrollArea can shrink/grow properly.
+          Bug fix: previously the parent was a plain block + ScrollArea used
+          h-full, which caused the ScrollArea to overlap the Create-blank row
+          above it and pushed the last list item below the viewport. */}
+      <div data-testid="shared-skills-list" className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        {/* D-02: Create blank link at top-left of list region per UI Spec */}
+        <div className="flex shrink-0 items-center justify-start border-b-whisper px-4 py-1.5">
           <button
             type="button"
             data-testid="filter-create-blank"
@@ -361,36 +364,38 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
             Create blank skill
           </button>
         </div>
-        {loading ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            Loading skills…
-          </div>
-        ) : skills.length === 0 ? (
-          <div
-            data-testid="empty-state"
-            className="flex h-full items-center justify-center px-8 text-center text-xs"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            No shared skills yet. Use the buttons above to install from registry, import a folder, or install from ZIP.
-          </div>
-        ) : (
-          <ScrollArea className="h-full">
-            {skills.map((skill) => (
-              <SharedSkillRow
-                key={skill.id}
-                skill={skill}
-                linkedAgents={linkedAgentsByskill.get(skill.id) ?? []}
-                lock={lockMap[skill.id]}
-                onOpen={() => selectSkill(skill)}
-                onDelete={() => { void handleDelete(skill.id); }}
-                onUpdate={lockMap[skill.id]
-                  ? () => setUpdateDialog({ ids: [skill.id], label: skill.id })
-                  : undefined}
-                onAgentIconClick={handleAgentIconClick}
-              />
-            ))}
-          </ScrollArea>
-        )}
+        <div className="flex-1 min-h-0">
+          {loading ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              Loading skills…
+            </div>
+          ) : skills.length === 0 ? (
+            <div
+              data-testid="empty-state"
+              className="flex h-full items-center justify-center px-8 text-center text-xs"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              No shared skills yet. Use the buttons above to install from registry, import a folder, or install from ZIP.
+            </div>
+          ) : (
+            <ScrollArea className="h-full">
+              {skills.map((skill) => (
+                <SharedSkillRow
+                  key={skill.id}
+                  skill={skill}
+                  linkedAgents={linkedAgentsByskill.get(skill.id) ?? []}
+                  lock={lockMap[skill.id]}
+                  onOpen={() => selectSkill(skill)}
+                  onDelete={() => { void handleDelete(skill.id); }}
+                  onUpdate={lockMap[skill.id]
+                    ? () => setUpdateDialog({ ids: [skill.id], label: skill.id })
+                    : undefined}
+                  onAgentIconClick={handleAgentIconClick}
+                />
+              ))}
+            </ScrollArea>
+          )}
+        </div>
       </div>
 
       <InstallFromRegistryDialog
