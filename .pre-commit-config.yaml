@@ -1,0 +1,11 @@
+# Secret scanning at commit time.
+# Install once per clone:
+#   pip install pre-commit && pre-commit install
+# Run ad-hoc against all files:
+#   pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.0
+    hooks:
+      - id: gitleaks

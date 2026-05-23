@@ -233,6 +233,71 @@ export interface Skill {
   isSymbolicLink?: boolean;
 }
 
+/** Reverse-link relation: which non-shared agents have symlinked a given shared skill. */
+export type LinkedByAgentType = Exclude<AgentType, 'shared' | 'custom'>;
+
+export interface SkillLinkedBy {
+  skillId: string;
+  agents: LinkedByAgentType[];
+}
+
+/** Known agent names accepted by the `skills` CLI's --agent (-a) flag.
+ *  The CLI always installs files to ~/.agents/skills/<name> (the universal /
+ *  shared pool) and creates symlinks from each specified agent's own skills
+ *  directory back to that universal location. `gemini-cli` is intentionally
+ *  omitted — it has been deprecated and superseded by `antigravity` 2.0. */
+export type SkillsCliAgent =
+  | 'claude-code'
+  | 'github-copilot'
+  | 'antigravity';
+
+export interface InstallRegistryOptions {
+  /** Which agents should receive a symlink back to the shared pool.
+   *  Each entry becomes a separate `-a <name>` flag.
+   *  Empty array → no `-a` flag at all (universal-only install, no symlinks). */
+  agents: SkillsCliAgent[];
+  /** Value for --skill flag. Empty string or `*` means "install all skills" (flag omitted). */
+  skill: string;
+}
+
+export interface InstallRegistryResult {
+  requestId: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+/** Reuses InstallRegistryResult shape — update returns same envelope. */
+export type UpdateRegistryResult = InstallRegistryResult;
+
+export interface UpdateRegistryOptions {
+  /** Skill IDs to update. Empty array = update all (CLI default). */
+  skillIds: string[];
+}
+
+export interface InstallRegistryStartedEvent {
+  requestId: string;
+}
+
+/** Per-skill metadata stored by the `skills` CLI in `<sharedConfigDir>/.skill-lock.json`. */
+export interface SkillLockEntry {
+  source: string;          // e.g. "tw93/kami"
+  sourceType: string;      // e.g. "github"
+  sourceUrl: string;       // git clone URL
+  skillPath: string;       // path of SKILL.md within the source repo
+  skillFolderHash: string; // git tree/blob hash captured at install time
+  pluginName?: string;     // present when installed via a plugin grouping
+  installedAt: string;     // ISO timestamp
+  updatedAt: string;       // ISO timestamp
+}
+
+export interface SkillLock {
+  version: number;
+  skills: Record<string, SkillLockEntry>;
+  dismissed?: Record<string, boolean>;
+  lastSelectedAgents?: string[];
+}
+
 export interface ClaudeSessionMessage {
   role: 'user' | 'assistant';
   text: string;
@@ -385,6 +450,18 @@ export const IPC_CHANNELS = {
   CONFIG_DELETE_SKILL: 'config:delete-skill',
   SKILL_LINK_SHARED: 'skill:link-shared',
   SKILL_INSTALL_ZIP: 'skill:install-zip',
+  SKILL_INSTALL_REGISTRY: 'skill:install-registry',
+  SKILL_INSTALL_REGISTRY_STARTED: 'skill:install-registry:started',
+  SKILL_INSTALL_REGISTRY_CANCEL: 'skill:install-registry:cancel',
+  SKILL_IMPORT_FOLDER: 'skill:import-folder',
+  SKILL_GET_LINKED_BY: 'skill:get-linked-by',
+  SKILL_GET_LOCK: 'skill:get-lock',
+  SKILL_UPDATE_REGISTRY: 'skill:update-registry',
+  SKILL_UPDATE_REGISTRY_STARTED: 'skill:update-registry:started',
+  SKILL_UPDATE_REGISTRY_CANCEL: 'skill:update-registry:cancel',
+  SKILL_REMOVE_REGISTRY: 'skill:remove-registry',
+  SKILL_REMOVE_REGISTRY_STARTED: 'skill:remove-registry:started',
+  SKILL_REMOVE_REGISTRY_CANCEL: 'skill:remove-registry:cancel',
 
   // Markdown files (CLAUDE.md / GEMINI.md)
   CONFIG_GET_MARKDOWN: 'config:get-markdown',

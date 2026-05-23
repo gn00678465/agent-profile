@@ -84,6 +84,10 @@
     "vitest": "^4.0.18",
     "wait-on": "^8.0.3"
   },
+  "trustedDependencies": [
+    "electron",
+    "esbuild"
+  ],
   "build": {
     "appId": "com.agentprofile.manager",
     "productName": "Agent Profile Manager",

@@ -8,6 +8,7 @@ import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
+import { SharedSkillsPage } from './components/shared-skills/SharedSkillsPage';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
 import { GeminiSessionsView } from './components/editors/GeminiSessionsView';
 import { ClaudeSessionsView } from './components/editors/ClaudeSessionsView';
@@ -86,9 +87,10 @@ interface ContentViewProps {
   agent: AgentProfile;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onSelectAgentType?: (type: AgentProfile['type']) => void;
 }
 
-function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
+function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: ContentViewProps) {
   const { type, configDir, name } = agent;
   const color = agentColor(type);
   const tabs = AGENT_TABS[type] ?? [];
@@ -137,7 +139,7 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
       );
     }
     if (type === 'shared') {
-      if (tabId === 'skills') return <SkillsEditor configDir={configDir} agentName="Shared" agentType="shared" />;
+      if (tabId === 'skills') return <SharedSkillsPage configDir={configDir} onSelectAgentType={onSelectAgentType} />;
     }
     return <div className="flex h-full items-center justify-center text-muted-foreground text-sm">View not available</div>;
   }
@@ -158,40 +160,46 @@ function ContentView({ agent, activeTab, onTabChange }: ContentViewProps) {
         </div>
       </div>
 
-      {/* Section tabs */}
-      <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b-whisper" style={{ background: 'var(--bg-base)' }}>
-          <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="rounded-none border-b-2 px-4 py-2.5 text-xs font-medium transition-colors data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                  style={isActive
-                    ? { color: color.primary, borderColor: color.primary } as React.CSSProperties
-                    : { color: 'var(--text-secondary)', borderColor: 'transparent' } as React.CSSProperties
-                  }
-                >
-                  {tab.label}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+      {/* Section tabs (skipped for single-tab agents like shared) */}
+      {tabs.length <= 1 ? (
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {renderTabContent(tabs[0]?.id ?? activeTab)}
         </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 border-b-whisper" style={{ background: 'var(--bg-base)' }}>
+            <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="rounded-none border-b-2 px-4 py-2.5 text-xs font-medium transition-colors data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                    style={isActive
+                      ? { color: color.primary, borderColor: color.primary } as React.CSSProperties
+                      : { color: 'var(--text-secondary)', borderColor: 'transparent' } as React.CSSProperties
+                    }
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </div>
 
-        {tabs.map((tab) => (
-          <TabsContent
-            key={tab.id}
-            value={tab.id}
-            className="mt-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
-            style={{ flex: activeTab === tab.id ? 1 : undefined }}
-          >
-            {renderTabContent(tab.id)}
-          </TabsContent>
-        ))}
-      </Tabs>
+          {tabs.map((tab) => (
+            <TabsContent
+              key={tab.id}
+              value={tab.id}
+              className="mt-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col"
+              style={{ flex: activeTab === tab.id ? 1 : undefined }}
+            >
+              {renderTabContent(tab.id)}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </div>
   );
 }
@@ -311,6 +319,10 @@ export default function App() {
                 agent={activeAgent}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                onSelectAgentType={(type) => {
+                  const target = agents.find((a) => a.type === type);
+                  if (target) selectAgent(target.id);
+                }}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">

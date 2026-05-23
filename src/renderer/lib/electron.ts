@@ -8,6 +8,11 @@ import type {
   CopilotConfig,
   McpSettings,
   Skill,
+  SkillLinkedBy,
+  SkillLock,
+  InstallRegistryOptions,
+  InstallRegistryResult,
+  InstallRegistryStartedEvent,
   ConfigFile,
   DirectoryEntry,
   IpcResponse,
@@ -58,6 +63,18 @@ declare global {
         deleteSkill: (configDir: string, skillId: string) => Promise<IpcResponse<void>>;
         linkSharedSkill: (agentConfigDir: string, sharedSkillPath: string, skillId: string) => Promise<IpcResponse<void>>;
         installSkillFromZip: (agentConfigDir: string, zipFilePath: string) => Promise<IpcResponse<void>>;
+        installSkillFromRegistry: (sharedConfigDir: string, input: string, options: InstallRegistryOptions) => Promise<IpcResponse<InstallRegistryResult>>;
+        cancelInstallSkillFromRegistry: (requestId: string) => Promise<IpcResponse<{ killed: boolean }>>;
+        onInstallSkillFromRegistryStarted: (handler: (payload: InstallRegistryStartedEvent) => void) => () => void;
+        importSkillFromFolder: (sharedConfigDir: string, sourcePath: string) => Promise<IpcResponse<{ skillId: string }>>;
+        getSkillsLinkedBy: (sharedConfigDir: string) => Promise<IpcResponse<SkillLinkedBy[]>>;
+        getSkillLock: (sharedConfigDir: string) => Promise<IpcResponse<SkillLock | null>>;
+        updateSkillFromRegistry: (sharedConfigDir: string, skillIds: string[]) => Promise<IpcResponse<InstallRegistryResult>>;
+        cancelUpdateSkillFromRegistry: (requestId: string) => Promise<IpcResponse<{ killed: boolean }>>;
+        onUpdateSkillFromRegistryStarted: (handler: (payload: InstallRegistryStartedEvent) => void) => () => void;
+        removeSkillFromRegistry: (sharedConfigDir: string, skillIds: string[]) => Promise<IpcResponse<InstallRegistryResult>>;
+        cancelRemoveSkillFromRegistry: (requestId: string) => Promise<IpcResponse<{ killed: boolean }>>;
+        onRemoveSkillFromRegistryStarted: (handler: (payload: InstallRegistryStartedEvent) => void) => () => void;
         getMarkdown: (filePath: string) => Promise<IpcResponse<ConfigFile<string>>>;
         saveMarkdown: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         getSessions: (configDir: string, agentType: string) => Promise<IpcResponse<SessionEntry[]>>;

@@ -17,7 +17,7 @@ interface SkillsEditorProps {
   agentType?: string;
 }
 
-const DEFAULT_SKILL_TEMPLATE = `---
+export const DEFAULT_SKILL_TEMPLATE = `---
 name: my-skill
 version: "1.0.0"
 description: "Describe when to use this skill"

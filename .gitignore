@@ -40,5 +40,10 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-.claude/settings.local.json
 evidence/
+
+# APM dependencies
+apm_modules/
+
+# Claude Code local settings (not the project-tracked .claude/agents.md etc.)
+.claude/settings.local.json
