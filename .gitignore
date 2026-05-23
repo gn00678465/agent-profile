@@ -40,5 +40,17 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-.claude/settings.local.json
 evidence/
+
+# APM dependencies
+apm_modules/
+
+# Claude Code local settings (not the project-tracked .claude/agents.md etc.)
+.claude/settings.local.json
+
+# Locally-installed agent assets pulled in via `apm install`.
+# Treat like node_modules for agents — declared in apm.yml/apm.lock.yaml,
+# regenerated per-clone, not committed.
+.claude/skills/
+.claude/rules/
+.agents/skills/
