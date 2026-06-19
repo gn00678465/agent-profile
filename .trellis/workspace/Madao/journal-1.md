@@ -127,17 +127,23 @@
 
 ### Main Changes
 
-(Add details)
+- 歷史整併：feat-001~019 → archive task `06-19-legacy-feat-001-019`（忠實保留 feature_list.json 快照）；feat-020 → 現役 planned task `06-19-feat-020-auto-update`
+- session 回填：SESSION-LOG.jsonl 001–014 整併進本 journal「Historical sessions」區塊 + index 更新
+- AGENTS.md 切換：Startup / Definition of Done / End of Session 改走 Trellis 流程；技術規則（IPC / guards / cliRunner）暫留 AGENTS.md（spec 仍為通用範本，待 `00-bootstrap-guidelines` 填入）
+- 凍結舊檔：6 個 root 狀態檔 → `docs/legacy-harness/` + deprecation README；修正 docs/E2E_BLOCKED.md 殘留指標
+- scripts/check-architecture.sh 維持現役
 
 ### Git Commits
 
 | Hash | Message |
 |------|---------|
-| `d492aee` | (see git log) |
+| `d492aee` | chore(harness): migrate state & handoff from custom root harness to Trellis |
+| `41a9972` | chore(task): archive 06-19-legacy-feat-001-019 |
 
 ### Testing
 
-- [OK] (Add test results)
+- [OK] typecheck 0 | lint 0/0 | test 532 passed (33 files) | arch 0 violations
+- 註：plugin-delete 測試曾一次 flaky 失敗，連跑 3 次皆綠；與本次純文件遷移無關
 
 ### Status
 
@@ -145,4 +151,6 @@
 
 ### Next Steps
 
-- None - task complete
+- feat-020 auto-update Switch write path（已建 planned task）
+- `00-bootstrap-guidelines`：把 `.trellis/spec/` 通用範本填為本專案真實內容（含下放 IPC/guards/cliRunner 慣例）
+- 決定是否將整個未追蹤的 `.trellis/` `.claude/` `.agents/` `.codex/` 一併納入版控（apm vendoring，獨立於本次遷移）
