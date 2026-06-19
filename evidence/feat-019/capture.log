@@ -1,0 +1,49 @@
+[2026-05-03T10:21:01.939Z] === Pass: real home (M1-M11) ===
+[2026-05-03T10:21:01.940Z] Spawning Electron (direct .exe) with --remote-debugging-port=9222
+[2026-05-03T10:21:01.968Z] [electron] 
+[2026-05-03T10:21:02.085Z] [electron:err] DevTools listening on ws://127.0.0.1:9222/devtools/browser/9d080abc-e56c-448c-ad66-0bc7cd59ca55
+[2026-05-03T10:21:02.225Z] CDP ready: Chrome/146.0.7680.179
+[2026-05-03T10:21:02.293Z] Waiting for sidebar...
+[2026-05-03T10:21:03.317Z] Switching to Plugins tab...
+[2026-05-03T10:21:04.969Z]   ✓ m1.png — Tab strip default — Installed pre-selected
+[2026-05-03T10:21:04.969Z] Click Marketplaces tab...
+[2026-05-03T10:21:06.670Z]   ✓ m2.png — Marketplaces list with Built-in pill
+[2026-05-03T10:21:06.670Z] Open Add Marketplace dialog...
+[2026-05-03T10:21:07.545Z]   ✓ m3.png — Add Marketplace dialog with directory + auto-update
+[2026-05-03T10:21:08.081Z] Switch to Discover tab + open scope chooser...
+[2026-05-03T10:21:12.369Z]   ✓ m4.png — Discover + scope chooser open
+[2026-05-03T10:21:12.925Z] Switch to Errors tab (empty state expected)...
+[2026-05-03T10:21:14.573Z]   ✓ m5.png — Errors empty state (or populated, depends on env)
+[2026-05-03T10:21:14.573Z] Back to Installed for M6 toggle...
+[2026-05-03T10:21:15.732Z]   ✓ m6.png — Installed list after Errors tab visit
+[2026-05-03T10:21:15.732Z] M7 — focus on + Add Marketplace
+[2026-05-03T10:21:17.004Z]   ✓ m7.png — + Add Marketplace focused (focus ring)
+[2026-05-03T10:21:17.005Z] M8 — dialog dynamic fields
+[2026-05-03T10:21:17.964Z]   ✓ m8.png — Dialog showing directory source type with Local path field
+[2026-05-03T10:21:18.512Z] M9 — Discover scope chooser focus
+[2026-05-03T10:21:21.775Z]   ✓ m9.png — Scope chooser with Project radio focused
+[2026-05-03T10:21:22.327Z] M10 — Built-in Remove disabled tooltip
+[2026-05-03T10:21:24.003Z]   ✓ m10.png — Marketplaces tab — Built-in Remove disabled (with title tooltip)
+[2026-05-03T10:21:24.003Z] M11 — Installed Switch focus
+[2026-05-03T10:21:25.960Z]   ✓ m11.png — Installed plugin Switch focused
+[2026-05-03T10:21:25.960Z] Skipping M12-M14 (mocked-state pass — will run separately)
+[2026-05-03T10:21:25.965Z] Killing electron pid=15180
+[2026-05-03T10:21:27.980Z] Mocked home: C:\Users\gn006\AppData\Local\Temp\agent-profile-capture-yn3z0j
+[2026-05-03T10:21:27.981Z] === Pass: mocked empty home (M12-M14 + m4-no-binary) ===
+[2026-05-03T10:21:27.981Z] Spawning Electron (direct .exe) with --remote-debugging-port=9222
+[2026-05-03T10:21:27.981Z]   HOME=C:\Users\gn006\AppData\Local\Temp\agent-profile-capture-yn3z0j
+[2026-05-03T10:21:27.981Z]   USERPROFILE=C:\Users\gn006\AppData\Local\Temp\agent-profile-capture-yn3z0j
+[2026-05-03T10:21:28.001Z] [electron] 
+[2026-05-03T10:21:28.116Z] [electron:err] DevTools listening on ws://127.0.0.1:9222/devtools/browser/90c5c511-da3e-4a6a-9b1f-519e1af6a0cc
+[2026-05-03T10:21:28.244Z] CDP ready: Chrome/146.0.7680.179
+[2026-05-03T10:21:30.867Z] M12 — Installed empty
+[2026-05-03T10:21:30.956Z]   ✓ m12.png — Installed empty state
+[2026-05-03T10:21:30.956Z] M13 — Marketplaces empty + Discover placeholder
+[2026-05-03T10:21:32.104Z]   ✓ m13.png — Marketplaces empty
+[2026-05-03T10:21:32.105Z] m4-no-binary supplemental
+[2026-05-03T10:21:33.757Z]   ✓ m4-no-binary.png — Discover tab in clean-home state (no marketplaces → no Install possible)
+[2026-05-03T10:21:33.757Z] M14 — Errors populated
+[2026-05-03T10:21:35.411Z]   ✓ m14.png — Errors tab — should show error from corrupt installed_plugins.json
+[2026-05-03T10:21:35.414Z] Killing electron pid=104824
+[2026-05-03T10:21:37.430Z] === Done ===
+[2026-05-03T10:21:37.430Z] Captures saved to: D:\Projects\agent-profile\evidence\feat-019

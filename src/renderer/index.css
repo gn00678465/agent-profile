@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* shadcn CSS color vars — warm dark palette */
+    --background:         28 4% 18%;
+    --foreground:         0 0% 95%;
+    --card:               28 4% 14%;
+    --card-foreground:    0 0% 95%;
+    --popover:            28 4% 15%;
+    --popover-foreground: 0 0% 95%;
+    --primary:            208 80% 66%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:          28 4% 22%;
+    --secondary-foreground: 0 0% 80%;
+    --muted:              28 4% 22%;
+    --muted-foreground:   28 3% 55%;
+    --accent:             28 4% 24%;
+    --accent-foreground:  0 0% 95%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border:             28 4% 24%;
+    --input:              28 4% 24%;
+    --ring:               208 80% 66%;
+    --radius:             0.375rem;
+
+    /* Sidebar vars */
+    --sidebar-background: 28 4% 16%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary:    208 80% 66%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     28 4% 22%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border:     28 4% 22%;
+    --sidebar-ring:       208 80% 66%;
+
+    /* App-level design tokens */
+    --bg-base:        #31302e;
+    --bg-surface:     #3a3836;
+    --bg-raised:      #444240;
+    --bg-overlay:     #4e4c4a;
+    --border-subtle:  rgba(255, 255, 255, 0.1);
+    --text-primary:   rgba(255, 255, 255, 0.95);
+    --text-secondary: #a39e98;
+    --text-muted:     #615d59;
+    --text-code:      #c5c5d0;
+
+    /* Notion design tokens */
+    --notion-blue:        #0075de;
+    --notion-blue-active: #005bab;
+    --notion-blue-focus:  #097fe8;
+    --badge-blue-bg:      rgba(0, 117, 222, 0.2);
+    --badge-blue-text:    #62aef0;
+
+    /* Shadow system */
+    --shadow-card: rgba(0, 0, 0, 0.04) 0px 4px 18px, rgba(0, 0, 0, 0.027) 0px 2.025px 7.84688px, rgba(0, 0, 0, 0.02) 0px 0.8px 2.925px, rgba(0, 0, 0, 0.01) 0px 0.175px 1.04062px;
+    --shadow-deep: rgba(0, 0, 0, 0.01) 0px 1px 3px, rgba(0, 0, 0, 0.02) 0px 3px 7px, rgba(0, 0, 0, 0.02) 0px 7px 15px, rgba(0, 0, 0, 0.04) 0px 14px 28px, rgba(0, 0, 0, 0.05) 0px 23px 52px;
+
+    /* Agent color identities */
+    --gemini-primary:  #7c6ef5;
+    --gemini-accent:   #a99df7;
+    --copilot-primary: #2eb88a;
+    --copilot-accent:  #4ed4a6;
+    --claude-primary:  #d97706;
+    --claude-accent:   #f59e0b;
+    --shared-primary:  #6b7280;
+    --shared-accent:   #9ca3af;
+  }
+
+  .light {
+    /* shadcn overrides — warm white palette */
+    --background:         0 0% 100%;
+    --foreground:         28 5% 11%;
+    --card:               30 5% 96%;
+    --card-foreground:    28 5% 11%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 28 5% 11%;
+    --primary:            208 100% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:          30 5% 93%;
+    --secondary-foreground: 28 5% 30%;
+    --muted:              30 5% 93%;
+    --muted-foreground:   28 4% 45%;
+    --accent:             30 5% 93%;
+    --accent-foreground:  28 5% 11%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border:             0 0% 90%;
+    --input:              0 0% 90%;
+    --ring:               208 100% 43%;
+
+    /* Sidebar */
+    --sidebar-background: 30 5% 97%;
+    --sidebar-foreground: 28 5% 30%;
+    --sidebar-primary:    208 100% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:     30 5% 93%;
+    --sidebar-accent-foreground: 28 5% 11%;
+    --sidebar-border:     0 0% 90%;
+    --sidebar-ring:       208 100% 43%;
+
+    /* App design tokens */
+    --bg-base:        #ffffff;
+    --bg-surface:     #f6f5f4;
+    --bg-raised:      #eeeceb;
+    --bg-overlay:     #e5e3e2;
+    --border-subtle:  rgba(0, 0, 0, 0.1);
+    --text-primary:   rgba(0, 0, 0, 0.95);
+    --text-secondary: #615d59;
+    --text-muted:     #a39e98;
+    --text-code:      #3a3a4a;
+
+    /* Badge tokens for light mode — #005bab achieves 6.52:1 on #f2f9ff (WCAG AA ✓) */
+    --badge-blue-bg:  #f2f9ff;
+    --badge-blue-text: #005bab;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'NotionInter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  button {
+    cursor: pointer;
+  }
+
+  /* Typography scale */
+  h1, .text-display {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.00;
+    letter-spacing: -2.125px;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
+  }
+  h2, .text-section {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.00;
+    letter-spacing: -1.5px;
+    font-feature-settings: 'lnum' 1, 'locl' 1;
+  }
+  h3, .text-subhead {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.23;
+    letter-spacing: -0.625px;
+  }
+  h4, .text-card-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.27;
+    letter-spacing: -0.25px;
+  }
+}
+
+/* Electron drag regions */
+.titlebar-drag { -webkit-app-region: drag; }
+.titlebar-nodrag { -webkit-app-region: no-drag; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+@layer utilities {
+  /* Whisper border utilities */
+  .border-whisper {
+    border: 1px solid var(--border-subtle);
+  }
+  .border-b-whisper {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* Shadow utilities */
+  .shadow-notion-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-notion-deep {
+    box-shadow: var(--shadow-deep);
+  }
+
+  /* Pill badge */
+  .badge-notion {
+    display: inline-flex;
+    align-items: center;
+    background: var(--badge-blue-bg);
+    color: var(--badge-blue-text);
+    border-radius: 9999px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.125px;
+    line-height: 1.33;
+  }
+}

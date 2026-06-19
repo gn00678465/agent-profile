@@ -1,0 +1,17 @@
+=== AGENTS.md S4-5 'Claude Plugins / CLI Runner — 規則' section ===
+## Claude Plugins / CLI Runner — 規則
+
+`src/main/ipc/handlers/cliRunner.ts` 是唯一允許 spawn `claude` binary 的模組。修改前先讀本段。
+
+- **No shell.** `child_process.spawn(cmd, args, { shell: false })`. `exec` / `execSync` 一律禁止 (C1, C2)。
+- **Whitelist.** 只接受 11 條 token pattern (L4) — `plugin marketplace add|remove|update|list --json`、`plugin install|uninstall <id> --scope <user|project|local>`、`plugin enable|disable <id>`、`plugin reload`、`--version`、`plugin --help`。`isWhitelisted(args)` 與 `runWith(args)` 是強制閘道；任何新增 CLI 互動必須先擴 L4 白名單。
+- **Input validation.** 市場名走 `assertSafeMarketplaceName` (拒 `..` / 路徑分隔 / shell 元字元)；plugin id 走 `assertSafePluginId` (拒非 `name@marketplace` 格式)；scope 限於 `user|project|local`；git URL 限於 regex `L6 = /^(https://[\w./@:-]+|git@[\w./:-]+:[\w./-]+|github:[\w-]+/[\w.-]+)$/`；directory path 拒 NUL/CR/LF/tab。任何驗證失敗 → 直接回 `{ success: false, error }`，**不 spawn**。
+- **Timeout.** 60 s 觸發 `SIGTERM`；額外 5 s grace 後 `SIGKILL`；回 `{ success: false, error: "claude CLI timeout (60s)" }`。
+- **Binary detection.** Windows 用 `where claude`（解析 `%PATHEXT%`：`claude.cmd` → `claude.exe` → `claude.bat`），macOS / Linux 用 `which claude`。找不到 → `{ success: false, error: "claude CLI not found in PATH; install via instructions at https://code.claude.com/docs/zh-TW/setup" }`。結果在 process 內 cache。
+- **DV5.** plugin enable/disable **不**走 cliRunner — 直接寫 `~/.claude/settings.json#enabledPlugins`，避免 spawn 開銷與 binary 依賴。
+
+新增 cliRunner 指令的步驟：(1) 在 L4 加 token pattern；(2) 加 `Commands.*` builder + 對應 `assertSafe*` 校驗；(3) 加 `runWith(args)` 包裝函式；(4) 加 vitest case 涵蓋 reject path；(5) 對應 IPC handler 委派至新 builder。
+
+## Update AGENTS.md Files
+
+=== Section length: 14 lines (cap: 30) ===

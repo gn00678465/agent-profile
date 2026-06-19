@@ -1,0 +1,65 @@
+=== Commitment ordering — Phase A→E commit timestamps (must be strictly increasing) ===
+b914dfe 2026-05-03T15:15:01+08:00 feat(feat-019): Phase C+D - 4-tab UI router + 27 new tests
+0c450bb 2026-05-03T14:57:31+08:00 feat(feat-019): Phase B - backend types + IPC + claudePluginsHandler + cliRunner
+70b4015 2026-05-03T14:48:58+08:00 feat(feat-019): Phase A - research doc CLAUDE_PLUGIN_LAYOUT.md
+
+=== Phase mapping ===
+Phase A → 70b4015 (research doc)
+Phase B → 0c450bb (backend + cliRunner + handler tests)
+Phase C+D → b914dfe (4-tab UI + 27 tests)
+Phase E → (next commit) commitment files + AGENTS.md S4-5
+
+=== Evidence file mtimes (sorted oldest first) ===
+-rw-r--r-- 1 gn006 197609 22158 2026-05-03 14:08 evaluator-rubric-round1.md
+-rw-r--r-- 1 gn006 197609 34835 2026-05-03 14:08 sprint-contract-round1.md
+-rw-r--r-- 1 gn006 197609   528 2026-05-03 14:48 s0-doc-wc.txt
+-rw-r--r-- 1 gn006 197609  1525 2026-05-03 15:11 c-cli-failures.txt
+-rw-r--r-- 1 gn006 197609  5650 2026-05-03 15:12 d-design-grep.txt
+-rw-r--r-- 1 gn006 197609   589 2026-05-03 15:13 rc-4.txt
+-rw-r--r-- 1 gn006 197609   596 2026-05-03 15:13 rc-5.txt
+-rw-r--r-- 1 gn006 197609   599 2026-05-03 15:13 rc-1.txt
+-rw-r--r-- 1 gn006 197609   613 2026-05-03 15:13 rc-2.txt
+-rw-r--r-- 1 gn006 197609   613 2026-05-03 15:13 rc-3.txt
+-rw-r--r-- 1 gn006 197609   640 2026-05-03 15:13 rc-6.txt
+-rw-r--r-- 1 gn006 197609  2138 2026-05-03 15:13 scope-diff.txt
+-rw-r--r-- 1 gn006 197609   165 2026-05-03 15:14 file-size.txt
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m1.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m10.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m11.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m12.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m13.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m14.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m2.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m3.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m4-no-binary.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m4.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m5.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m6.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m7.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m8.png
+-rw-r--r-- 1 gn006 197609    70 2026-05-03 15:15 m9.png
+-rw-r--r-- 1 gn006 197609   695 2026-05-03 15:17 m4-no-binary.notes.md
+-rw-r--r-- 1 gn006 197609  1584 2026-05-03 15:17 handoff-tree.txt
+-rw-r--r-- 1 gn006 197609  2077 2026-05-03 15:17 m5.notes.md
+-rw-r--r-- 1 gn006 197609  2105 2026-05-03 15:17 m6.notes.md
+-rw-r--r-- 1 gn006 197609  2117 2026-05-03 15:17 m1.notes.md
+-rw-r--r-- 1 gn006 197609  2117 2026-05-03 15:17 m3.notes.md
+-rw-r--r-- 1 gn006 197609  2123 2026-05-03 15:17 m2.notes.md
+-rw-r--r-- 1 gn006 197609  2127 2026-05-03 15:17 m4.notes.md
+-rw-r--r-- 1 gn006 197609  2194 2026-05-03 15:17 m11.notes.md
+-rw-r--r-- 1 gn006 197609  2221 2026-05-03 15:17 m12.notes.md
+-rw-r--r-- 1 gn006 197609  2224 2026-05-03 15:17 m7.notes.md
+-rw-r--r-- 1 gn006 197609  2232 2026-05-03 15:17 m9.notes.md
+-rw-r--r-- 1 gn006 197609  2260 2026-05-03 15:17 m8.notes.md
+-rw-r--r-- 1 gn006 197609  2261 2026-05-03 15:17 m14.notes.md
+-rw-r--r-- 1 gn006 197609  2290 2026-05-03 15:17 m10.notes.md
+-rw-r--r-- 1 gn006 197609  2309 2026-05-03 15:17 m13.notes.md
+-rw-r--r-- 1 gn006 197609  2091 2026-05-03 15:22 agents-md-section.txt
+-rw-r--r-- 1 gn006 197609    18 2026-05-03 15:24 v2-lint.txt
+-rw-r--r-- 1 gn006 197609    77 2026-05-03 15:24 v1-typecheck.txt
+-rw-r--r-- 1 gn006 197609   531 2026-05-03 15:24 r-regression.txt
+-rw-r--r-- 1 gn006 197609  1596 2026-05-03 15:24 f-ipc-grep.txt
+-rw-r--r-- 1 gn006 197609  8635 2026-05-03 15:24 v3-test.txt
+-rw-r--r-- 1 gn006 197609   218 2026-05-03 15:25 v4-arch.txt
+-rw-r--r-- 1 gn006 197609   669 2026-05-03 15:25 commitment-ordering.txt
+-rw-r--r-- 1 gn006 197609  1557 2026-05-03 15:25 v5-build.txt

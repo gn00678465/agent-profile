@@ -1,0 +1,165 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "專案基礎架構",
+      "description": "Electron + React 19 + TypeScript + vite-plugin-electron 統一建置流程、多平台打包、path alias (@/ / @shared/)",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "build 正常，bun run build 通過，electron:win 可打包"
+    },
+    {
+      "id": "feat-002",
+      "name": "側邊欄 UI 與主題切換",
+      "description": "可收摺側邊欄、深淺色主題切換、agentColor 傳遞至 tab 元件",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "Sidebar.tsx、useTheme.ts 實作完整"
+    },
+    {
+      "id": "feat-003",
+      "name": "Agent 設定 JSON 編輯器",
+      "description": "以 JsonFileEditor 整合 Claude / Gemini / Copilot 三個設定頁面，讀寫對應設定檔",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "JsonFileEditor.tsx + configHandlers.ts IPC 完整"
+    },
+    {
+      "id": "feat-004",
+      "name": "MCP 伺服器管理",
+      "description": "McpCommandEditor 依 agentType 路由至正確設定檔（~/.claude/mcp.json / ~/.gemini/settings.json 等）",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "evidence": "McpCommandEditor.tsx、IPC_CHANNELS.CONFIG_GET_MCP / CONFIG_SAVE_MCP"
+    },
+    {
+      "id": "feat-005",
+      "name": "Skills 管理",
+      "description": "列出 skills、顯示符號連結狀態、ZIP 安裝、連結至 shared skills 目錄",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "SkillsEditor.tsx、AddSkillDialog.tsx、SKILL_LINK_SHARED / SKILL_INSTALL_ZIP IPC"
+    },
+    {
+      "id": "feat-006",
+      "name": "Claude 外掛管理",
+      "description": "讀取 installed_plugins.json、啟用/停用外掛、刪除外掛，套用 ExtensionListLayout + ExtensionRow",
+      "dependencies": ["feat-010"],
+      "status": "done",
+      "evidence": "ClaudePlugins/ 目錄、CONFIG_GET_CLAUDE_PLUGINS / CONFIG_SET_PLUGIN_ENABLED / CONFIG_DELETE_PLUGIN"
+    },
+    {
+      "id": "feat-007",
+      "name": "Gemini 擴充套件管理",
+      "description": "列出 ~/.gemini/extensions/、刪除擴充套件，套用 ExtensionListLayout + ExtensionRow",
+      "dependencies": ["feat-010"],
+      "status": "done",
+      "evidence": "GeminiExtensions.tsx、CONFIG_GET_GEMINI_EXTENSIONS / CONFIG_DELETE_GEMINI_EXTENSION"
+    },
+    {
+      "id": "feat-008",
+      "name": "Session 查看",
+      "description": "Claude JSONL session 解析與顯示、Gemini session 查看、Copilot session 查看與刪除",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "ClaudeSessionsView.tsx、GeminiSessionsView.tsx、CopilotSessionsView.tsx 與對應 IPC"
+    },
+    {
+      "id": "feat-009",
+      "name": "Rules 編輯器",
+      "description": "讀取 ~/.claude/rules/**/*.md、建立規則/資料夾、重新命名、刪除規則/資料夾",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "RulesEditor.tsx、CONFIG_GET_RULES / CONFIG_CREATE_RULE / CONFIG_RENAME_RULE / CONFIG_DELETE_RULE_FOLDER"
+    },
+    {
+      "id": "feat-010",
+      "name": "共用 UI 元件層",
+      "description": "ExtensionRow（列表列）、ExtensionListLayout（版面）、useItemLoader（通用資料載入 Hook）、RemoveButton",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "shared/ 目錄、hooks/useItemLoader.ts 實作完整"
+    },
+    {
+      "id": "feat-011",
+      "name": "Copilot Subagents 管理",
+      "description": "讀取 ~/.copilot/subagents/*.agent.md、建立、重新命名、刪除 subagent",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "SubagentsEditor.tsx、CONFIG_GET_SUBAGENTS / CONFIG_CREATE_SUBAGENT / CONFIG_RENAME_SUBAGENT / CONFIG_DELETE_SUBAGENT"
+    },
+    {
+      "id": "feat-012",
+      "name": "安全性強化",
+      "description": "assertSafePath 防路徑遍歷、assertSafeName 防目錄跳脫、PowerShell 使用 $env: 變數防命令注入",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "configHandlers.ts 頂部兩個 utility 函式"
+    },
+    {
+      "id": "feat-013",
+      "name": "測試套件修復",
+      "description": "根本原因：bun test 呼叫 Bun 原生 runner 而非 Vitest；正確指令為 bun run test。CLAUDE.md 已更正。",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "bun run test: 391 pass / 0 fail — 24 files (2026-04-14)"
+    },
+    {
+      "id": "feat-014",
+      "name": "Harness 設定完善",
+      "description": "補齊 feature_list.json、progress.md、AGENTS.md 完整版、init.sh 測試與 lint 步驟、session-handoff.md 四段式結構。",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "AGENTS.md / feature_list.json / progress.md / init.sh 全部完成 (2026-04-14)"
+    },
+    {
+      "id": "feat-015",
+      "name": "configHandlers.ts 拆分",
+      "description": "將 ~1,000 行的 configHandlers.ts 依領域拆分為多個獨立檔案（claude、gemini、copilot、rules、sessions、skills），降低維護難度。",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "拆分為 handlers/{configUtils,agentsHandler,claudeHandler,geminiHandler,copilotHandler,mcpHandler,skillsHandler,rulesHandler,markdownHandler}.ts；configHandlers.ts 縮減為 18 行 orchestrator；bun run typecheck + lint + test 378/378 (2026-04-15)"
+    },
+    {
+      "id": "feat-016",
+      "name": "E2E 測試",
+      "description": "使用 Playwright 為關鍵使用者流程建立 E2E 測試（載入 agent 清單、開啟設定頁、儲存設定）。",
+      "dependencies": ["feat-001"],
+      "status": "blocked",
+      "evidence": "基礎建設完整（playwright.config.ts, e2e/fixtures.ts, e2e/app.spec.ts, e2e/electron-entry.cjs）；但 electron.launch() 在 Windows 上以 STATUS_BREAKPOINT (0x80000003) 崩潰於 Playwright CDP 初始化時。Electron 35/41 均重現。詳見 docs/E2E_BLOCKED.md"
+    },
+    {
+      "id": "feat-017",
+      "name": "init.sh 整合 session-handoff checklist",
+      "description": "在 init.sh 加入啟動前 harness 狀態驗證：確認 AGENTS.md、feature_list.json 存在，顯示 progress.md 上次結束點。",
+      "dependencies": ["feat-014"],
+      "status": "done",
+      "evidence": "init.sh 新增 [0/6] harness state check：驗證 AGENTS.md + feature_list.json 存在（缺少則 exit 1），並以 awk 擷取 progress.md「上次 Session 結束點」區塊顯示給 agent。clean-state-checklist.md Tip 同步更新。bun run test 378 pass；bun run lint 0 errors。"
+    },
+    {
+      "id": "feat-018",
+      "name": "UI 重構為 Notion 風格設計系統",
+      "description": "依 DESIGN.md 規範重構 UI：暖中性色盤 (#f6f5f4/#31302e/#615d59)、whisper borders (1px rgba(0,0,0,0.1))、Notion Blue (#0075de) 主 CTA、Inter 字型與 typography scale（display 64px -2.125px letter-spacing）、4-layer shadow stacks、pill badges (9999px)。涵蓋 index.css tokens、tailwind.config.js、App 主框架、Sidebar、ui primitives (button/card/tabs)、ExtensionRow/ExtensionListLayout。衝刺合約待核准後啟動。",
+      "dependencies": ["feat-001", "feat-010"],
+      "status": "done",
+      "evidence": "bun run typecheck: exit 0 (0 errors) | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 378 passed / 21 files / 0 fail | bash scripts/check-architecture.sh: 0 violations | bun run build: ✓ built in 12.83s | D2 border grep: 0 matches | D3 shadow-notion-card applied to card.tsx | R2 bg-accent/60 preserved in ExtensionRow.tsx:60"
+    },
+    {
+      "id": "feat-019",
+      "name": "Claude 外掛頁面重構：對齊官方 plugin 模型 + Notion 設計系統",
+      "description": "依 https://code.claude.com/docs/zh-TW/plugins 與 https://code.claude.com/docs/zh-TW/discover-plugins 重構 ClaudePlugins 頁面：研究前置 docs/CLAUDE_PLUGIN_LAYOUT.md (S0) → 後端 IPC + claudePluginsHandler + cliRunner (S1) → 4-tab UI router (S2) → 27 new tests (S3) → commitment (S4). cliRunner 11-token whitelist + assertSafeMarketplaceName + git URL regex + 60s timeout SIGTERM/SIGKILL。完整合約見 sprint-contract.md / evaluator-rubric.md。",
+      "dependencies": ["feat-006", "feat-018"],
+      "status": "done",
+      "evidence": "Round-3 ACCEPT 27/30 (Correctness 5/5, Verification 5/5, Scope Discipline 3/5, Reliability 5/5, Maintainability 5/5, Handoff Readiness 4/5). bun run typecheck: exit 0 | bun run lint: exit 0 (0 errors / 0 warnings) | bun run test: 409 passed / 27 files / 0 fail (baseline 378 + 31 new) | bash scripts/check-architecture.sh: 0 violations | bun run build: renderer + main + preload all OK | F1=10 (>=9) | F2=9 (>=9) | C1=C2=0 | D1=D2=D3=0 | D4=17 (>=5) | D5=14 (>=4) | D6=7 (>=6) | R1=18 (>=18) | R2=R3=0 vs feat-018 baseline f79716e | RC1-RC7 all green | M1-M14 + m4-no-binary auto-captured PNGs (27-94 KB) | DV6 delete via cliRunner.runPluginUninstall + file-fallback share-check | claudePluginsDelete.ts 77 + claudePluginsHandler.ts 380 + cliRunner.ts 342 (all <= 400). Full evidence at evidence/feat-019/"
+    },
+    {
+      "id": "feat-020",
+      "name": "Marketplace auto-update toggle 寫入路徑",
+      "description": "把 MarketplacesTab 的 auto-update Switch 從 read-only (feat-019 落地) 升級為可寫：(1) 確認 `claude plugin marketplace` CLI 是否原生支援 auto-update flag 寫入（若無，fallback 直接寫 ~/.claude/plugins/known_marketplaces.json 的 autoUpdate 欄位，並在 Errors tab 顯示 sync 警告）；(2) 在 cliRunner L4 白名單加 token pattern `[plugin marketplace set <name> --auto-update <bool>]` 或對應指令；(3) 加 IPC channel CLAUDE_CLI_MARKETPLACE_SET_AUTO_UPDATE + handler；(4) preload binding；(5) Switch onCheckedChange 串通；(6) test cases (cliRunner + handler + UI)。需求變動：feat-019 sprint contract L4 / DV4 / FC3 都需要 patch（重跑 evaluator）。",
+      "dependencies": ["feat-019"],
+      "status": "planned",
+      "evidence": ""
+    }
+  ]
+}
+

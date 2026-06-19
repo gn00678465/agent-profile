@@ -1,0 +1,12 @@
+=== D1 ===
+(no matches)
+
+=== D2 ===
+(no matches)
+
+=== D3 ===
+(no matches)
+
+D4 count: 17
+D5 count: 14
+D6 count: 7

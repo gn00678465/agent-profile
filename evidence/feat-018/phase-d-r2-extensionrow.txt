@@ -1,0 +1,1 @@
+60:        selected ? 'bg-accent/60' : isClickable ? 'hover:bg-accent/30' : '',

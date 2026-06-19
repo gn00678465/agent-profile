@@ -1,0 +1,3 @@
+src/renderer/components/ui/card.tsx:      className={cn('rounded-card border-whisper shadow-notion-card bg-card text-card-foreground', className)}
+src/renderer/index.css:  .shadow-notion-card {
+src/renderer/index.css:  .shadow-notion-deep {

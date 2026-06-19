@@ -1,3 +1,26 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+playwright-report/
+test-results/
+
+# Production
+dist
+dist-ssr
+dist-electron
+release
+*.local
+
+# Electron
+# We want to keep icons in build/
+!build/icon.ico
+!build/icon.icns
+!build/icon.png
+
 # Logs
 logs
 *.log
@@ -6,11 +29,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +40,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+evidence/
+
+# APM dependencies
+apm_modules/
+
+# Claude Code local settings (not the project-tracked .claude/agents.md etc.)
+.claude/settings.local.json

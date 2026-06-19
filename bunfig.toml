@@ -1,0 +1,19 @@
+# Supply-chain hardening for Bun.
+# Rationale: docs at https://bun.com/docs/runtime/bunfig#installminimumreleaseage
+
+[install]
+# Refuse versions younger than 7 days. Unit is SECONDS (not minutes/days).
+# A 7-day window blocks the typical npm-compromise detection-and-yank cycle
+# (axios 4h, ua-parser-js 4h, Ledger Connect Kit 5h, etc.).
+minimumReleaseAge = 604800
+
+# NOTE: linker is currently `hoisted` for this single-package project. The
+# `isolated` linker is the phantom-dependency defense, but switching requires
+# a clean reinstall and full regression test. Tracked as a follow-up — do not
+# enable here without verifying `bun install && bun run test` still passes.
+# linker = "isolated"
+
+# NOTE: do NOT set `ignoreScripts = true`. Unlike pnpm/Yarn, Bun's
+# `ignoreScripts` overrides `trustedDependencies` (the allowlist) — it would
+# block electron's postinstall and break local dev. The allowlist in
+# package.json#trustedDependencies is the correct control here.
