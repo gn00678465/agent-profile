@@ -109,4 +109,4 @@ May include workarounds for this specific CDP crash.
 - Unit tests: **378 passing** — unaffected.
 - Lint: **0 errors** — unaffected.
 - E2E infrastructure: **complete** — waiting for launcher fix.
-- `feature_list.json` feat-016: **blocked**.
+- feat-016: **blocked** — see Trellis archive task `.trellis/tasks/archive/2026-06/06-19-legacy-feat-001-019/` (state migrated from the now-frozen `docs/legacy-harness/feature_list.json`).

@@ -4,14 +4,17 @@ Agent Profile — Electron desktop app for managing AI agent settings (Claude Co
 
 ## Startup Workflow
 
+> **狀態與 handoff 由 Trellis 管理**（`.trellis/`）。本專案已從自訂 root harness（`feature_list.json` / `PROGRESS.md` / `SESSION-HANDOFF.md` / `SESSION-LOG.jsonl` / `init.sh`）**完整切換**到 Trellis；舊檔已凍結於 `docs/legacy-harness/`（僅供查歷史，不再維護）。
+
 Before writing any code:
 
-1. Read this file
-2. Run `./init.sh` to verify the project builds and tests pass
-3. Read `feature_list.json` to see what is done / in-progress
-4. Read `PROGRESS.md` to see blockers, risks, and last session's endpoint
-5. Read `SESSION-HANDOFF.md` to see last session's endpoint
-5. **For any UI/UX work**: read `DESIGN.md` — the project's design system (Notion-inspired warm neutrals, typography, components, color tokens)
+1. Read this file + `.trellis/workflow.md`（開發三階段、task 建立時機、skill 路由）
+2. `python3 ./.trellis/scripts/task.py current --source` — 看目前 active task（若有）
+3. `python3 ./.trellis/scripts/get_context.py` — 取得 session runtime（git 狀態、tasks、journal、近期 commits）
+4. 看現役 / 已封存任務：`task.py list` 與 `task.py list-archive`（歷史 feature 在 archive `06-19-legacy-feat-001-019`）
+5. 進入某層寫碼前，讀對應 `.trellis/spec/<package>/<layer>/index.md`
+6. 驗證建置仍綠：`bun run typecheck && bun run lint && bun run test && bash scripts/check-architecture.sh`
+7. **For any UI/UX work**: read `DESIGN.md` — the project's design system (Notion-inspired warm neutrals, typography, components, color tokens)
 
 > `CLAUDE.md` is a pointer to this file — no need to read it separately.
 
@@ -53,13 +56,13 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 
 ## Working Rules
 
-- **One feature at a time.** Pick the first `in-progress` or `planned` item from `feature_list.json` and complete it before moving on.
+- **One task at a time.** 用 Trellis task 系統：一個 task 走完 plan → execute → finish 再開下一個（見 `.trellis/workflow.md`）。
 - **Verification before done.** A feature is not done until `bun run test` + `bun run lint` both pass.
 - **Never mutate objects.** Use spread/`structuredClone`.
 - **IPC envelope.** Every IPC handler returns `{ success, data? }` or `{ success: false, error }`. Never throw across the IPC boundary.
 - **Security guards.** Always call `assertSafePath` / `assertSafeName` for renderer-supplied inputs before touching the file system.
 - **Design system compliance.** All UI changes must follow `DESIGN.md`: warm neutral palette, whisper borders (`1px solid rgba(0,0,0,0.1)`), Notion Blue (`#0075de`) for primary CTA, agent accent colors for interactive highlights.
-- **Update state before ending.** Update `feature_list.json` (status + evidence) + `progress.md` (snapshot) + `session-log.jsonl` (append one line) + `session-handoff.md` (▶ 下次 Session 區塊) at the end of every session.
+- **Update state before ending.** 走 Trellis Phase 3：驗證閘 → spec update → commit → `add_session.py` 記錄 journal → `task.py archive`（見下方 End of Session）。
 - **Reusable patterns** Update AGENTS.md files if you discover reusable patterns (see below)
 
 ## Claude Plugins / CLI Runner — 規則
@@ -99,24 +102,26 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 **Do NOT add:**
 - Story-specific implementation details
 - Temporary debugging notes
-- Information already in `progress.md` or `session-log.jsonl`
+- Information already captured in the Trellis workspace journal (`.trellis/workspace/`) or task artifacts (`.trellis/tasks/`)
+
+> 專案層級的編碼慣例（IPC、security guards、cliRunner、layer 邊界）長期歸宿是 `.trellis/spec/`。目前 spec 仍為 `trellis init` 通用範本，正由 task `00-bootstrap-guidelines` 填入真實內容；在那之前，下方技術規則以 AGENTS.md 為準。
 
 ## Definition of Done
 
-A feature is complete when:
+A task is complete when:
 
-- [ ] Implementation matches the description in `feature_list.json`
-- [ ] `bun run test` passes (378 tests, 21 files, 0 failures)
+- [ ] Implementation matches the task's `prd.md`（acceptance criteria 全勾）
+- [ ] `bun run test` passes (baseline ≥ 409 tests, 0 failures)
 - [ ] `bun run lint` passes (0 errors, 0 warnings)
 - [ ] `bun run typecheck` passes
-- [ ] `feature_list.json` entry updated to `"status": "done"` with evidence
-- [ ] `progress.md` 快照已更新（上次結束點）
-- [ ] `session-log.jsonl` 已追加本次紀錄（一行 JSON）
-- [ ] `session-handoff.md` 本次實際執行結果
+- [ ] `bash scripts/check-architecture.sh` passes (0 violations)
+- [ ] task.json status → `completed`（透過 `task.py archive`）
+- [ ] 本次 session 已記錄到 workspace journal（`add_session.py`）
+- [ ] 學到的慣例已寫回 `.trellis/spec/`（若適用）
 
 ## End of Session
 
-Before ending a session, execute these steps **in order**:
+走 Trellis **Phase 3**（若平台有 `/trellis:finish-work` 指令，優先用它）。手動步驟，**依序執行**：
 
 ### 1. Verification gates — all must be green
 ```bash
@@ -124,38 +129,49 @@ bun run typecheck && bun run lint && bun run test
 bash scripts/check-architecture.sh
 ```
 
-### 2. Append to `session-log.jsonl` — exactly one line, TODAY's date
-> **CRITICAL:** Use today's actual date (`date +%Y-%m-%d`). Do NOT copy the date from previous session context.
-> Check if today's entry already exists before appending to avoid duplicates.
-```
-{"date":"YYYY-MM-DD","summary":"<一句話>","tests":<N>,"lint_errors":0,"lint_warnings":0}
-```
+### 2. Spec update（若適用）
+把本次學到的 pattern / 慣例 / bug 預防寫回 `.trellis/spec/<package>/<layer>/`（見 `trellis-update-spec`）。
 
-### 3. Update `session-handoff.md` — fill the "▶ 下次 Session 從這裡開始" block
-Four fields, all required:
-- **最後更新** → today's date (same as step 2)
-- **驗證狀態** → actual gate results from step 1
-- **上次動作** → one sentence summary of this session
-- **下次起點** → concrete feat-id or action (not vague)
+### 3. Commit
+遵循 conventional commits；逐項 `git add <file>`，**不要 `git add .`**。
 
-### 4. Update `feature_list.json` and `progress.md`
-- `feature_list.json`: set completed items to `"status": "done"` with evidence; no stale `in-progress`
-- `progress.md`: update feature table and "上次 Session 結束點" to match current state
-
-### 5. Commit — exactly these 4 files, this exact format
+### 4. 記錄 session 到 workspace journal
 ```bash
-git add feature_list.json progress.md session-log.jsonl session-handoff.md
-git commit -m "chore: end-of-session handoff YYYY-MM-DD"
+python3 ./.trellis/scripts/add_session.py --title "<標題>" --commit "<hash>" --summary "<一句話>"
 ```
-> Do NOT use `git add .` — only the 4 listed files belong in the handoff commit.
+> 用今天實際日期（`date +%Y-%m-%d`），勿沿用先前 context 的日期。
 
-Full binary gate checklist: `clean-state-checklist.md`.
+### 5. 收尾 task
+完成的 task → `python3 ./.trellis/scripts/task.py archive <task-dir>`；中途暫停 → `task.py finish`（清 active pointer，status 不變）。
 
 ## Current Focus
 
-All 18 features are **done** (feat-001 ~ feat-018). See `feature_list.json` for the full list with evidence.
+所有歷史 feature（feat-001 ~ feat-019）已收口，凍結於 archive task `06-19-legacy-feat-001-019`（feat-016 為 blocked，其餘 done）。
 
-**Next work candidates (add new features to `feature_list.json` as `planned` before starting):**
-- feat-016 E2E tests — unblock via `chromium.connectOverCDP()` (see `docs/E2E_BLOCKED.md`)
+**現役 / 待辦（用 `task.py list` 查最新）：**
+- `06-19-feat-020-auto-update`（planned）— Marketplace auto-update Switch 寫入路徑
+- feat-016 E2E — unblock via `chromium.connectOverCDP()`（見 `docs/E2E_BLOCKED.md`）
 - Dark mode CTA contrast follow-up — `#ffffff` on `#62aef0` = 2.22:1, below 3:1 for large text
 - Merge `feat/018-notion-ui` → `main`
+- `00-bootstrap-guidelines`（in_progress）— 把 `.trellis/spec/` 通用範本填為本專案真實內容
+<!-- TRELLIS:START -->
+# Trellis Instructions
+
+These instructions are for AI assistants working in this project.
+
+This project is managed by Trellis. The working knowledge you need lives under `.trellis/`:
+
+- `.trellis/workflow.md` — development phases, when to create tasks, skill routing
+- `.trellis/spec/` — package- and layer-scoped coding guidelines (read before writing code in a given layer)
+- `.trellis/workspace/` — per-developer journals and session traces
+- `.trellis/tasks/` — active and archived tasks (PRDs, research, jsonl context)
+
+If a Trellis command is available on your platform (e.g. `/trellis:finish-work`, `/trellis:continue`), prefer it over manual steps. Not every platform exposes every command.
+
+If you're using Codex or another agent-capable tool, additional project-scoped helpers may live in:
+- `.agents/skills/` — reusable Trellis skills
+- `.codex/agents/` — optional custom subagents
+
+Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
+
+<!-- TRELLIS:END -->
