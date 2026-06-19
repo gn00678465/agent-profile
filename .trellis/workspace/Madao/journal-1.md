@@ -154,3 +154,36 @@
 - feat-020 auto-update Switch write path（已建 planned task）
 - `00-bootstrap-guidelines`：把 `.trellis/spec/` 通用範本填為本專案真實內容（含下放 IPC/guards/cliRunner 慣例）
 - 決定是否將整個未追蹤的 `.trellis/` `.claude/` `.agents/` `.codex/` 一併納入版控（apm vendoring，獨立於本次遷移）
+
+
+## Session 16: Bootstrap spec: replace foreign template with real project spec
+
+**Date**: 2026-06-19
+**Task**: Bootstrap spec: replace foreign template with real project spec
+**Branch**: `feature/initial-agent-profile`
+
+### Summary
+
+00-bootstrap-guidelines focused pass — rewrote .trellis/spec to agent-profile reality (IPC/guards/cliRunner/config-persistence/architecture), deleted 29 foreign template files, slimmed AGENTS.md to point at spec; gates green (typecheck 0, lint 0, test 532, arch 0).
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9b5332f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
