@@ -65,18 +65,15 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 - **Update state before ending.** 走 Trellis Phase 3：驗證閘 → spec update → commit → `add_session.py` 記錄 journal → `task.py archive`（見下方 End of Session）。
 - **Reusable patterns** Update AGENTS.md files if you discover reusable patterns (see below)
 
-## Claude Plugins / CLI Runner — 規則
+## Claude Plugins / CLI Runner
 
-`src/main/ipc/handlers/cliRunner.ts` 是唯一允許 spawn `claude` binary 的模組。修改前先讀本段。
+`src/main/ipc/handlers/cliRunner.ts` 是唯一允許 spawn `claude` binary 的模組。完整契約已**正式下放到 `.trellis/spec/`**（單一事實來源），寫碼前讀對應文件：
 
-- **No shell.** `child_process.spawn(cmd, args, { shell: false })`. `exec` / `execSync` 一律禁止 (C1, C2)。
-- **Whitelist.** 只接受 11 條 token pattern (L4) — `plugin marketplace add|remove|update|list --json`、`plugin install|uninstall <id> --scope <user|project|local>`、`plugin enable|disable <id>`、`plugin reload`、`--version`、`plugin --help`。`isWhitelisted(args)` 與 `runWith(args)` 是強制閘道；任何新增 CLI 互動必須先擴 L4 白名單。
-- **Input validation.** 市場名走 `assertSafeMarketplaceName` (拒 `..` / 路徑分隔 / shell 元字元)；plugin id 走 `assertSafePluginId` (拒非 `name@marketplace` 格式)；scope 限於 `user|project|local`；git URL 限於 regex `L6 = /^(https://[\w./@:-]+|git@[\w./:-]+:[\w./-]+|github:[\w-]+/[\w.-]+)$/`；directory path 拒 NUL/CR/LF/tab。任何驗證失敗 → 直接回 `{ success: false, error }`，**不 spawn**。
-- **Timeout.** 60 s 觸發 `SIGTERM`；額外 5 s grace 後 `SIGKILL`；回 `{ success: false, error: "claude CLI timeout (60s)" }`。
-- **Binary detection.** Windows 用 `where claude`（解析 `%PATHEXT%`：`claude.cmd` → `claude.exe` → `claude.bat`），macOS / Linux 用 `which claude`。找不到 → `{ success: false, error: "claude CLI not found in PATH; install via instructions at https://code.claude.com/docs/zh-TW/setup" }`。結果在 process 內 cache。
-- **DV5.** plugin enable/disable **不**走 cliRunner — 直接寫 `~/.claude/settings.json#enabledPlugins`，避免 spawn 開銷與 binary 依賴。
-
-新增 cliRunner 指令的步驟：(1) 在 L4 加 token pattern；(2) 加 `Commands.*` builder + 對應 `assertSafe*` 校驗；(3) 加 `runWith(args)` 包裝函式；(4) 加 vitest case 涵蓋 reject path；(5) 對應 IPC handler 委派至新 builder。
+- cliRunner（no-shell / 11 條 L4 白名單 / `isWhitelisted`+`runWith` 閘道 / 60 s timeout / binary detection / DV5 / 新增指令 5 步驟）→ `.trellis/spec/backend/cli-runner.md`
+- IPC envelope（never throw across IPC、`success`/`failure`、handler 註冊）→ `.trellis/spec/backend/ipc-handlers.md`
+- security guards（`assertSafePath`/`assertSafeName`/`assertSafeMarketplaceName`/`assertSafePluginId`）→ `.trellis/spec/backend/security-guards.md`
+- config 持久化（`readJsonFile`/`writeJsonFile`、無 DB、JSON 檔模型）→ `.trellis/spec/backend/config-persistence.md`
+- 4-layer 邊界 + import alias（由 `scripts/check-architecture.sh` 強制）→ `.trellis/spec/shared/architecture.md`
 
 ### Evidence Capture Driver (feat-019 dev-only)
 
@@ -104,7 +101,7 @@ Electron + React 19 + TypeScript desktop app built with `vite-plugin-electron`. 
 - Temporary debugging notes
 - Information already captured in the Trellis workspace journal (`.trellis/workspace/`) or task artifacts (`.trellis/tasks/`)
 
-> 專案層級的編碼慣例（IPC、security guards、cliRunner、layer 邊界）長期歸宿是 `.trellis/spec/`。目前 spec 仍為 `trellis init` 通用範本，正由 task `00-bootstrap-guidelines` 填入真實內容；在那之前，下方技術規則以 AGENTS.md 為準。
+> 專案層級的編碼慣例（IPC、security guards、cliRunner、layer 邊界、frontend 模式）的**單一事實來源是 `.trellis/spec/`**——已由 task `00-bootstrap-guidelines`（focused pass）從 `trellis init` 通用範本改寫為本專案真實內容，並清除描述別專案的外來檔。AGENTS.md 僅留薄指標；進入某層寫碼前先讀對應 `.trellis/spec/<layer>/index.md`。
 
 ## Definition of Done
 
@@ -153,7 +150,7 @@ python3 ./.trellis/scripts/add_session.py --title "<標題>" --commit "<hash>" -
 - feat-016 E2E — unblock via `chromium.connectOverCDP()`（見 `docs/E2E_BLOCKED.md`）
 - Dark mode CTA contrast follow-up — `#ffffff` on `#62aef0` = 2.22:1, below 3:1 for large text
 - Merge `feat/018-notion-ui` → `main`
-- `00-bootstrap-guidelines`（in_progress）— 把 `.trellis/spec/` 通用範本填為本專案真實內容
+- `00-bootstrap-guidelines`（in_progress）— ✅ focused pass 完成：`.trellis/spec/` 已從通用範本改寫為本專案真實內容（backend IPC/guards/cliRunner/config-persistence + shared architecture/ts/quality/git + frontend 4 檔 + big-question + guides 清矛盾），並刪除 29 個外來檔。剩餘（選擇性後續）：frontend components/hooks/css 深掘
 <!-- TRELLIS:START -->
 # Trellis Instructions
 
