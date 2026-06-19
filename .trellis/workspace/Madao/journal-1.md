@@ -113,3 +113,36 @@
 
 ---
 
+
+
+## Session 15: Harness → Trellis migration
+
+**Date**: 2026-06-19
+**Task**: Harness → Trellis migration
+**Branch**: `feature/initial-agent-profile`
+
+### Summary
+
+完整切換 root harness 狀態/handoff 到 Trellis：歷史整併為 legacy archive task + feat-020 現役 task、SESSION-LOG 回填 journal、改寫 AGENTS.md workflow、凍結舊檔到 docs/legacy-harness/。gates 全綠 (532 tests)。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d492aee` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

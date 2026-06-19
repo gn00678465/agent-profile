@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 14
-- **Last Active**: 2026-05-03
+- **Total Sessions**: 15
+- **Last Active**: 2026-06-19
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~0 | Active |
+| `journal-1.md` | ~148 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 15 | 2026-06-19 | Harness → Trellis migration | `d492aee` | `feature/initial-agent-profile` |
 | 001 | 2026-04-14 | harness 基礎檔案 + ESLint 遷移 | 0f9d890… | — |
 | 002 | 2026-04-15 | feat-014 狀態對齊 + 測試死碼清理 | dae02a0 | — |
 | 003 | 2026-04-15 | src 分層清理 + CLAUDE.md 併入 AGENTS.md | 37124d2… | — |
