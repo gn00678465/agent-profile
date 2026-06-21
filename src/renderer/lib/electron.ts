@@ -4,6 +4,9 @@ import type {
   AgentType,
   ClaudeSettings,
   ClaudePlugin,
+  CodexMarketplace,
+  CodexPlugin,
+  CliRunResult,
   GeminiSettings,
   CopilotConfig,
   McpSettings,
@@ -97,6 +100,13 @@ declare global {
         renameRule: (filePath: string, newName: string) => Promise<IpcResponse<string>>;
         setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) => Promise<IpcResponse<void>>;
         deletePlugin: (configDir: string, pluginId: string, installPath: string) => Promise<IpcResponse<void>>;
+        getCodexMarketplaces: (configDir: string) => Promise<IpcResponse<CodexMarketplace[]>>;
+        getCodexPlugins: () => Promise<IpcResponse<CodexPlugin[]>>;
+        codexMarketplaceAdd: (source: string, ref?: string) => Promise<IpcResponse<CliRunResult>>;
+        codexMarketplaceRemove: (name: string) => Promise<IpcResponse<CliRunResult>>;
+        codexMarketplaceUpgrade: (name?: string) => Promise<IpcResponse<CliRunResult>>;
+        codexPluginAdd: (pluginId: string) => Promise<IpcResponse<CliRunResult>>;
+        codexPluginRemove: (pluginId: string) => Promise<IpcResponse<CliRunResult>>;
       };
       dialog: {
         openDir: (defaultPath?: string) => Promise<IpcResponse<string | null>>;

@@ -3,6 +3,7 @@ import os from 'os';
 import { registerAgentsHandler } from './handlers/agentsHandler';
 import { registerClaudeHandler } from './handlers/claudeHandler';
 import { registerClaudePluginsHandler } from './handlers/claudePluginsHandler';
+import { registerCodexPluginsHandler } from './handlers/codexPluginsHandler';
 import { registerGeminiHandler } from './handlers/geminiHandler';
 import { registerCopilotHandler } from './handlers/copilotHandler';
 import { registerMcpHandler } from './handlers/mcpHandler';
@@ -15,6 +16,7 @@ export function registerConfigHandlers(ipcMain: IpcMain): void {
   registerAgentsHandler(ipcMain, home);
   registerClaudeHandler(ipcMain, home);
   registerClaudePluginsHandler(ipcMain, home);
+  registerCodexPluginsHandler(ipcMain, home);
   registerGeminiHandler(ipcMain, home);
   registerCopilotHandler(ipcMain, home);
   registerMcpHandler(ipcMain, home);

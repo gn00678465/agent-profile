@@ -121,6 +121,29 @@ export interface CliRunResult {
   error?: string;
 }
 
+// ─── Codex plugins (`~/.codex/`) ─────────────────────────────────────────────
+// Marketplaces are a hybrid: every entry from `codex plugin marketplace list`
+// (builtin:true) merged with user marketplaces declared in config.toml
+// (builtin:false + source/sourceType/lastUpdated).
+
+export interface CodexMarketplace {
+  name: string;
+  root: string;
+  builtin: boolean;
+  source?: string;
+  sourceType?: string;
+  lastUpdated?: string;
+}
+
+export interface CodexPlugin {
+  id: string;
+  name: string;
+  marketplace: string;
+  status: 'installed' | 'not-installed';
+  version?: string;
+  path?: string;
+}
+
 // ─── Gemini (`~/.gemini/`) ───────────────────────────────────────────────────
 
 export interface GeminiSettings {
@@ -522,6 +545,17 @@ export const IPC_CHANNELS = {
   CLAUDE_CLI_PLUGIN_INSTALL: 'claude-cli:plugin-install',
   CLAUDE_CLI_PLUGIN_UNINSTALL: 'claude-cli:plugin-uninstall',
   CLAUDE_CLI_RELOAD: 'claude-cli:reload',
+
+  // Codex plugin reads (hybrid: CLI table + config.toml)
+  CONFIG_GET_CODEX_MARKETPLACES: 'config:get-codex-marketplaces',
+  CONFIG_GET_CODEX_PLUGINS: 'config:get-codex-plugins',
+
+  // Codex CLI integration
+  CODEX_CLI_MARKETPLACE_ADD: 'codex-cli:marketplace-add',
+  CODEX_CLI_MARKETPLACE_REMOVE: 'codex-cli:marketplace-remove',
+  CODEX_CLI_MARKETPLACE_UPGRADE: 'codex-cli:marketplace-upgrade',
+  CODEX_CLI_PLUGIN_ADD: 'codex-cli:plugin-add',
+  CODEX_CLI_PLUGIN_REMOVE: 'codex-cli:plugin-remove',
 
   // Dialog operations
   DIALOG_OPEN_DIR: 'dialog:open-dir',

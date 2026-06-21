@@ -12,6 +12,8 @@ import type {
   ClaudePluginDiscoveryItem,
   ClaudePluginError,
   CliRunResult,
+  CodexMarketplace,
+  CodexPlugin,
   GeminiSettings,
   CopilotConfig,
   McpSettings,
@@ -225,6 +227,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<ClaudePluginDiscoveryItem[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY, configDir, marketplaceName),
     getClaudePluginErrors: (configDir: string) =>
       invoke<ClaudePluginError[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS, configDir),
+
+    // Codex plugins (hybrid reads + CLI mutations).
+    //   config.getCodexMarketplaces — merge CLI list + config.toml user marketplaces
+    //   config.getCodexPlugins — parse `codex plugin list`
+    //   config.codexMarketplaceAdd/Remove/Upgrade — marketplace mutations via codex CLI
+    //   config.codexPluginAdd/Remove — plugin install/remove via codex CLI
+    getCodexMarketplaces: (configDir: string) =>
+      invoke<CodexMarketplace[]>(IPC_CHANNELS.CONFIG_GET_CODEX_MARKETPLACES, configDir),
+    getCodexPlugins: () =>
+      invoke<CodexPlugin[]>(IPC_CHANNELS.CONFIG_GET_CODEX_PLUGINS),
+    codexMarketplaceAdd: (source: string, ref?: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_ADD, source, ref),
+    codexMarketplaceRemove: (name: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_REMOVE, name),
+    codexMarketplaceUpgrade: (name?: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_UPGRADE, name),
+    codexPluginAdd: (pluginId: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_PLUGIN_ADD, pluginId),
+    codexPluginRemove: (pluginId: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_PLUGIN_REMOVE, pluginId),
   },
 
   // Claude CLI integration (feat-019).

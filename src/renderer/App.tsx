@@ -4,6 +4,7 @@ import { useAgents } from './hooks/useAgents';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
 import { ClaudePluginsView } from './components/agents/ClaudePlugins';
+import { CodexPluginsView } from './components/agents/CodexPlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
@@ -80,6 +81,7 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'settings',  label: 'Settings' },
     { id: 'agents-md', label: 'AGENTS.md' },
     { id: 'subagents', label: 'Subagents' },
+    { id: 'plugins',   label: 'Plugins' },
   ],
   shared: [
     { id: 'skills', label: 'Shared Skills' },
@@ -172,6 +174,7 @@ function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: Conte
           template={codexSubagentTemplate}
         />
       );
+      if (tabId === 'plugins') return <CodexPluginsView configDir={configDir} accentColor={color.primary} />;
     }
     if (type === 'shared') {
       if (tabId === 'skills') return <SharedSkillsPage configDir={configDir} onSelectAgentType={onSelectAgentType} />;
