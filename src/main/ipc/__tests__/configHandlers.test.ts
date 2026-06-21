@@ -1144,6 +1144,55 @@ Skill instructions here.`;
     });
   });
 
+  // ── Subagents: Codex opts override (agents/ + .toml) ───────────────────────
+
+  describe('config:*-subagent with Codex opts (agents/ + .toml)', () => {
+    const CODEX_DIR = path.join(HOME, '.codex');
+    const AGENTS_DIR = path.join(CODEX_DIR, 'agents');
+    const CODEX_OPTS = { dir: 'agents', ext: '.toml' };
+
+    it('lists *.toml from the agents/ dir with parsed descriptions', async () => {
+      vi.mocked(fs.readdir).mockResolvedValue(['planner.toml', 'reviewer.toml', 'notes.md'] as any);
+      vi.mocked(fs.stat)
+        .mockResolvedValueOnce({ isFile: () => true, isDirectory: () => false } as any)
+        .mockResolvedValueOnce({ isFile: () => true, isDirectory: () => false } as any);
+      vi.mocked(fs.readFile)
+        .mockResolvedValueOnce('name = "planner"\ndescription = "Plans the work"\n' as any)
+        .mockResolvedValueOnce('name = "reviewer"\ndescription = "Reviews code"\n' as any);
+
+      const result = await ipc.invoke('config:get-subagents', CODEX_DIR, CODEX_OPTS);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].id).toBe('planner');
+      expect(result.data[0].path).toBe(path.join(AGENTS_DIR, 'planner.toml'));
+      expect(result.data[0].description).toBe('Plans the work');
+      expect(result.data[1].description).toBe('Reviews code');
+    });
+
+    it('creates a .toml file seeded with the template', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined as any);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      const template = 'name = "planner"\n';
+
+      const result = await ipc.invoke('config:create-subagent', CODEX_DIR, 'planner', { ...CODEX_OPTS, template });
+      expect(result.success).toBe(true);
+      expect(fs.mkdir).toHaveBeenCalledWith(AGENTS_DIR, { recursive: true });
+      expect(fs.writeFile).toHaveBeenCalledWith(path.join(AGENTS_DIR, 'planner.toml'), template, 'utf-8');
+      expect(result.data).toBe(path.join(AGENTS_DIR, 'planner.toml'));
+    });
+
+    it('renames within agents/ keeping the .toml extension', async () => {
+      vi.mocked(fs.rename).mockResolvedValue(undefined);
+      const result = await ipc.invoke('config:rename-subagent', CODEX_DIR, 'planner', 'senior-planner', CODEX_OPTS);
+      expect(result.success).toBe(true);
+      expect(fs.rename).toHaveBeenCalledWith(
+        path.join(AGENTS_DIR, 'planner.toml'),
+        path.join(AGENTS_DIR, 'senior-planner.toml'),
+      );
+      expect(result.data).toBe(path.join(AGENTS_DIR, 'senior-planner.toml'));
+    });
+  });
+
   // ── CONFIG_CREATE_SUBAGENT ─────────────────────────────────────────────────
 
   describe('config:create-subagent', () => {

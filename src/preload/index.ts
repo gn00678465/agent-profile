@@ -26,6 +26,7 @@ import type {
   ClaudeSessionMessage,
   RuleFile,
   SubagentFile,
+  SubagentOptions,
 } from '../shared/types';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResponse<T>> {
@@ -183,15 +184,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteRuleFolder: (configDir: string, folderName: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE_FOLDER, configDir, folderName),
 
-    // Subagents (Copilot)
-    getSubagents: (configDir: string) =>
-      invoke<SubagentFile[]>(IPC_CHANNELS.CONFIG_GET_SUBAGENTS, configDir),
-    createSubagent: (configDir: string, name: string) =>
-      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_SUBAGENT, configDir, name),
-    deleteSubagent: (configDir: string, name: string) =>
-      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SUBAGENT, configDir, name),
-    renameSubagent: (configDir: string, oldName: string, newName: string) =>
-      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_SUBAGENT, configDir, oldName, newName),
+    // Subagents (Copilot `subagents/*.agent.md`; Codex `agents/*.toml` via opts)
+    getSubagents: (configDir: string, opts?: SubagentOptions) =>
+      invoke<SubagentFile[]>(IPC_CHANNELS.CONFIG_GET_SUBAGENTS, configDir, opts),
+    createSubagent: (configDir: string, name: string, opts?: SubagentOptions) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_SUBAGENT, configDir, name, opts),
+    deleteSubagent: (configDir: string, name: string, opts?: SubagentOptions) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SUBAGENT, configDir, name, opts),
+    renameSubagent: (configDir: string, oldName: string, newName: string, opts?: SubagentOptions) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_SUBAGENT, configDir, oldName, newName, opts),
     renameRule: (filePath: string, newName: string) =>
       invoke<string>(IPC_CHANNELS.CONFIG_RENAME_RULE, filePath, newName),
 

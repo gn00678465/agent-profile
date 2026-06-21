@@ -22,6 +22,7 @@ import type {
   GeminiSessionMessage,
   RuleFile,
   SubagentFile,
+  SubagentOptions,
 } from '@shared/types';
 
 declare global {
@@ -89,10 +90,10 @@ declare global {
         saveRule: (filePath: string, content: string) => Promise<IpcResponse<void>>;
         deleteRule: (filePath: string) => Promise<IpcResponse<void>>;
         deleteRuleFolder: (configDir: string, folderName: string) => Promise<IpcResponse<void>>;
-        getSubagents: (configDir: string) => Promise<IpcResponse<SubagentFile[]>>;
-        createSubagent: (configDir: string, name: string) => Promise<IpcResponse<string>>;
-        deleteSubagent: (configDir: string, name: string) => Promise<IpcResponse<void>>;
-        renameSubagent: (configDir: string, oldName: string, newName: string) => Promise<IpcResponse<string>>;
+        getSubagents: (configDir: string, opts?: SubagentOptions) => Promise<IpcResponse<SubagentFile[]>>;
+        createSubagent: (configDir: string, name: string, opts?: SubagentOptions) => Promise<IpcResponse<string>>;
+        deleteSubagent: (configDir: string, name: string, opts?: SubagentOptions) => Promise<IpcResponse<void>>;
+        renameSubagent: (configDir: string, oldName: string, newName: string, opts?: SubagentOptions) => Promise<IpcResponse<string>>;
         renameRule: (filePath: string, newName: string) => Promise<IpcResponse<string>>;
         setPluginEnabled: (configDir: string, pluginId: string, enabled: boolean) => Promise<IpcResponse<void>>;
         deletePlugin: (configDir: string, pluginId: string, installPath: string) => Promise<IpcResponse<void>>;

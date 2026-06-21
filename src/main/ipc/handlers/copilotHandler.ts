@@ -8,8 +8,34 @@ import type {
   SessionEntry,
   ClaudeSessionMessage,
   SubagentFile,
+  SubagentOptions,
 } from '../../../shared/types';
 import { assertSafePath, assertSafeName, success, failure, readJsonFile, writeJsonFile } from './configUtils';
+
+// Subagent files default to Copilot's layout; Codex overrides dir/ext via opts.
+function resolveSubagentOpts(opts?: SubagentOptions) {
+  return {
+    dir: opts?.dir ?? 'subagents',
+    ext: opts?.ext ?? '.agent.md',
+    template: opts?.template ?? '',
+  };
+}
+
+// Pull a one-line description for the list view: TOML `description = "..."` or
+// Markdown frontmatter `description: ...`. Best-effort — never throws.
+function extractSubagentDescription(content: string, ext: string): string | undefined {
+  if (!content) return undefined;
+  if (ext === '.toml') {
+    const m = /^[ \t]*description[ \t]*=[ \t]*"([^"\n]*)"/m.exec(content);
+    return m?.[1].trim() || undefined;
+  }
+  const fm = /^---\n([\s\S]*?)\n---/.exec(content);
+  if (fm) {
+    const m = /^description:\s*(.+)$/m.exec(fm[1]);
+    if (m) return m[1].trim().replace(/^["']|["']$/g, '') || undefined;
+  }
+  return undefined;
+}
 
 export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
   ipcMain.handle(
@@ -164,9 +190,10 @@ export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_GET_SUBAGENTS,
-    async (_event, configDir: string) => {
+    async (_event, configDir: string, opts?: SubagentOptions) => {
       try {
-        const subagentsDir = path.join(configDir, 'subagents');
+        const { dir, ext } = resolveSubagentOpts(opts);
+        const subagentsDir = path.join(configDir, dir);
         let entries: string[];
         try {
           entries = await fs.readdir(subagentsDir);
@@ -176,14 +203,19 @@ export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
 
         const subagents: SubagentFile[] = [];
         for (const entry of entries) {
-          if (!entry.endsWith('.agent.md')) continue;
+          if (!entry.endsWith(ext)) continue;
           const filePath = path.join(subagentsDir, entry);
           try {
             const stat = await fs.stat(filePath);
             if (!stat.isFile()) continue;
           } catch { continue; }
-          const id = entry.slice(0, -'.agent.md'.length);
-          subagents.push({ id, name: id, path: filePath });
+          const id = entry.slice(0, -ext.length);
+          let description: string | undefined;
+          try {
+            const content = await fs.readFile(filePath, 'utf-8');
+            description = extractSubagentDescription(content, ext);
+          } catch { /* description stays undefined */ }
+          subagents.push({ id, name: id, path: filePath, description });
         }
 
         return success(subagents);
@@ -195,14 +227,15 @@ export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_CREATE_SUBAGENT,
-    async (_event, configDir: string, name: string) => {
+    async (_event, configDir: string, name: string, opts?: SubagentOptions) => {
       try {
+        const { dir, ext, template } = resolveSubagentOpts(opts);
         assertSafeName(name);
-        const subagentsDir = path.join(configDir, 'subagents');
-        const filePath = path.join(subagentsDir, `${name}.agent.md`);
+        const subagentsDir = path.join(configDir, dir);
+        const filePath = path.join(subagentsDir, `${name}${ext}`);
         assertSafePath(filePath, os.homedir());
         await fs.mkdir(subagentsDir, { recursive: true });
-        await fs.writeFile(filePath, '', 'utf-8');
+        await fs.writeFile(filePath, template, 'utf-8');
         return success(filePath);
       } catch (err) {
         return failure(err);
@@ -212,10 +245,11 @@ export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_DELETE_SUBAGENT,
-    async (_event, configDir: string, name: string) => {
+    async (_event, configDir: string, name: string, opts?: SubagentOptions) => {
       try {
+        const { dir, ext } = resolveSubagentOpts(opts);
         assertSafeName(name);
-        const filePath = path.join(configDir, 'subagents', `${name}.agent.md`);
+        const filePath = path.join(configDir, dir, `${name}${ext}`);
         assertSafePath(filePath, os.homedir());
         await fs.unlink(filePath);
         return success(undefined);
@@ -227,13 +261,14 @@ export function registerCopilotHandler(ipcMain: IpcMain, _home: string): void {
 
   ipcMain.handle(
     IPC_CHANNELS.CONFIG_RENAME_SUBAGENT,
-    async (_event, configDir: string, oldName: string, newName: string) => {
+    async (_event, configDir: string, oldName: string, newName: string, opts?: SubagentOptions) => {
       try {
+        const { dir, ext } = resolveSubagentOpts(opts);
         assertSafeName(oldName);
         assertSafeName(newName);
-        const subagentsDir = path.join(configDir, 'subagents');
-        const oldPath = path.join(subagentsDir, `${oldName}.agent.md`);
-        const newPath = path.join(subagentsDir, `${newName}.agent.md`);
+        const subagentsDir = path.join(configDir, dir);
+        const oldPath = path.join(subagentsDir, `${oldName}${ext}`);
+        const newPath = path.join(subagentsDir, `${newName}${ext}`);
         assertSafePath(oldPath, os.homedir());
         assertSafePath(newPath, os.homedir());
         await fs.rename(oldPath, newPath);

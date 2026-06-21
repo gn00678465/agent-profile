@@ -398,9 +398,19 @@ export interface RuleFile {
 }
 
 export interface SubagentFile {
-  id: string;    // filename without .agent.md, e.g. "coder"
+  id: string;    // filename without the extension, e.g. "coder"
   name: string;  // same as id
-  path: string;  // absolute path to the .agent.md file
+  path: string;  // absolute path to the subagent file
+  description?: string; // parsed from the file (TOML `description` / md frontmatter)
+}
+
+/** Per-call overrides for the generic subagent file handlers.
+ *  Defaults reproduce Copilot's layout (`subagents/` + `.agent.md`);
+ *  Codex passes `{ dir: 'agents', ext: '.toml' }`. */
+export interface SubagentOptions {
+  dir?: string;       // subfolder under configDir (default 'subagents')
+  ext?: string;       // file extension incl. leading dot (default '.agent.md')
+  template?: string;  // initial content used by create (default '')
 }
 
 // ─── IPC Channels ────────────────────────────────────────────────────────────

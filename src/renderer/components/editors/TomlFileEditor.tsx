@@ -10,6 +10,8 @@ interface TomlFileEditorProps {
   filePath: string;
   title: string;
   description?: string;
+  /** Called after a successful save (e.g. so a parent list can re-read the file). */
+  onSaved?: () => void;
 }
 
 // Taplo (the TOML formatter) is a ~10 MB base64-inlined WASM module. Lazy-load
@@ -28,7 +30,7 @@ function loadTaplo(): Promise<Taplo> {
 // save via smol-toml and writes bytes verbatim — TOML comments are preserved.
 // Format uses Taplo, the only TOML formatter that keeps comments and key order
 // intact (reorderKeys: false).
-export function TomlFileEditor({ filePath, title, description }: TomlFileEditorProps) {
+export function TomlFileEditor({ filePath, title, description, onSaved }: TomlFileEditorProps) {
   const [rawToml, setRawToml] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -92,6 +94,7 @@ export function TomlFileEditor({ filePath, title, description }: TomlFileEditorP
     try {
       await callElectron(() => electronAPI().file.write(filePath, rawToml));
       await load();
+      onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {

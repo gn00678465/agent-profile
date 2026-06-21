@@ -43,6 +43,11 @@ function agentColor(type: string) {
   return AGENT_COLORS[type] ?? AGENT_COLORS.shared;
 }
 
+// Seed new Codex subagent files (~/.codex/agents/<name>.toml) with the three
+// required fields so the file is valid for Codex out of the box.
+const codexSubagentTemplate = (name: string) =>
+  `name = "${name}"\ndescription = ""\ndeveloper_instructions = """\n\n"""\n`;
+
 // ─── Tab configuration per agent ─────────────────────────────────────────────
 
 const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
@@ -74,6 +79,7 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
   codex: [
     { id: 'settings',  label: 'Settings' },
     { id: 'agents-md', label: 'AGENTS.md' },
+    { id: 'subagents', label: 'Subagents' },
   ],
   shared: [
     { id: 'skills', label: 'Shared Skills' },
@@ -155,6 +161,16 @@ function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: Conte
       );
       if (tabId === 'agents-md') return (
         <MarkdownEditor filePath={`${configDir}/AGENTS.md`} title="AGENTS.md" description="Global instructions for OpenAI Codex" />
+      );
+      if (tabId === 'subagents') return (
+        <SubagentsEditor
+          configDir={configDir}
+          accentColor={color.primary}
+          subdir="agents"
+          ext=".toml"
+          editorKind="toml"
+          template={codexSubagentTemplate}
+        />
       );
     }
     if (type === 'shared') {
