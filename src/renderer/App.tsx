@@ -7,6 +7,7 @@ import { ClaudePluginsView } from './components/agents/ClaudePlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
+import { TomlFileEditor } from './components/editors/TomlFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { SharedSkillsPage } from './components/shared-skills/SharedSkillsPage';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
@@ -71,6 +72,7 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'mcp',        label: 'MCP Servers' },
   ],
   codex: [
+    { id: 'settings',  label: 'Settings' },
     { id: 'agents-md', label: 'AGENTS.md' },
   ],
   shared: [
@@ -144,6 +146,13 @@ function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: Conte
       );
     }
     if (type === 'codex') {
+      if (tabId === 'settings') return (
+        <TomlFileEditor
+          filePath={`${configDir}/config.toml`}
+          title="config.toml"
+          description="OpenAI Codex configuration (TOML)"
+        />
+      );
       if (tabId === 'agents-md') return (
         <MarkdownEditor filePath={`${configDir}/AGENTS.md`} title="AGENTS.md" description="Global instructions for OpenAI Codex" />
       );
