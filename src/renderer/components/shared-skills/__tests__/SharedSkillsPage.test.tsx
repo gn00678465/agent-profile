@@ -107,10 +107,11 @@ describe('SharedSkillsPage — layout regions in DOM order', () => {
     expect(screen.getByTestId('header-install-zip')).toBeTruthy();
   });
 
-  it('renders exactly 3 agent chips (claude-code, gemini, copilot) — chips are NOT interactive', () => {
+  it('renders 4 agent chips (claude-code, codex, gemini, copilot) — chips are NOT interactive', () => {
     useSkillsMock.mockReturnValue(defaultHookState());
     render(<SharedSkillsPage configDir="/x" />);
     expect(screen.getByTestId('filter-chip-claude-code')).toBeTruthy();
+    expect(screen.getByTestId('filter-chip-codex')).toBeTruthy();
     expect(screen.getByTestId('filter-chip-gemini')).toBeTruthy();
     expect(screen.getByTestId('filter-chip-copilot')).toBeTruthy();
     // No role=button, no onclick: chip is a span
@@ -243,6 +244,21 @@ describe('SharedSkillsPage — chip count (CA-09 dedup)', () => {
     render(<SharedSkillsPage configDir="/home/.agents" />);
     await waitFor(() => {
       expect(screen.getByTestId('filter-chip-count-claude-code').textContent).toBe('2');
+    });
+  });
+});
+
+describe('SharedSkillsPage — Codex (whole shared pool)', () => {
+  it('Codex chip counts all shared skills and every row shows the Codex icon', async () => {
+    // 2 shared skills in the pool; Codex reads ~/.agents/skills directly, so it
+    // "uses" all of them regardless of per-agent symlinks (linkedBy is empty).
+    useSkillsMock.mockReturnValue(defaultHookState());
+    render(<SharedSkillsPage configDir="/home/.agents" />);
+    await waitFor(() => {
+      expect(screen.getByTestId('filter-chip-count-codex').textContent).toBe('2');
+    });
+    await waitFor(() => {
+      expect(screen.getAllByTestId('agent-icon-codex').length).toBe(2);
     });
   });
 });

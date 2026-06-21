@@ -119,6 +119,9 @@ function defaultAgentSkillsDirs(home: string): Record<LinkedByAgentType, string[
     'claude-desktop': [path.join(home, 'Library', 'Application Support', 'Claude', 'skills')],
     gemini: [path.join(home, '.gemini', 'skills')],
     copilot: [path.join(home, '.copilot', 'skills'), path.join(home, '.config', 'copilot', 'skills')],
+    // Codex reads the shared ~/.agents/skills pool directly (no per-agent symlink dir),
+    // so there is nothing to reverse-scan; the empty list keeps the Record type complete.
+    codex: [],
   };
 }
 

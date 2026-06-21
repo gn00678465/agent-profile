@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/backend/cli-runner.md", "reason": "codexCliRunner 鏡像 no-shell/whitelist/binary-detect/timeout"}
+{"file": ".trellis/spec/backend/ipc-handlers.md", "reason": "IPC envelope 與 handler 註冊慣例"}
+{"file": ".trellis/spec/backend/security-guards.md", "reason": "assertSafe* 驗證 source/plugin-id/ref"}
+{"file": ".trellis/spec/backend/config-persistence.md", "reason": "讀 config.toml（smol-toml 唯讀）慣例"}
+{"file": ".trellis/spec/shared/architecture.md", "reason": "4 層邊界與 import alias"}
+{"file": ".trellis/spec/frontend/components.md", "reason": "Phase 3 UI 元件慣例，複用 shared/Extension*"}
+{"file": ".trellis/tasks/add-codex-support/research/codex-plugins.md", "reason": "codex CLI 動詞/狀態位置/manifest 實機研究"}

@@ -12,6 +12,8 @@ import type {
   ClaudePluginDiscoveryItem,
   ClaudePluginError,
   CliRunResult,
+  CodexMarketplace,
+  CodexPlugin,
   GeminiSettings,
   CopilotConfig,
   McpSettings,
@@ -26,6 +28,7 @@ import type {
   ClaudeSessionMessage,
   RuleFile,
   SubagentFile,
+  SubagentOptions,
 } from '../shared/types';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResponse<T>> {
@@ -183,15 +186,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteRuleFolder: (configDir: string, folderName: string) =>
       invoke<void>(IPC_CHANNELS.CONFIG_DELETE_RULE_FOLDER, configDir, folderName),
 
-    // Subagents (Copilot)
-    getSubagents: (configDir: string) =>
-      invoke<SubagentFile[]>(IPC_CHANNELS.CONFIG_GET_SUBAGENTS, configDir),
-    createSubagent: (configDir: string, name: string) =>
-      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_SUBAGENT, configDir, name),
-    deleteSubagent: (configDir: string, name: string) =>
-      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SUBAGENT, configDir, name),
-    renameSubagent: (configDir: string, oldName: string, newName: string) =>
-      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_SUBAGENT, configDir, oldName, newName),
+    // Subagents (Copilot `subagents/*.agent.md`; Codex `agents/*.toml` via opts)
+    getSubagents: (configDir: string, opts?: SubagentOptions) =>
+      invoke<SubagentFile[]>(IPC_CHANNELS.CONFIG_GET_SUBAGENTS, configDir, opts),
+    createSubagent: (configDir: string, name: string, opts?: SubagentOptions) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_CREATE_SUBAGENT, configDir, name, opts),
+    deleteSubagent: (configDir: string, name: string, opts?: SubagentOptions) =>
+      invoke<void>(IPC_CHANNELS.CONFIG_DELETE_SUBAGENT, configDir, name, opts),
+    renameSubagent: (configDir: string, oldName: string, newName: string, opts?: SubagentOptions) =>
+      invoke<string>(IPC_CHANNELS.CONFIG_RENAME_SUBAGENT, configDir, oldName, newName, opts),
     renameRule: (filePath: string, newName: string) =>
       invoke<string>(IPC_CHANNELS.CONFIG_RENAME_RULE, filePath, newName),
 
@@ -224,6 +227,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
       invoke<ClaudePluginDiscoveryItem[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_DISCOVERY, configDir, marketplaceName),
     getClaudePluginErrors: (configDir: string) =>
       invoke<ClaudePluginError[]>(IPC_CHANNELS.CONFIG_GET_CLAUDE_PLUGIN_ERRORS, configDir),
+
+    // Codex plugins (hybrid reads + CLI mutations).
+    //   config.getCodexMarketplaces — merge CLI list + config.toml user marketplaces
+    //   config.getCodexPlugins — parse `codex plugin list`
+    //   config.codexMarketplaceAdd/Remove/Upgrade — marketplace mutations via codex CLI
+    //   config.codexPluginAdd/Remove — plugin install/remove via codex CLI
+    getCodexMarketplaces: (configDir: string) =>
+      invoke<CodexMarketplace[]>(IPC_CHANNELS.CONFIG_GET_CODEX_MARKETPLACES, configDir),
+    getCodexPlugins: () =>
+      invoke<CodexPlugin[]>(IPC_CHANNELS.CONFIG_GET_CODEX_PLUGINS),
+    codexMarketplaceAdd: (source: string, ref?: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_ADD, source, ref),
+    codexMarketplaceRemove: (name: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_REMOVE, name),
+    codexMarketplaceUpgrade: (name?: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_MARKETPLACE_UPGRADE, name),
+    codexPluginAdd: (pluginId: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_PLUGIN_ADD, pluginId),
+    codexPluginRemove: (pluginId: string) =>
+      invoke<CliRunResult>(IPC_CHANNELS.CODEX_CLI_PLUGIN_REMOVE, pluginId),
   },
 
   // Claude CLI integration (feat-019).

@@ -10,9 +10,11 @@ interface MarkdownEditorProps {
   description?: string;
   placeholder?: string;
   autoCreate?: boolean;
+  /** Called after a successful manual save (e.g. so a parent list can re-read the file). */
+  onSaved?: () => void;
 }
 
-export function MarkdownEditor({ filePath, title, description, placeholder, autoCreate }: MarkdownEditorProps) {
+export function MarkdownEditor({ filePath, title, description, placeholder, autoCreate, onSaved }: MarkdownEditorProps) {
   const { config, loading, saving, error, save, refresh } = useMarkdown(filePath);
   const [draft, setDraft] = useState('');
   const [isDirty, setIsDirty] = useState(false);
@@ -33,6 +35,7 @@ export function MarkdownEditor({ filePath, title, description, placeholder, auto
   async function handleSave() {
     await save(draft);
     setIsDirty(false);
+    onSaved?.();
   }
 
   if (loading) {

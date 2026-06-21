@@ -8,13 +8,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import type { SubagentFile } from '@shared/types';
 import { MarkdownEditor } from './MarkdownEditor';
+import { TomlFileEditor } from './TomlFileEditor';
 
 interface SubagentsEditorProps {
   configDir: string;
   accentColor: string;
+  /** Subfolder + extension for the subagent files. Defaults to Copilot's subagents/.agent.md. */
+  subdir?: string;
+  ext?: string;
+  /** Right-panel editor: 'markdown' (Copilot .agent.md) or 'toml' (Codex .toml). */
+  editorKind?: 'markdown' | 'toml';
+  /** Builds the initial content for a newly-created file (e.g. a Codex TOML skeleton). */
+  template?: (name: string) => string;
 }
 
-export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps) {
+export function SubagentsEditor({
+  configDir,
+  accentColor,
+  subdir = 'subagents',
+  ext = '.agent.md',
+  editorKind = 'markdown',
+  template,
+}: SubagentsEditorProps) {
   const [subagents, setSubagents] = useState<SubagentFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SubagentFile | null>(null);
@@ -35,17 +50,19 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
     setLoading(true);
     try {
       const result = await callElectron(() =>
-        electronAPI().config.getSubagents(configDir)
+        electronAPI().config.getSubagents(configDir, { dir: subdir, ext })
       );
       setSubagents(result);
+      return result;
     } catch (err) {
       toast.error('Failed to load subagents', {
         description: err instanceof Error ? err.message : 'Unknown error',
       });
+      return [] as SubagentFile[];
     } finally {
       setLoading(false);
     }
-  }, [configDir]);
+  }, [configDir, subdir, ext]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -63,7 +80,7 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
   async function handleDelete(agent: SubagentFile) {
     if (!confirm(`Delete subagent "${agent.name}"?\n${agent.path}\n\nThis cannot be undone.`)) return;
     try {
-      await callElectron(() => electronAPI().config.deleteSubagent(configDir, agent.name));
+      await callElectron(() => electronAPI().config.deleteSubagent(configDir, agent.name, { dir: subdir, ext }));
       toast.success('Subagent deleted');
       if (selected?.id === agent.id) setSelected(null);
       await load();
@@ -77,16 +94,20 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
   async function handleAdd() {
     const trimmed = addValue.trim();
     if (!trimmed) { setAddError('Enter a subagent name'); return; }
+    // Case-insensitive: Windows filesystems collide on case, silently overwriting.
+    if (subagents.some((a) => a.name.toLowerCase() === trimmed.toLowerCase())) {
+      setAddError(`A subagent named "${trimmed}" already exists`);
+      return;
+    }
     try {
       const filePath = await callElectron(() =>
-        electronAPI().config.createSubagent(configDir, trimmed)
+        electronAPI().config.createSubagent(configDir, trimmed, { dir: subdir, ext, template: template?.(trimmed) })
       );
       toast.success('Subagent created');
       setShowAddInput(false);
       setAddValue('');
       setAddError('');
-      const freshAgents = await callElectron(() => electronAPI().config.getSubagents(configDir));
-      setSubagents(freshAgents);
+      const freshAgents = await load();
       const newAgent = freshAgents.find((a) => a.path === filePath);
       if (newAgent) setSelected(newAgent);
     } catch (err) {
@@ -109,14 +130,17 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
   async function commitRename(agent: SubagentFile) {
     const trimmed = renameValue.trim();
     if (!trimmed || trimmed === agent.name) { cancelRename(); return; }
+    if (subagents.some((a) => a.id !== agent.id && a.name.toLowerCase() === trimmed.toLowerCase())) {
+      setRenameError(`A subagent named "${trimmed}" already exists`);
+      return;
+    }
     try {
       const newPath = await callElectron(() =>
-        electronAPI().config.renameSubagent(configDir, agent.name, trimmed)
+        electronAPI().config.renameSubagent(configDir, agent.name, trimmed, { dir: subdir, ext })
       );
       toast.success('Subagent renamed');
       cancelRename();
-      const freshAgents = await callElectron(() => electronAPI().config.getSubagents(configDir));
-      setSubagents(freshAgents);
+      const freshAgents = await load();
       const updated = freshAgents.find((a) => a.path === newPath);
       if (selected?.id === agent.id) setSelected(updated ?? null);
     } catch (err) {
@@ -166,7 +190,7 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
             />
             {addError && <p className="mt-1 text-[10px] text-destructive">{addError}</p>}
             <p className="mt-1 text-[10px] text-muted-foreground">
-              Creates <span className="font-mono">{addValue || 'name'}.agent.md</span> · Enter to create
+              Creates <span className="font-mono">{addValue || 'name'}{ext}</span> · Enter to create
             </p>
           </div>
         )}
@@ -176,7 +200,7 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground">
             <FileText className="h-8 w-8 opacity-30" />
             <p className="text-xs">No subagents found</p>
-            <p className="font-mono text-[10px] opacity-60 break-all">{configDir}/subagents/</p>
+            <p className="font-mono text-[10px] opacity-60 break-all">{configDir}/{subdir}/</p>
           </div>
         ) : (
           <ScrollArea className="flex-1">
@@ -221,12 +245,22 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
                         )}
                       </div>
                     ) : (
-                      <span
-                        className="truncate text-xs w-[120px]"
-                        style={{ ...(isSelected ? { color: accentColor, fontWeight: 500 } : {}) }}
-                      >
-                        {agent.name}
-                      </span>
+                      <div className="flex w-[120px] min-w-0 flex-col">
+                        <span
+                          className="truncate text-xs"
+                          style={{ ...(isSelected ? { color: accentColor, fontWeight: 500 } : {}) }}
+                        >
+                          {agent.name}
+                        </span>
+                        {agent.description && (
+                          <span
+                            className="truncate text-[10px] text-muted-foreground"
+                            title={agent.description}
+                          >
+                            {agent.description}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {!isRenaming && (
@@ -261,11 +295,19 @@ export function SubagentsEditor({ configDir, accentColor }: SubagentsEditorProps
             <FileText className="h-10 w-10 opacity-30" />
             <p className="text-sm">Select a subagent to edit</p>
           </div>
+        ) : editorKind === 'toml' ? (
+          <TomlFileEditor
+            filePath={selected.path}
+            title={selected.name}
+            description={`${selected.name}${ext}`}
+            onSaved={() => { void load(); }}
+          />
         ) : (
           <MarkdownEditor
             filePath={selected.path}
             title={selected.name}
-            description={`${selected.name}.agent.md`}
+            description={`${selected.name}${ext}`}
+            onSaved={() => { void load(); }}
           />
         )}
       </div>

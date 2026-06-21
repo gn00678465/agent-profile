@@ -4,9 +4,11 @@ import { useAgents } from './hooks/useAgents';
 import { useTheme } from './hooks/useTheme';
 import { Sidebar } from './components/layout/Sidebar';
 import { ClaudePluginsView } from './components/agents/ClaudePlugins';
+import { CodexPluginsView } from './components/agents/CodexPlugins';
 import { GeminiExtensionsView } from './components/agents/GeminiExtensions';
 import { McpCommandEditor } from './components/editors/McpCommandEditor';
 import { JsonFileEditor } from './components/editors/JsonFileEditor';
+import { TomlFileEditor } from './components/editors/TomlFileEditor';
 import { SkillsEditor } from './components/editors/SkillsEditor';
 import { SharedSkillsPage } from './components/shared-skills/SharedSkillsPage';
 import { MarkdownEditor } from './components/editors/MarkdownEditor';
@@ -26,6 +28,7 @@ const AGENT_COLORS: Record<string, { primary: string; subtle: string }> = {
   'claude-code': { primary: '#d97706', subtle: 'rgba(217,119,6,0.08)' },
   copilot:       { primary: '#2eb88a', subtle: 'rgba(46,184,138,0.08)' },
   gemini:        { primary: '#7c6ef5', subtle: 'rgba(124,110,245,0.08)' },
+  codex:         { primary: '#3941ff', subtle: 'rgba(57,65,255,0.08)' },
   shared:        { primary: '#6b7280', subtle: 'rgba(107,114,128,0.08)' },
 };
 
@@ -33,12 +36,18 @@ const AGENT_GLYPHS: Record<string, string> = {
   'claude-code': '◉',
   copilot:       '▶',
   gemini:        '◆',
+  codex:         '✦',
   shared:        '◈',
 };
 
 function agentColor(type: string) {
   return AGENT_COLORS[type] ?? AGENT_COLORS.shared;
 }
+
+// Seed new Codex subagent files (~/.codex/agents/<name>.toml) with the three
+// required fields so the file is valid for Codex out of the box.
+const codexSubagentTemplate = (name: string) =>
+  `name = "${name}"\ndescription = ""\ndeveloper_instructions = """\n\n"""\n`;
 
 // ─── Tab configuration per agent ─────────────────────────────────────────────
 
@@ -67,6 +76,12 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'skills',     label: 'Skills' },
     { id: 'extensions', label: 'Extensions' },
     { id: 'mcp',        label: 'MCP Servers' },
+  ],
+  codex: [
+    { id: 'settings',  label: 'Settings' },
+    { id: 'agents-md', label: 'AGENTS.md' },
+    { id: 'subagents', label: 'Subagents' },
+    { id: 'plugins',   label: 'Plugins' },
   ],
   shared: [
     { id: 'skills', label: 'Shared Skills' },
@@ -137,6 +152,29 @@ function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: Conte
       if (tabId === 'gemini-md')  return (
         <MarkdownEditor filePath={`${configDir}/GEMINI.md`} title="GEMINI.md" description="Global instructions for Gemini CLI" />
       );
+    }
+    if (type === 'codex') {
+      if (tabId === 'settings') return (
+        <TomlFileEditor
+          filePath={`${configDir}/config.toml`}
+          title="config.toml"
+          description="OpenAI Codex configuration (TOML)"
+        />
+      );
+      if (tabId === 'agents-md') return (
+        <MarkdownEditor filePath={`${configDir}/AGENTS.md`} title="AGENTS.md" description="Global instructions for OpenAI Codex" />
+      );
+      if (tabId === 'subagents') return (
+        <SubagentsEditor
+          configDir={configDir}
+          accentColor={color.primary}
+          subdir="agents"
+          ext=".toml"
+          editorKind="toml"
+          template={codexSubagentTemplate}
+        />
+      );
+      if (tabId === 'plugins') return <CodexPluginsView configDir={configDir} accentColor={color.primary} />;
     }
     if (type === 'shared') {
       if (tabId === 'skills') return <SharedSkillsPage configDir={configDir} onSelectAgentType={onSelectAgentType} />;

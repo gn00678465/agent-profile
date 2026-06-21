@@ -9,7 +9,7 @@ export interface AgentProfile {
 }
 
 // Agent types discovered from research
-export type AgentType = 'claude-code' | 'claude-desktop' | 'gemini' | 'copilot' | 'shared' | 'custom';
+export type AgentType = 'claude-code' | 'claude-desktop' | 'gemini' | 'copilot' | 'codex' | 'shared' | 'custom';
 
 // ─── Claude Code (`~/.claude/`) ─────────────────────────────────────────────
 
@@ -119,6 +119,29 @@ export interface CliRunResult {
   stdout?: string;
   stderr?: string;
   error?: string;
+}
+
+// ─── Codex plugins (`~/.codex/`) ─────────────────────────────────────────────
+// Marketplaces are a hybrid: every entry from `codex plugin marketplace list`
+// (builtin:true) merged with user marketplaces declared in config.toml
+// (builtin:false + source/sourceType/lastUpdated).
+
+export interface CodexMarketplace {
+  name: string;
+  root: string;
+  builtin: boolean;
+  source?: string;
+  sourceType?: string;
+  lastUpdated?: string;
+}
+
+export interface CodexPlugin {
+  id: string;
+  name: string;
+  marketplace: string;
+  status: 'installed' | 'not-installed';
+  version?: string;
+  path?: string;
 }
 
 // ─── Gemini (`~/.gemini/`) ───────────────────────────────────────────────────
@@ -398,9 +421,19 @@ export interface RuleFile {
 }
 
 export interface SubagentFile {
-  id: string;    // filename without .agent.md, e.g. "coder"
+  id: string;    // filename without the extension, e.g. "coder"
   name: string;  // same as id
-  path: string;  // absolute path to the .agent.md file
+  path: string;  // absolute path to the subagent file
+  description?: string; // parsed from the file (TOML `description` / md frontmatter)
+}
+
+/** Per-call overrides for the generic subagent file handlers.
+ *  Defaults reproduce Copilot's layout (`subagents/` + `.agent.md`);
+ *  Codex passes `{ dir: 'agents', ext: '.toml' }`. */
+export interface SubagentOptions {
+  dir?: string;       // subfolder under configDir (default 'subagents')
+  ext?: string;       // file extension incl. leading dot (default '.agent.md')
+  template?: string;  // initial content used by create (default '')
 }
 
 // ─── IPC Channels ────────────────────────────────────────────────────────────
@@ -512,6 +545,17 @@ export const IPC_CHANNELS = {
   CLAUDE_CLI_PLUGIN_INSTALL: 'claude-cli:plugin-install',
   CLAUDE_CLI_PLUGIN_UNINSTALL: 'claude-cli:plugin-uninstall',
   CLAUDE_CLI_RELOAD: 'claude-cli:reload',
+
+  // Codex plugin reads (hybrid: CLI table + config.toml)
+  CONFIG_GET_CODEX_MARKETPLACES: 'config:get-codex-marketplaces',
+  CONFIG_GET_CODEX_PLUGINS: 'config:get-codex-plugins',
+
+  // Codex CLI integration
+  CODEX_CLI_MARKETPLACE_ADD: 'codex-cli:marketplace-add',
+  CODEX_CLI_MARKETPLACE_REMOVE: 'codex-cli:marketplace-remove',
+  CODEX_CLI_MARKETPLACE_UPGRADE: 'codex-cli:marketplace-upgrade',
+  CODEX_CLI_PLUGIN_ADD: 'codex-cli:plugin-add',
+  CODEX_CLI_PLUGIN_REMOVE: 'codex-cli:plugin-remove',
 
   // Dialog operations
   DIALOG_OPEN_DIR: 'dialog:open-dir',

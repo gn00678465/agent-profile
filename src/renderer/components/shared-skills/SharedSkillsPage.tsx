@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSkills } from '@/hooks/useConfig';
 import { callElectron, electronAPI } from '@/lib/electron';
-import { agentAccent, CHIP_AGENT_ORDER } from '@/lib/agentColors';
+import { agentAccent, agentIconSrc, CHIP_AGENT_ORDER } from '@/lib/agentColors';
 import { SharedSkillRow } from './SharedSkillRow';
 import { SharedSkillDetail } from './SharedSkillDetail';
 import { InstallFromRegistryDialog } from './InstallFromRegistryDialog';
@@ -45,6 +45,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
     'claude-desktop': 0,
     gemini: 0,
     copilot: 0,
+    codex: 0, // placeholder — Codex's count is derived at render from the shared pool size
   });
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [updateDialog, setUpdateDialog] = useState<{ ids: string[]; label: string } | null>(null);
@@ -72,7 +73,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
 
       // Aggregate the linkedBy term
       const linkedTerm: Record<LinkedByAgentType, number> = {
-        'claude-code': 0, 'claude-desktop': 0, gemini: 0, copilot: 0,
+        'claude-code': 0, 'claude-desktop': 0, gemini: 0, copilot: 0, codex: 0,
       };
       for (const entry of lb) {
         for (const a of entry.agents) linkedTerm[a] += 1;
@@ -82,7 +83,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
       // CA-09: drop entries where isSymbolicLink === true (avoids double-count).
       const agents = await callElectron(() => electronAPI().config.getAgents());
       const ownTerm: Record<LinkedByAgentType, number> = {
-        'claude-code': 0, 'claude-desktop': 0, gemini: 0, copilot: 0,
+        'claude-code': 0, 'claude-desktop': 0, gemini: 0, copilot: 0, codex: 0,
       };
       const linkedByAgentType = (a: AgentProfile): LinkedByAgentType | null =>
         a.type === 'shared' || a.type === 'custom' ? null : (a.type as LinkedByAgentType);
@@ -103,6 +104,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
         'claude-desktop': linkedTerm['claude-desktop'] + ownTerm['claude-desktop'],
         gemini: linkedTerm.gemini + ownTerm.gemini,
         copilot: linkedTerm.copilot + ownTerm.copilot,
+        codex: 0, // overridden at render — Codex uses the whole shared pool
       });
       setLinkedByError(null);
     } catch (e) {
@@ -282,7 +284,8 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
         <div data-testid="filter-chip-group" className="flex items-center gap-2">
           {CHIP_AGENT_ORDER.map((agentType) => {
             const accent = agentAccent(agentType);
-            const count = chipCounts[agentType];
+            // Codex reads ~/.agents/skills directly, so it uses every shared skill.
+            const count = agentType === 'codex' ? skills.length : chipCounts[agentType];
             return (
               <span
                 key={agentType}
@@ -290,7 +293,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
                 className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-mono"
                 style={{ background: accent.subtle, color: accent.primary }}
               >
-                <span>{accent.glyph}</span>
+                <img src={agentIconSrc(agentType)} alt="" className="h-3.5 w-3.5" />
                 <span>{accent.label}</span>
                 <span className="opacity-60">·</span>
                 <span data-testid={`filter-chip-count-${agentType}`}>{count}</span>
@@ -383,7 +386,7 @@ export function SharedSkillsPage({ configDir, onSelectAgentType }: SharedSkillsP
                 <SharedSkillRow
                   key={skill.id}
                   skill={skill}
-                  linkedAgents={linkedAgentsByskill.get(skill.id) ?? []}
+                  linkedAgents={[...(linkedAgentsByskill.get(skill.id) ?? []), 'codex']}
                   lock={lockMap[skill.id]}
                   onOpen={() => selectSkill(skill)}
                   onDelete={() => { void handleDelete(skill.id); }}

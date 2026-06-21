@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
-- **Last Active**: 2026-06-19
+- **Total Sessions**: 17
+- **Last Active**: 2026-06-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~189 | Active |
+| `journal-1.md` | ~224 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-06-22 | Codex Marketplace/Plugins 分頁 | `33a16cb`, `99f43be`, `1fd0334` | `feature/add-codex-support` |
 | 16 | 2026-06-19 | Bootstrap spec: replace foreign template with real project spec | `9b5332f` | `feature/initial-agent-profile` |
 | 15 | 2026-06-19 | Harness → Trellis migration | `d492aee` | `feature/initial-agent-profile` |
 | 001 | 2026-04-14 | harness 基礎檔案 + ESLint 遷移 | 0f9d890… | — |

@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/cli-runner.md", "reason": "驗 whitelist/驗證/no-shell 符規"}
+{"file": ".trellis/spec/backend/ipc-handlers.md", "reason": "驗 envelope、不跨界 throw"}
+{"file": ".trellis/spec/backend/security-guards.md", "reason": "驗 renderer 輸入皆經驗證器"}
+{"file": ".trellis/spec/shared/architecture.md", "reason": "驗層邊界（check-architecture）"}
+{"file": ".trellis/spec/shared/code-quality.md", "reason": "品質/簡潔慣例"}
+{"file": ".trellis/spec/shared/typescript.md", "reason": "TS 型別嚴謹度"}

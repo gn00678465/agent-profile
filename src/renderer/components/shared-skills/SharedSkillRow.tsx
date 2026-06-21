@@ -1,6 +1,6 @@
 import { Trash2, GitBranch, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { agentAccent } from '@/lib/agentColors';
+import { agentAccent, agentIconSrc } from '@/lib/agentColors';
 import type { Skill, LinkedByAgentType, SkillLockEntry } from '@shared/types';
 
 interface SharedSkillRowProps {
@@ -73,10 +73,10 @@ export function SharedSkillRow({
               aria-label={`Open ${accent.label} skills`}
               onClick={(e) => { e.stopPropagation(); onAgentIconClick(agentType); }}
               onKeyDown={(e) => { e.stopPropagation(); }}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-xs transition-transform hover:scale-110"
-              style={{ background: accent.subtle, color: accent.primary }}
+              className="flex h-6 w-6 items-center justify-center rounded-full transition-transform hover:scale-110"
+              style={{ background: accent.subtle }}
             >
-              {accent.glyph}
+              <img src={agentIconSrc(agentType)} alt="" className="h-4 w-4" />
             </button>
           );
         })}

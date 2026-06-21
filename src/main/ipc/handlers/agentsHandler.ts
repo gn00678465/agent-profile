@@ -14,11 +14,11 @@ export function getKnownAgents(home: string): AgentProfile[] {
       type: 'claude-code',
     },
     {
-      id: 'copilot',
-      name: 'GitHub Copilot',
-      configDir: path.join(home, '.copilot'),
-      description: 'GitHub Copilot CLI agent',
-      type: 'copilot',
+      id: 'codex',
+      name: 'Codex',
+      configDir: path.join(home, '.codex'),
+      description: 'OpenAI Codex CLI agent',
+      type: 'codex',
     },
     {
       id: 'gemini',
@@ -26,6 +26,13 @@ export function getKnownAgents(home: string): AgentProfile[] {
       configDir: path.join(home, '.gemini'),
       description: 'Google Gemini CLI agent',
       type: 'gemini',
+    },
+    {
+      id: 'copilot',
+      name: 'GitHub Copilot',
+      configDir: path.join(home, '.copilot'),
+      description: 'GitHub Copilot CLI agent',
+      type: 'copilot',
     },
     {
       id: 'shared',
