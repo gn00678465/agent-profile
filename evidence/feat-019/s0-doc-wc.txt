@@ -1,7 +1,0 @@
-## 1. `~/.claude/settings.json` plugin 鍵 schema: 28
-## 2. `~/.claude/plugins/installed_plugins.json` v2 schema: 33
-## 3. `~/.claude/plugins/known_marketplaces.json` schema: 38
-## 4. `~/.claude/plugins/marketplaces/<name>/.claude-plugin/marketplace.json` schema: 40
-## 5. `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` 佈局: 25
-## 6. `~/.claude/plugins/{cache,marketplaces,repos,data,blocklist.json,config.json,install-counts-cache.json}` 路徑用途: 21
-## 7. 邊界情況清單（IPC handler 必處理）: 18

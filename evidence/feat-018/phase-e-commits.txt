@@ -1,4 +1,0 @@
-f6f266b refactor(ui): Phase D — shared list components Notion style
-22f3b4c refactor(ui): Phase C — Sidebar + UI primitives Notion redesign
-84cb3d3 refactor(ui): Phase B — App.tsx Notion-style title bar, tabs, status bar
-5fda104 style(tokens): Phase A — Notion warm palette, CSS tokens, Tailwind config
