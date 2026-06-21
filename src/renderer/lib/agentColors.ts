@@ -36,6 +36,12 @@ const AGENT_ACCENTS: Record<LinkedByAgentType, AgentAccent> = {
     glyph: '▶',
     label: 'Copilot',
   },
+  codex: {
+    primary: 'rgb(57, 65, 255)',
+    subtle: 'rgba(57, 65, 255, 0.08)',
+    glyph: '✦',
+    label: 'Codex',
+  },
 };
 
 export function agentAccent(type: LinkedByAgentType): AgentAccent {

@@ -57,10 +57,10 @@ describe('configHandlers', () => {
   // ── CONFIG_GET_AGENTS ──────────────────────────────────────────────────────
 
   describe('config:get-agents', () => {
-    it('returns all four known agents', async () => {
+    it('returns all five known agents', async () => {
       const result = await ipc.invoke('config:get-agents');
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(4);
+      expect(result.data).toHaveLength(5);
     });
 
     it('includes Claude Code agent with correct config dir', async () => {
@@ -86,6 +86,14 @@ describe('configHandlers', () => {
       expect(copilotAgent).toBeDefined();
       expect(copilotAgent.configDir).toBe(path.join(HOME, '.copilot'));
       expect(copilotAgent.type).toBe('copilot');
+    });
+
+    it('includes Codex agent with correct config dir', async () => {
+      const result = await ipc.invoke('config:get-agents');
+      const codexAgent = result.data.find((a: any) => a.id === 'codex');
+      expect(codexAgent).toBeDefined();
+      expect(codexAgent.configDir).toBe(path.join(HOME, '.codex'));
+      expect(codexAgent.type).toBe('codex');
     });
 
     it('includes shared agent with correct config dir', async () => {

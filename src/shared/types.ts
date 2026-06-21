@@ -9,7 +9,7 @@ export interface AgentProfile {
 }
 
 // Agent types discovered from research
-export type AgentType = 'claude-code' | 'claude-desktop' | 'gemini' | 'copilot' | 'shared' | 'custom';
+export type AgentType = 'claude-code' | 'claude-desktop' | 'gemini' | 'copilot' | 'codex' | 'shared' | 'custom';
 
 // ─── Claude Code (`~/.claude/`) ─────────────────────────────────────────────
 

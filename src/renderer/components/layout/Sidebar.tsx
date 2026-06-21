@@ -5,11 +5,13 @@ import type { AgentProfile } from '@shared/types';
 import claudeIcon from '../../../assets/claude-color.svg';
 import geminiIcon from '../../../assets/gemini-color.svg';
 import copilotIcon from '../../../assets/githubcopilot.svg';
+import codexIcon from '../../../assets/codex.svg';
 
 const AGENT_COLORS: Record<string, string> = {
   'claude-code': '#d97706',
   gemini: '#7c6ef5',
   copilot: '#2eb88a',
+  codex: '#3941ff',
   shared: '#6b7280',
 };
 
@@ -25,6 +27,7 @@ const AGENT_ICONS: Record<string, React.ReactNode> = {
   'claude-code': <img src={claudeIcon} alt="Claude" className="h-5 w-5" />,
   gemini: <img src={geminiIcon} alt="Gemini" className="h-5 w-5" />,
   copilot: <img src={copilotIcon} alt="Copilot" className="h-5 w-5" />,
+  codex: <img src={codexIcon} alt="Codex" className="h-5 w-5" />,
   shared: <Share2 className="h-5 w-5 text-gray-400" />,
 };
 

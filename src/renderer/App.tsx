@@ -26,6 +26,7 @@ const AGENT_COLORS: Record<string, { primary: string; subtle: string }> = {
   'claude-code': { primary: '#d97706', subtle: 'rgba(217,119,6,0.08)' },
   copilot:       { primary: '#2eb88a', subtle: 'rgba(46,184,138,0.08)' },
   gemini:        { primary: '#7c6ef5', subtle: 'rgba(124,110,245,0.08)' },
+  codex:         { primary: '#3941ff', subtle: 'rgba(57,65,255,0.08)' },
   shared:        { primary: '#6b7280', subtle: 'rgba(107,114,128,0.08)' },
 };
 
@@ -33,6 +34,7 @@ const AGENT_GLYPHS: Record<string, string> = {
   'claude-code': '◉',
   copilot:       '▶',
   gemini:        '◆',
+  codex:         '✦',
   shared:        '◈',
 };
 
@@ -67,6 +69,9 @@ const AGENT_TABS: Record<string, Array<{ id: string; label: string }>> = {
     { id: 'skills',     label: 'Skills' },
     { id: 'extensions', label: 'Extensions' },
     { id: 'mcp',        label: 'MCP Servers' },
+  ],
+  codex: [
+    { id: 'agents-md', label: 'AGENTS.md' },
   ],
   shared: [
     { id: 'skills', label: 'Shared Skills' },
@@ -136,6 +141,11 @@ function ContentView({ agent, activeTab, onTabChange, onSelectAgentType }: Conte
       if (tabId === 'mcp')        return <McpCommandEditor configDir={configDir} agentType="gemini" />;
       if (tabId === 'gemini-md')  return (
         <MarkdownEditor filePath={`${configDir}/GEMINI.md`} title="GEMINI.md" description="Global instructions for Gemini CLI" />
+      );
+    }
+    if (type === 'codex') {
+      if (tabId === 'agents-md') return (
+        <MarkdownEditor filePath={`${configDir}/AGENTS.md`} title="AGENTS.md" description="Global instructions for OpenAI Codex" />
       );
     }
     if (type === 'shared') {
