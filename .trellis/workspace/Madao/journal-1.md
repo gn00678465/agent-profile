@@ -187,3 +187,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: Codex Marketplace/Plugins 分頁
+
+**Date**: 2026-06-22
+**Task**: Codex Marketplace/Plugins 分頁
+**Branch**: `feature/add-codex-support`
+
+### Summary
+
+新增 Codex Plugins 分頁（T2）：codexCliRunner 安全邊界（no-shell/whitelist/驗證+leading-dash）、解析 plugin/marketplace list 表格、Hybrid 讀取（config.toml + CLI）、變更全走 CLI；UI 兩子分頁。修正 installed,enabled 狀態解析與 Add Marketplace 輸入框樣式（live smoke 發現）。skillsHandler 補 codex 鍵。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `33a16cb` | (see git log) |
+| `99f43be` | (see git log) |
+| `1fd0334` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
